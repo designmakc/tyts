@@ -110,9 +110,12 @@ def test_a_nonce_without_the_key_gets_the_proof_and_nothing_else(client):
 
 
 def test_a_web_page_and_any_extension_are_refused_everywhere(client):
+    id = client.post("/recordings", headers=KEY, json={"source": "mic", "tracks": {"mic": {"startedAt": 0}}}).json()["id"]
     for who in (PAGE, OTHER, OURS, {"origin": "null"}):
-        for method, route in (("GET", "/health"), ("GET", "/transcripts"), ("PUT", "/settings"), ("POST", "/recordings")):
+        for method, route in (("GET", "/health"), ("GET", "/transcripts"), ("PUT", "/settings"), ("POST", "/recordings"),
+                              ("PUT", f"/recordings/{id}/mic/0"), ("POST", f"/recordings/{id}/finish"), ("DELETE", f"/recordings/{id}")):
             assert client.request(method, route, headers={**who, **KEY}).status_code == 403, (who, method, route)
+    assert engine.state.get_store().row(id)["status"] == "recording"
 
 
 def test_an_extension_gets_no_cors_answer(client):

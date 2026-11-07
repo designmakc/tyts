@@ -22,13 +22,13 @@ export const OLD_LOCAL_FOLDERS = ['Krya', 'Altype']
 export const OLD_PROGRAMS = ['krya.exe', 'altype.exe']
 /**
  * What moves: the app's own files, never Electron's caches beside them. The
- * settings and the lists, the device profile, the speech engine's settings,
- * the logs (the old log under the new name), the
+ * settings and the lists, the device profile, the speech engine's settings
+ * (and extension.json, the Chrome extension's hello until 2026-11-07, so the old folder can be emptied), the logs (the old log under the new name), the
  * updater's id, and the downloads that lived here until 0.10.1.
  */
 export const ITEMS: readonly (string | readonly [from: string, to: string])[] = [
   'settings.json', 'words.json', 'dictation.json', 'translations.json', 'learning.json', 'mistakes.json', 'talks.json', 'speech-token',
-  'device.json', 'speech.json', 'speech.log', 'translate.log', ['krya.log', 'kryakl.log'], ['altype.log', 'kryakl.log'],
+  'device.json', 'speech.json', 'extension.json', 'speech.log', 'translate.log', ['krya.log', 'kryakl.log'], ['altype.log', 'kryakl.log'],
   '.updaterId', 'models', 'voice', 'dict',
 ]
 

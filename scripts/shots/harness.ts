@@ -322,7 +322,7 @@ async function appShots(theme: 'dark' | 'light', narrow = false): Promise<void> 
     send(w, { type: 'app', view: v })
     await esc(w)
     await sleep(400)
-    await page('recordings', ['transcripts', 'meet', 'speakers'])
+    await page('recordings', ['transcripts', 'speakers'])
     await page('layout', ['kept', 'learned', 'programs', 'layouts', 'fixing'])
     await page('settings', ['languages'])
     // The page's end: Backup and Reset.
@@ -369,7 +369,6 @@ async function appShots(theme: 'dark' | 'light', narrow = false): Promise<void> 
     await page('recordings', ['speakers'], 'tr-switch')
   } else {
     await page('english')
-    await page('recordings', ['meet'])
     await page('layout', ['fixing'])
     await focused('layout', 'kept')
     await page('settings')

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git push origin --delete:*)",
+      "Bash(git push origin v*)",
+      "mcp__claude-code-remote__delete_trigger"
+    ]
+  }
+}

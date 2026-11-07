@@ -1,0 +1,10 @@
+{
+  "type": "object",
+  "properties": {
+    "port": {
+      "title": "The speech engine's port",
+      "description": "Set by Kryakl when its engine is not on 8765.",
+      "type": "integer"
+    }
+  }
+}

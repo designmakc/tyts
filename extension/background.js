@@ -4,12 +4,10 @@
 
 const OFFSCREEN = 'offscreen.html'
 
-const PORTS = [8765, 8766, 8767, 8768, 8769, 8770, 8771, 8772, 8773, 8774]
-
 /** Kryakl's own engine on this port: its /health names itself; another engine or program on the port does not. */
 async function engineOn(p) {
   try {
-    const r = await fetch(`http://127.0.0.1:${p}/health`, { headers: SELF(), signal: AbortSignal.timeout(500) })
+    const r = await fetch(`http://127.0.0.1:${p}/health`, { headers: SELF(), signal: AbortSignal.timeout(1500) })
     return r.ok && (await r.json()).engine === 'tyts'
   } catch {
     return false
@@ -17,19 +15,16 @@ async function engineOn(p) {
 }
 
 // The engine takes 8765, or the next free of ten when Windows or another program holds it (src/speechservice.ts freePort).
-// The port found is remembered for the browser's session and looked for again when it stops answering.
+// The extension never looks for it: it cannot tell Kryakl's engine from a program that answers alike, so a port other
+// than 8765 comes only from Kryakl itself, through Chrome's managed storage (HKCU\Software\Policies\Google\Chrome\
+// 3rdparty\extensions\<id>\policy, which only this Windows account writes; src/speechport.ts), or the person's own setting.
 async function port() {
+  try {
+    const { port } = await chrome.storage.managed.get('port')
+    if (port) return port
+  } catch {}
   const { port } = await chrome.storage.local.get('port')
-  if (port) return port
-  const { found } = await chrome.storage.session.get('found')
-  if (found && (await engineOn(found))) return found
-  for (const p of PORTS) {
-    if (await engineOn(p)) {
-      await chrome.storage.session.set({ found: p })
-      return p
-    }
-  }
-  return 8765
+  return port || 8765
 }
 
 // Every call to /health says which version of the extension this is, so Kryakl can show "Installed in Chrome".

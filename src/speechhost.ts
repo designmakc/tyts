@@ -49,6 +49,8 @@ export type SpeechHostOptions = {
   testHome?: string
   settings: () => Settings
   onChange: () => void
+  /** The engine is up on this port (it moves on when 8765 is taken). */
+  onPort?: (port: number) => void
 }
 
 export class SpeechHost {
@@ -100,6 +102,7 @@ export class SpeechHost {
         log(`speech: an older engine without the key stopped (${stopped.length})${holding.length ? `, ${holding.length} would not stop` : ''}`)
       },
       change: () => this.changed(),
+      ...(o.onPort ? { onPort: o.onPort } : {}),
     })
     this.extensionShipped = shippedVersion(o.extensionDir)
   }

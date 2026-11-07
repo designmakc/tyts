@@ -79,6 +79,7 @@ import { log, logTo } from './log'
 import { NATURAL_PREFIX, systemVoiceName, type NaturalState } from './natural'
 import { recognize, recognizeMac } from './ocr'
 import { pickLines } from './ocrpick'
+import { tellExtensionPort } from './speechport'
 import { adoptLocalFolder, adoptOldFolders, freeFolder, hasToMove, healSpeech, leftIn, moveDownloads, OLD_LOCAL_FOLDERS, partDir, removeOldUpdaterCaches, type LeftPart, type Warn } from './oldfolder'
 import { paragraphsOf } from './ocrtext'
 import { menuGroups, type MenuAction } from './menu'
@@ -3873,6 +3874,8 @@ function setUpSpeechEngine(): void {
     extensionDir: unpacked('extension'),
     sharedCache: sharedUvCache(),
     port: speechPort,
+    // The Chrome extension records only to a port Kryakl names (a test run names none: its engine is its own).
+    ...(TEST_HOME ? {} : { onPort: (port: number) => tellExtensionPort(port, log) }),
     open: url => openStream(url),
     ...(TEST_HOME ? { testHome: TEST_HOME } : {}),
     settings: () => settings,

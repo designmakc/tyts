@@ -114,6 +114,8 @@ export type SpeechServiceOptions = {
   stopStale?: () => Promise<void>
   env?: Record<string, string>
   change: () => void
+  /** The engine proved on a port: main tells the Chrome extension (speechport.ts), which may not probe for it. */
+  onPort?: (port: number) => void
 }
 
 export class SpeechService {
@@ -164,6 +166,9 @@ export class SpeechService {
     this.failures = 0
     this.trouble = undefined
     this.taken.clear()
+    // The key goes only where the proof was seen: a new port is a new engine to prove.
+    this.proved = false
+    this.health = undefined
     this.port = this.o.port
     if (this.child) this.child.kill()
     else if (!this.stopped) void this.launch()
@@ -277,6 +282,7 @@ export class SpeechService {
       delete health.proof
       this.health = health
       this.failures = 0
+      if (this.state !== 'ready') this.o.onPort?.(this.port)
       this.set('ready')
       return true
     } catch {

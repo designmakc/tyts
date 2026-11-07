@@ -7,6 +7,7 @@
   "description": "__MSG_description__",
   "permissions": ["tabCapture", "offscreen", "storage", "activeTab", "alarms"],
   "host_permissions": ["http://127.0.0.1/*"],
+  "storage": { "managed_schema": "schema.json" },
   "background": { "service_worker": "background.js" },
   "action": {
     "default_title": "__MSG_actionTitle__",

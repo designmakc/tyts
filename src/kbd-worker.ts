@@ -15,7 +15,7 @@ import { loadLib } from './native'
 
 import { lexiconOf, type KeyTable, type Lexicon } from './layoutfix'
 import { MASK_KEYS, Typist, type KbdConfig, type KbdIn, type KbdOut } from './typist'
-import { capsLockOf, caretOf, elevated, exeOf, foreground, fullScreenNow, installedLayouts, layoutId, layoutOf, layoutTable, MAIN_KEYS, OWN_KEYS, press, REPLAY_KEYS, switchLayout } from './winkbd'
+import { capsLockOf, caretOf, elevated, exeOf, foreground, FULL_SCREEN_STATES, installedLayouts, layoutId, layoutOf, layoutTable, MAIN_KEYS, notificationState, OWN_KEYS, press, REPLAY_KEYS, switchLayout } from './winkbd'
 
 const port = (workerData as { port: MessagePort }).port
 const send = (message: KbdOut) => port.postMessage(message)
@@ -198,8 +198,30 @@ function drainField(): void {
 }
 
 function tick(): void {
-  fullScreen = !!config?.quietFullScreen && fullScreenNow()
+  const state = config?.quietFullScreen ? notificationState() : 0
+  const quiet = FULL_SCREEN_STATES.has(state)
+  // Quiet on the full screen turns every key off without a word: tyts.log says when it starts and ends (2026-11-07).
+  if (quiet !== fullScreen) send({ type: 'note', text: quiet ? `quiet: Windows says a program is on the full screen (state ${state}); the keys do nothing until it is gone` : 'quiet: over' })
+  fullScreen = quiet
   typist.tick()
+}
+
+// The first keys after the start, counted once for tyts.log, so a computer where nothing happens says why.
+const seen = { keys: 0, foreign: 0, own: 0 }
+function look(vk: number, down: boolean, own: boolean, foreign: boolean): void {
+  if (seen.keys >= 40 || !down) return
+  seen.keys++
+  if (own) seen.own++
+  if (foreign) seen.foreign++
+  if (seen.keys !== 40) return
+  const front = foreground()
+  const source = layoutId(layoutOf(front.tid))
+  const langs = typist.cycle().map(id => layouts.get(id)?.lang ?? '?')
+  const keys = config ? Object.keys(config.keys).join(' ') || 'none' : 'none'
+  send({
+    type: 'note',
+    text: `keys: ${seen.keys} down, ${seen.foreign} foreign, ${seen.own} own; in front ${exeOf(front.pid) || '?'}${elevated(front.pid) ? ' (elevated: no fixing or switching there)' : ''}; source ${layouts.has(source) ? 'known' : 'unknown'} (${source}, ${layouts.get(source)?.lang ?? '?'}); cycle ${langs.join(' ') || 'none'}; word lists ${Object.keys(lexicons).join(' ') || 'none'}; autoFix ${config?.autoFix}; thread keys ${keys}; quiet ${fullScreen}`,
+  })
 }
 
 let failures = 0
@@ -232,7 +254,9 @@ const keyboardProc = koffi.register((code: number, wParam: number | bigint, lPar
         foreignSeen = true
         send({ type: 'foreignKeys' })
       }
-      return typist.key(info.vkCode, info.scanCode, message === WM_KEYDOWN || message === WM_SYSKEYDOWN, own, foreign)
+      const down = message === WM_KEYDOWN || message === WM_SYSKEYDOWN
+      look(info.vkCode, down, own, foreign)
+      return typist.key(info.vkCode, info.scanCode, down, own, foreign)
     })
     if (swallow) return 1
   }
@@ -268,6 +292,7 @@ const module = GetModuleHandleW(null)
 const keyboardHook = SetWindowsHookExW(WH_KEYBOARD_LL, keyboardProc, module, 0)
 const mouseHook = SetWindowsHookExW(WH_MOUSE_LL, mouseProc, module, 0)
 if (!keyboardHook || !mouseHook) send({ type: 'error', message: 'Windows did not let Tyts watch the keyboard' })
+else send({ type: 'note', text: 'hooks set: the keyboard and the mouse are watched' })
 // The main process learns where to wake this thread.
 send({ type: 'thread', tid })
 

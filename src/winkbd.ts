@@ -80,7 +80,7 @@ const PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
 const TOKEN_QUERY = 0x0008
 const TOKEN_ELEVATION = 20
 /** SHQueryUserNotificationState: a program on the full screen, a Direct3D one, presentation mode. */
-const FULL_SCREEN_STATES = new Set([2, 3, 4])
+export const FULL_SCREEN_STATES = new Set([2, 3, 4])
 const INPUT_KEYBOARD = 1
 const KEYEVENTF_EXTENDEDKEY = 0x0001
 const KEYEVENTF_KEYUP = 0x0002
@@ -336,8 +336,13 @@ export function windowedApps(): string[] {
 
 /** Whether a program fills the screen now: a game, a video or a presentation on the full screen. */
 export function fullScreenNow(): boolean {
+  return FULL_SCREEN_STATES.has(notificationState())
+}
+
+/** Windows' own word on the screen (SHQueryUserNotificationState): 2 busy, 3 a Direct3D program on the full screen, 4 presentation mode; 0 when it will not say. */
+export function notificationState(): number {
   const state = [0]
-  return (SHQueryUserNotificationState(state) as number) >= 0 && FULL_SCREEN_STATES.has(state[0] ?? 0)
+  return (SHQueryUserNotificationState(state) as number) >= 0 ? (state[0] ?? 0) : 0
 }
 
 /**

@@ -1,9 +1,8 @@
-"""Kryakl's speech service: a local HTTP service on 127.0.0.1 for Kryakl, its Chrome extension and other apps.
+"""Kryakl's speech service: a local HTTP service on 127.0.0.1 for Kryakl and other apps.
 
 Run: python app.py [--port 8765]. Only this computer can reach it, and only
-callers with the engine's key (X-Krya-Token, see auth.py) are served; Kryakl's
-own Chrome extension may record meetings; a web page or another extension
-cannot call it (see `guard`).
+callers with the engine's key (X-Krya-Token, see auth.py) are served; a web
+page or a browser extension cannot call it (see `guard`).
 
 What other apps may use, and keep using:
   POST /dictate?language=auto|<code>&expected=ru,en[&strict=1][&format=pcm16]
@@ -21,9 +20,8 @@ What other apps may use, and keep using:
   DELETE /dictate/sessions/<id>       thrown away
   POST /dictate/prepare               loads the dictation model, so the next phrase is quick
   POST /transcripts {path}            a file on this computer -> a transcript in the library
-  POST /recordings ...                a recording that arrives in chunks (the extension)
-  GET  /health                        what is installed (parts), loaded and busy, and the Chrome
-                                      extension last seen ({id, version, seen} or null); without
+  POST /recordings ...                a recording that arrives in chunks (a call, the microphone, a note)
+  GET  /health                        what is installed (parts), loaded and busy; without
                                       the key only {ok}, or with X-Krya-Nonce only {proof}
   GET  /transcripts/<id>/file?format= the transcript as txt, md, srt, vtt, docx or json (bytes)
 
@@ -56,7 +54,6 @@ os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
 
 import uvicorn
 from fastapi import Body, FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, JSONResponse, Response
 
@@ -78,13 +75,12 @@ from stream import Session, Sessions
 VERSION = "0.2.0"
 PORT = 8765
 SOURCES = ("file", "mic", "meet", "note", "system")
-# "system" is the whole computer's sound in a call (Kryakl's own recorder), taken as the extension's "tab".
+# "system" is the whole computer's sound in a call (Kryakl's own recorder); "meet" was the Chrome extension's, kept for the transcripts it made.
 TRACKS = ("main", "mic", "tab", "system")
 MEDIA = {".mp4", ".mkv", ".webm", ".mov", ".avi", ".m4v", ".mp3", ".m4a", ".wav", ".ogg", ".oga", ".opus", ".flac", ".aac", ".wma"}
 
 log = logging.getLogger("kryakl")
 settings = Settings()
-EXTENSION_FILE = APP_DIR / "extension.json"
 
 
 class State:
@@ -99,41 +95,6 @@ class State:
         return self.store
 
 
-def load_extension() -> dict | None:
-    """The extension seen last time, so the app can say it is installed before it pings again."""
-    try:
-        found = json.loads(EXTENSION_FILE.read_text("utf-8"))
-        if found.get("id") != auth.EXTENSION_ID:
-            found["id"] = ""  # an older copy, with the id Chrome gave its folder: refused now, the app says to load it again
-        return {"id": str(found["id"]), "version": str(found["version"]), "seen": float(found["seen"])}
-    except (OSError, ValueError, KeyError, TypeError):
-        return None
-
-
-extension: dict | None = load_extension()
-
-
-def note_extension(origin: str, version: str) -> None:
-    """The extension says who it is on every call (header X-Krya-Extension: its version).
-
-    The newest sighting stays in memory; the file is written only when the id or version
-    is new, as the extension pings every 15 minutes.
-    """
-    global extension
-    # A copy before the fixed id (its hello comes without an Origin, so only its version tells): no id, and the app
-    # says to remove it and load it again; from 0.4.0 on, the id is the fixed one.
-    version = version.strip()[:32]
-    seen = {"id": auth.EXTENSION_ID if auth.fixed_id(version) else "", "version": version, "seen": time.time()}
-    changed = extension is None or extension["id"] != seen["id"] or extension["version"] != seen["version"] or not EXTENSION_FILE.exists()
-    extension = seen
-    if changed:
-        try:
-            EXTENSION_FILE.parent.mkdir(parents=True, exist_ok=True)
-            EXTENSION_FILE.write_text(json.dumps(seen), "utf-8")
-        except OSError:
-            log.exception("could not save extension.json")
-
-
 state = State()
 worker = Worker(settings, state.get_store)
 setup = diarize.Setup()
@@ -143,42 +104,28 @@ worker.dictating = sessions.active
 calibrator = Calibrator(worker.bench, lambda: worker.idle() and not _dictating.locked() and not sessions.active(), worker.unload_all, lambda: worker.activity, worker.threads)
 # No /docs, /redoc or /openapi.json: Swagger's page would load scripts from a CDN onto the engine's own origin.
 app = FastAPI(title="Kryakl speech", version=VERSION, docs_url=None, redoc_url=None, openapi_url=None)
-app.add_middleware(CORSMiddleware, allow_origins=[auth.EXTENSION_ORIGIN], allow_methods=["*"], allow_headers=["*"])
 TOKEN = auth.load_token()
 
 
 @app.middleware("http")
 async def guard(request: Request, call_next):
-    """Kryakl with the engine's key, its own extension on its own routes; anyone else gets /health's bare ok.
+    """Kryakl with the engine's key; anyone else gets /health's bare ok.
 
     The Host check stops DNS rebinding: a page whose name points at 127.0.0.1 still says its own name.
+    A request with an Origin is a web page's or a browser extension's: refused everywhere.
     """
     host = request.headers.get("host", "").split(":")[0]
-    origin = request.headers.get("origin", "")
-    if host not in ("127.0.0.1", "localhost"):
+    if host not in ("127.0.0.1", "localhost") or request.headers.get("origin"):
         return JSONResponse({"detail": "forbidden"}, status_code=403)
     method, path = request.method, request.url.path
-    if origin:
-        # A web page or another extension: nothing. Kryakl's extension: only what it does.
-        if origin != auth.EXTENSION_ORIGIN or not auth.extension_may(method, path):
-            return JSONResponse({"detail": "forbidden"}, status_code=403)
-        # Any program here can send that Origin: the recording routes hold such a caller to a meeting (`by_extension`).
-        request.state.extension = True
-    elif not auth.token_ok(request.headers.get("x-krya-token", ""), TOKEN):
-        # The extension's look at /health may come without an Origin: it learns the engine is up, nothing else.
+    if not auth.token_ok(request.headers.get("x-krya-token", ""), TOKEN):
         if method == "GET" and path == "/health":
-            if request.headers.get("x-krya-extension", "").strip():
-                note_extension(origin, request.headers["x-krya-extension"])
             nonce = request.headers.get("x-krya-nonce", "")
             # Kryakl's first look, before it sends the key: the proof alone, so a program that took the port never gets it.
             if auth.nonce_ok(nonce):
                 return JSONResponse({"proof": auth.proof(TOKEN, nonce)})
             return JSONResponse({"ok": True})
         return JSONResponse({"detail": "the engine's key is needed"}, status_code=401)
-    # The extension of Altype's days (up to 0.2.1) sent X-Altype-Extension; it says hello until Chrome reloads it.
-    version = request.headers.get("x-krya-extension", "") or request.headers.get("x-altype-extension", "")
-    if version.strip():
-        note_extension(origin, version)
     return await call_next(request)
 
 
@@ -196,10 +143,6 @@ def planned(feature: str) -> dict:
 
 @app.get("/health")
 def health(request: Request):
-    if request.headers.get("origin"):
-        # Kryakl's extension needs to know only that the engine is up, and that it is this engine: the extension looks
-        # through ten ports (the engine moves on when 8765 is taken) and sends a meeting only where `engine` says so.
-        return {"ok": True, "version": VERSION, "engine": "tyts"}
     nonce = request.headers.get("x-krya-nonce", "")
     # The proof that this engine holds the key (auth.py), as without it; Kryakl asks it without the key first (guard).
     return {**health_view(), **({"proof": auth.proof(TOKEN, nonce)} if auth.nonce_ok(nonce) else {})}
@@ -235,7 +178,6 @@ def health_view() -> dict:
         "queued": worker.queue.qsize(),
         "dataDir": s["dataDir"],
         "kbDir": s["kbDir"],
-        "extension": extension,
     }
 
 
@@ -745,31 +687,6 @@ def from_file(body: dict = Body(...)):
     return {"id": id}
 
 
-# A caller by the extension's Origin (which any program here can send, auth.py) records a meeting and no more:
-# the extension's webm is 64 kbit/s a track, some 58 MB an hour for the tab and the microphone, so 1 GB is a
-# meeting of 18 hours, and a chunk (10 s, about 80 KB a track) is never near 16 MB. Above them the disk is not filled.
-EXTENSION_RECORDING_MAX = 1 << 30
-EXTENSION_CHUNK_MAX = 16 << 20
-# Bytes received for each recording by the extension's Origin, counted from its folder after a restart.
-_received: dict[str, int] = {}
-
-
-def by_extension(request: Request) -> bool:
-    return getattr(request.state, "extension", False)
-
-
-def extension_meeting(request: Request, row: dict | None) -> None:
-    """A caller by the extension's Origin touches only a meeting's recording, never Kryakl's microphone or a note."""
-    if by_extension(request) and row is not None and row["source"] != "meet":
-        raise HTTPException(403, "forbidden")
-
-
-def received(store: Store, id: str) -> int:
-    if id not in _received:
-        _received[id] = sum(f.stat().st_size for f in (store.folder(id) / "incoming").glob("*.part"))
-    return _received[id]
-
-
 async def body_within(request: Request, limit: int) -> bytes:
     """The request's body, read no further than `limit` bytes (a longer one is refused, never held whole)."""
     data = bytearray()
@@ -785,12 +702,10 @@ def start_recording(request: Request, body: dict = Body(...)):
     """A recording that arrives in chunks: {source, title?, app?, tracks: {tab|system|mic|main: {startedAt}}}."""
     source = body.get("source")
     tracks = body.get("tracks") or {}
-    if source not in ("mic", "meet", "note", "system") or not tracks or any(t not in TRACKS for t in tracks):
+    # "meet", the Chrome extension's, is gone (2026-11-07): a call is all of the computer's sound, "system".
+    if source not in ("mic", "note", "system") or not tracks or any(t not in TRACKS for t in tracks):
         raise HTTPException(400, "source and tracks are needed")
-    if by_extension(request) and source != "meet":
-        # The extension starts only meetings (offscreen.js); a note or the microphone is Kryakl's, with the key.
-        raise HTTPException(403, "forbidden")
-    title = (body.get("title") or "").strip() or {"mic": "Microphone recording", "meet": "Meeting", "note": "Note", "system": "Call"}[source]
+    title = (body.get("title") or "").strip() or {"mic": "Microphone recording", "note": "Note", "system": "Call"}[source]
     store = state.get_store()
     job = {"kind": source, "tracks": {t: {"startedAt": float(v.get("startedAt", 0))} for t, v in tracks.items()},
            "language": body.get("language") or None, "speakers": body.get("speakers") or None}
@@ -801,15 +716,13 @@ def start_recording(request: Request, body: dict = Body(...)):
     return {"id": id}
 
 
-# A call's screenshot (capture.ts): a JPEG of 2 MB at most, while the call records; Kryakl's own, never the extension's.
+# A call's screenshot (capture.ts): a JPEG of 2 MB at most, while the call records.
 SHOT_MAX = 2 << 20
 SHOT_MS_MAX = 48 * 3600_000
 
 
 @app.put("/recordings/{id}/shots/{ms}")
 async def shot(id: str, ms: int, request: Request, manual: str = ""):
-    if by_extension(request):
-        raise HTTPException(403, "forbidden")
     store = state.get_store()
     row = store.row(id)
     if row is None or row["status"] != "recording" or row["source"] != "system":
@@ -844,16 +757,8 @@ async def chunk(id: str, track: str, seq: int, request: Request):
         raise HTTPException(409, "The recording has ended")
     if track not in row["job"].get("tracks", {}) or not 0 <= seq < 1_000_000:
         raise HTTPException(400, "No such track")
-    extension_meeting(request, row)
     part = store.folder(id) / "incoming" / f"{track}-{seq:06d}.part"
-    if by_extension(request):
-        # A chunk sent again replaces its first copy, so that one's bytes count no more.
-        before = part.stat().st_size if part.exists() else 0
-        data = await body_within(request, min(EXTENSION_CHUNK_MAX, EXTENSION_RECORDING_MAX - received(store, id) + before))
-        _received[id] += len(data) - before
-    else:
-        data = await request.body()
-    part.write_bytes(data)
+    part.write_bytes(await request.body())
     store.update(id, touched=now_iso())
     return Response(status_code=204)
 
@@ -861,11 +766,9 @@ async def chunk(id: str, track: str, seq: int, request: Request):
 @app.post("/recordings/{id}/finish")
 def finish(id: str, request: Request, body: dict = Body(default={})):
     store = state.get_store()
-    extension_meeting(request, store.row(id))
     lost = body.get("lost", 0)
     if type(lost) is not int or lost < 0:
         raise HTTPException(400, "lost is a count of chunks")
-    _received.pop(id, None)
     if not finish_recording(store, id, body):
         raise HTTPException(409, "Nothing to transcribe")
     worker.submit(id)

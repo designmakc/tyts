@@ -334,7 +334,6 @@ function list(v: AppView): HTMLElement {
         tip('cloud-upload', t('tr.tipDrop')),
         tip('mic', t('tr.tipMic')),
         tip('note', ...phrase(t('tr.tipNote'), { keys: caps(v.settings.noteKey) })),
-        tip('organization', t('tr.tipMeet')),
       ),
     )
   }

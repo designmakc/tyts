@@ -88,7 +88,7 @@ export default {
     [`<span>Type by voice</span>`, `<span>Печатать голосом</span>`],
     [`<span>Type by voice into English</span>`, `<span>Печатать голосом с переводом</span>`],
     [`<span>Voice note</span>`, `<span>Заметка голосом</span>`],
-    [`<span>Record a Google Meet call</span>`, `<span>Записать звонок в Google Meet</span>`],
+    [`<span>Record a call</span>`, `<span>Записать звонок</span>`],
     [`>your key</kbd>Click one and press the key you want, as you would in Tyts: a combination, a modifier tapped twice, Pause or F-keys. Backspace clears it. The Translate and Talk keys you set work on this page.</p>`, `>ваша клавиша</kbd>Щёлкните и нажмите нужную клавишу, как в Тиць: сочетание, дважды модификатор, Pause или F-клавишу. Backspace стирает. Клавиши перевода и разговора, которые вы зададите, работают на этой странице.</p>`],
     // Keyboard, typed in the Russian layout
     [`</span>Keyboard layout</div>`, `</span>Раскладка</div>`],
@@ -147,7 +147,7 @@ export default {
     [`aria-label="A transcript of a call"`, `aria-label="Расшифровка звонка"`],
     [`<figcaption>The dictation panel while you speak: drag it anywhere, or fold it into the tray and keep talking. And a call transcribed with who spoke when.</figcaption>`, `<figcaption>Панель диктовки, пока вы говорите: перетащите её куда угодно или сверните в трей и говорите дальше. И звонок, расшифрованный с тем, кто когда говорил.</figcaption>`],
     [`<li><b>Quick on an ordinary processor.</b> 22 seconds of speech were typed 0.2 s after the key (Parakeet, on an Intel i9).</li>`, `<li><b>Быстро на обычном процессоре.</b> 22 секунды речи напечатаны через 0,2 с после клавиши (Parakeet, на Intel i9).</li>`],
-    [`<li><b>Transcripts</b> of files, the microphone and Google Meet calls. Telling an hour's speakers apart takes about 2 minutes on an RTX card.</li>`, `<li><b>Расшифровки</b> файлов, микрофона и звонков в Google Meet. Различить говорящих в часовой записи — около 2 минут на видеокарте RTX.</li>`],
+    [`<li><b>Transcripts</b> of files, the microphone and calls from any program. Telling an hour's speakers apart takes about 2 minutes on an RTX card.</li>`, `<li><b>Расшифровки</b> файлов, микрофона и звонков из любой программы. Различить говорящих в часовой записи — около 2 минут на видеокарте RTX.</li>`],
     [`<li><b>Names and terms.</b> They come out written your way, in dictation and in transcripts.</li>`, `<li><b>Имена и термины.</b> Пишутся так, как вам нужно, и в диктовке, и в расшифровках.</li>`],
     // Privacy
     [`<h2 id="pv-h">Nothing you read leaves your computer.</h2>`, `<h2 id="pv-h">Ничего из прочитанного не покидает ваш компьютер.</h2>`],
@@ -209,7 +209,7 @@ export default {
     selectSentence: 'сначала выделите предложение',
     onceMore: 'ещё раз',
     fixed: 'исправлено',
-    acts: { menu: 'открыть меню Тиць', translate: 'перевести выделенный текст', inplace: 'перевести выделенный текст на месте', check: 'проверить свой английский', dictate: 'начать диктовку', english: 'диктовать и печатать по-английски', note: 'надиктовать заметку', talk: 'поговорить с Тиць' },
+    acts: { menu: 'открыть меню Тиць', translate: 'перевести выделенный текст', inplace: 'перевести выделенный текст на месте', check: 'проверить свой английский', dictate: 'начать диктовку', english: 'диктовать и печатать по-английски', note: 'надиктовать заметку', meeting: 'записать звонок', talk: 'поговорить с Тиць' },
     levels: { fast: 'Около 85 МБ на языковую пару, быстро на любом процессоре.', accurate: '5,2 ГБ, 0,7 с на предложение на RTX 2080 SUPER. Рекомендуется для большинства компьютеров.', most: '7 ГБ, лучшие формулировки. Для видеокарт примерно от 12 ГБ.' },
     tkLevels: {
       A2: ['A2 · Начальный', 'короткие предложения из повседневных слов, простые времена, без идиом. Примерно 7 слов в предложении.'],

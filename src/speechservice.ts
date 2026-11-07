@@ -4,7 +4,7 @@
 // already answering on the port (run by hand) is used when it proves it holds
 // the engine's key (auth.py); another program on the port is not, and never
 // receives the key: it is sent only once the proof holds. Every feature and
-// every other app (the Chrome extension) speaks to it over HTTP.
+// every other app speaks to it over HTTP.
 
 import { spawn, type ChildProcess } from 'node:child_process'
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
@@ -16,7 +16,7 @@ import { rotate } from './log'
 import type { Bench } from './speechplan'
 
 export const SPEECH_PORT = 8765
-/** How many ports from SPEECH_PORT on the engine may take (extension/background.js looks through the same ones). */
+/** How many ports from SPEECH_PORT on the engine may take. */
 export const SPEECH_PORTS = 10
 
 /**
@@ -53,8 +53,6 @@ export type SpeechHealth = {
   downloaded?: string[]
   /** The models in memory now and where ("speakers" for who spoke when). */
   loaded?: { model: string; device: 'cuda' | 'cpu' | 'metal' }[]
-  /** The Chrome extension last seen (it pings every 15 min; `seen` is Unix seconds). */
-  extension?: { id: string; version: string; seen: number } | null
   /** Why the card is not used though it is there. */
   fallback?: string | null
   /** The speed test. */
@@ -114,8 +112,6 @@ export type SpeechServiceOptions = {
   stopStale?: () => Promise<void>
   env?: Record<string, string>
   change: () => void
-  /** The engine proved on a port: main tells the Chrome extension (speechport.ts), which may not probe for it. */
-  onPort?: (port: number) => void
 }
 
 export class SpeechService {
@@ -282,7 +278,6 @@ export class SpeechService {
       delete health.proof
       this.health = health
       this.failures = 0
-      if (this.state !== 'ready') this.o.onPort?.(this.port)
       this.set('ready')
       return true
     } catch {

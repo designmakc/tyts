@@ -312,11 +312,10 @@ export function engineRows(v: AppView, feature: string): HTMLElement[] {
   return []
 }
 
-/** "Dictate needs the speech engine": the pages name the feature by its English id (Dictate, Transcribe, Google Meet). */
+/** "Dictate needs the speech engine": the pages name the feature by its English id (Dictate, Transcribe). */
 function needsEngine(feature: string): string {
   if (feature === 'Dictate') return t('speech.needsDictate')
   if (feature === 'Transcribe') return t('speech.needsTranscribe')
-  if (feature === 'Google Meet') return t('speech.needsMeet')
   return t('speech.needs', { feature })
 }
 

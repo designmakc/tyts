@@ -107,6 +107,8 @@ Over the paragraphs of Architecture and the landing above where they differ. The
 
 ## Product rules (owner decisions, 2026-11-06): calls
 
+- **The Chrome extension is gone** (2026-11-07, the owner: it was needed only while a call was recorded from the plugin alone; the call recorder takes all of the computer's sound). `extension/`, the Google Meet page, `chrome.ts`, the engine's extension id, routes and caps went; a request with an Origin gets 403 everywhere; the source `meet` stays only on the transcripts it made. Wherever this file still describes the extension, it is history.
+
 - A call from any program is recorded, transcribed and summed up on this computer (`docs/meetings-tz.md`). The sound is all of the computer's, everywhere (the owner: «Везде только весь звук»); one program's sound is for a later version. Live transcription, a prompt when a call starts and cloud models are not in v1.
 - Dictation can be held (the owner: «добавь возможность включить Диктовка: держишь клавишу, говоришь, отпускаешь»): off by default, a short press as before.
 - Layout fixing works on a Mac too (the owner asked for it after comparing with Keyboop).

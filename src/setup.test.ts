@@ -47,8 +47,6 @@ function view(profile: DeviceProfile, over: Partial<AppView> = {}): AppView {
       pack: { status: 'absent', parts: [], nvidia },
       service: 'off',
       port: 8765,
-      extensionDir: '',
-      extensionShipped: '0.2.1',
       download: { core: 160, gpu: 1150, speakers: plan.offers.speakersGpu ? 3000 : 250 },
       installed: { core: 330, gpu: 1700, speakers: plan.offers.speakersGpu ? 4000 : 900 },
       speakers: { on: plan.speakers.advised, sizes: { cuda: { download: 3000, installed: 4000 }, cpu: { download: 250, installed: 900 } }, model: false },

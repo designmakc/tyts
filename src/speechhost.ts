@@ -31,8 +31,6 @@ const FETCH_AGAIN_MS = 30 * 60_000
 /** How often a model being downloaded is asked about, and how many asks it has to show as running (each ask may start it again). */
 const MODEL_PROBE_MS = 3000
 const MODEL_START_PROBES = 2
-/** How often the library is asked whether a meeting is being recorded (the engine's /health does not say). */
-const MEETING_PROBE_MS = 5000
 
 export type SpeechHostOptions = {
   /** %LOCALAPPDATA%\Kryakl\speech: the environment, models, uv. */
@@ -40,7 +38,6 @@ export type SpeechHostOptions = {
   /** Kryakl's own folder (%APPDATA%\Kryakl): the engine's settings and log, device.json. */
   userDir: string
   engineDir: string
-  extensionDir: string
   /** uv's download cache of this computer, when it has one (speechpack.ts `sharedCache`). */
   sharedCache?: string
   port: number
@@ -63,11 +60,6 @@ export class SpeechHost {
   /** When each processor model for dictation was last asked to download (`fetchProcessorDictation`). */
   private readonly fetchAsked = new Map<string, number>()
   private readonly nvidiaDriver = hasNvidia()
-  /** The extension's version in Kryakl's folder, which Chrome loads unpacked. */
-  private readonly extensionShipped: string
-  /** A meeting is being recorded through the Chrome extension now (the tray shows it). */
-  meeting = false
-  private meetingTimer: NodeJS.Timeout | undefined
 
   constructor(private readonly o: SpeechHostOptions) {
     this.profile = loadProfile(this.deviceFile) ?? quickProfile()
@@ -101,7 +93,6 @@ export class SpeechHost {
       },
       change: () => this.changed(),
     })
-    this.extensionShipped = shippedVersion(o.extensionDir)
   }
 
   /** "Who spoke when" runs on the card: the person's choice or the advice, and only where the card has room for it. */
@@ -187,34 +178,6 @@ export class SpeechHost {
   /** Something the plan depends on changed: the plan again, sent to the engine when it differs; the window told. */
   changed(): void {
     this.replan()
-    this.watchMeetings()
-    this.o.onChange()
-  }
-
-  /**
-   * A meeting can only come from the Chrome extension, and /health says
-   * nothing of recordings: while the engine runs and the extension has said
-   * hello, the library is asked every few seconds whether a meeting's
-   * transcript is still "recording". A recording the extension left behind
-   * is finished by the engine itself within minutes (jobs.py `_housekeeping`).
-   */
-  private watchMeetings(): void {
-    const wanted = this.ready && !!this.service.health?.extension
-    if (wanted && !this.meetingTimer) this.meetingTimer = setInterval(() => void this.lookForMeeting(), MEETING_PROBE_MS)
-    if (wanted || !this.meetingTimer) return
-    clearInterval(this.meetingTimer)
-    this.meetingTimer = undefined
-    this.setMeeting(false)
-  }
-
-  private async lookForMeeting(): Promise<void> {
-    const r = await this.call<{ source: string; status: string }[]>('GET', '/transcripts')
-    if (r.ok && Array.isArray(r.data)) this.setMeeting(r.data.some(t => t.source === 'meet' && t.status === 'recording'))
-  }
-
-  private setMeeting(on: boolean): void {
-    if (on === this.meeting) return
-    this.meeting = on
     this.o.onChange()
   }
 
@@ -329,9 +292,7 @@ export class SpeechHost {
       ...(this.service.health
         ? { health: this.service.health.diarizationMessage ? { ...this.service.health, diarizationMessage: engineMessage(this.service.health.diarizationMessage) } : this.service.health }
         : {}),
-      port: this.o.port,
-      extensionDir: this.o.extensionDir,
-      extensionShipped: this.extensionShipped,
+      port: this.service.port,
       download: { core: DOWNLOAD_MB.core, gpu: DOWNLOAD_MB.gpu, speakers: onCard ? DOWNLOAD_MB.speakersGpu : DOWNLOAD_MB.speakers },
       installed: { core: INSTALLED_MB.core, gpu: INSTALLED_MB.gpu, speakers: onCard ? INSTALLED_MB.speakersGpu : INSTALLED_MB.speakers },
       speakers: {
@@ -441,6 +402,11 @@ export class SpeechHost {
     return this.service.token
   }
 
+  /** The port the engine is on now (it moves on when its own is taken). */
+  get port(): number {
+    return this.service.port
+  }
+
   call<T = unknown>(method: string, route: string, body?: unknown): Promise<SpeechResult<T>> {
     return this.service.call<T>(method, route, body)
   }
@@ -453,17 +419,6 @@ export class SpeechHost {
   }
 
   dispose(): void {
-    clearInterval(this.meetingTimer)
     this.service.dispose()
-  }
-}
-
-/** The version in the extension's manifest.json; empty when it cannot be read. */
-function shippedVersion(dir: string): string {
-  try {
-    const m = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8')) as { version?: unknown }
-    return typeof m.version === 'string' ? m.version : ''
-  } catch {
-    return ''
   }
 }

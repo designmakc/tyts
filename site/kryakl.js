@@ -31,7 +31,7 @@ const T = merge({
   selectSentence: 'select a sentence first',
   onceMore: 'once more',
   fixed: 'fixed',
-  acts: { menu: "open Tyts's menu", translate: 'translate the selected text', inplace: 'translate the selected text in place', check: 'check your English', dictate: 'start dictating', english: 'dictate and type English', note: 'dictate a note', talk: 'talk to the duck' },
+  acts: { menu: "open Tyts's menu", translate: 'translate the selected text', inplace: 'translate the selected text in place', check: 'check your English', dictate: 'start dictating', english: 'dictate and type English', note: 'dictate a note', meeting: 'record a call', talk: 'talk to the duck' },
   levels: { fast: 'About 85 MB for a language pair, quick on any processor.', accurate: '5.2 GB, 0.7 s a sentence on an RTX 2080 SUPER. Recommended for most computers.', most: '7 GB, the best wording. For graphics cards from about 12 GB.' },
   tkLevels: {
     A2: ['A2 · Elementary', 'short sentences of everyday words, simple tenses, no idioms. About 7 words a sentence.'],

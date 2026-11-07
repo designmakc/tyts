@@ -1,17 +1,30 @@
 import { createHmac } from 'node:crypto'
 import * as fs from 'node:fs'
 import * as http from 'node:http'
+import * as net from 'node:net'
 import type { AddressInfo } from 'node:net'
 import * as os from 'node:os'
 import * as path from 'node:path'
 
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
-import { provesKey, SpeechService, speechToken } from './speechservice'
+import { freePort, provesKey, SPEECH_PORTS, SpeechService, speechToken } from './speechservice'
 
 const dirs: string[] = []
-afterEach(() => {
-  for (const dir of dirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true })
+afterEach(async () => {
+  // A stand-in engine killed by stop() holds its folder (its cwd, the service's speech.log stream, closed in the child's
+  // exit handler) a moment longer, and Windows then says EBUSY: tried again with the event loop let run between.
+  for (const dir of dirs.splice(0)) {
+    for (let i = 0; ; i++) {
+      try {
+        fs.rmSync(dir, { recursive: true, force: true })
+        break
+      } catch (error) {
+        if (i >= 50) throw error
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+    }
+  }
 })
 
 describe('the speech engine\'s key', () => {
@@ -107,12 +120,13 @@ describe('the engine on the port', () => {
     expect(r.keyed).toEqual([])
   })
 
-  test('another program on the port is neither used nor stopped', async () => {
+  test('another program on the port is neither used nor stopped: Kryakl\'s engine starts on the next port', async () => {
     const r = await onPort(() => ({ ok: true }))
     expect(r.stopStale).not.toHaveBeenCalled()
-    expect(r.state).toBe('down')
-    expect(r.trouble).toMatch(/used by another program/)
+    // Its own start was tried on another port: there is no Python here, so it says so.
+    expect(r.trouble).toBe('The speech engine is not installed')
     expect(r.health).toBeUndefined()
+    expect(r.keyed).toEqual([])
   })
 
   test.each([
@@ -131,4 +145,56 @@ describe('the engine on the port', () => {
     expect(r.token).toBeUndefined()
     expect(r.state).not.toBe('ready')
   })
+})
+
+test('freePort skips a port something listens on (Windows\' excluded ranges, another engine)', async () => {
+  const server = http.createServer()
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
+  const taken = (server.address() as AddressInfo).port
+  expect(await freePort(taken, 1)).toBeUndefined()
+  expect(await freePort(taken, 2)).not.toBe(taken)
+  await new Promise<void>(resolve => server.close(() => resolve()))
+})
+
+describe('the engine\'s port', () => {
+  /** A stand-in engine: app.py as a script node runs (node reads the file whatever its name), answering /health with the proof. */
+  const FAKE_ENGINE = `
+    const http = require('http'); const { createHmac } = require('crypto')
+    const port = Number(process.argv[process.argv.indexOf('--port') + 1])
+    const key = process.env.KRYA_SPEECH_TOKEN
+    http.createServer((req, res) => {
+      const nonce = req.headers['x-krya-nonce']
+      res.setHeader('content-type', 'application/json')
+      res.end(JSON.stringify({ ok: true, parts: {}, diarization: 'missing', version: 'fake', ...(nonce ? { proof: createHmac('sha256', key).update(String(nonce)).digest('hex') } : {}) }))
+    }).listen(port, '127.0.0.1', err => { if (err) process.exit(3) }).on('error', () => process.exit(3))
+  `
+  const until = async (ok: () => boolean) => {
+    for (let i = 0; i < 200 && !ok(); i++) await new Promise(r => setTimeout(r, 50))
+  }
+
+  test('its own port taken by something that does not answer HTTP: it starts on the next, and Restart goes back to the first', async () => {
+    // Accepts and never answers (the service's look at it ends by its timeout); its sockets are cut when it closes.
+    const sockets = new Set<net.Socket>()
+    const blocker = net.createServer(socket => sockets.add(socket))
+    await new Promise<void>(resolve => blocker.listen(0, '127.0.0.1', resolve))
+    const first = (blocker.address() as AddressInfo).port
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kryakl-engine-'))
+    dirs.push(dir)
+    fs.writeFileSync(path.join(dir, 'app.py'), FAKE_ENGINE)
+    const service = new SpeechService({ python: () => process.execPath, engineDir: dir, port: first, log: path.join(dir, 'speech.log'), pycache: path.join(dir, 'pycache'), token: 'k', change: () => undefined })
+    await service.start()
+    await until(() => service.state === 'ready')
+    expect(service.state).toBe('ready')
+    expect(service.port).toBeGreaterThan(first)
+    expect(service.port).toBeLessThan(first + SPEECH_PORTS)
+    expect(service.token).toBe('k')
+    expect(fs.readFileSync(path.join(dir, 'speech.log'), 'utf8')).toContain(`start on port ${service.port}`)
+    // The first port set free and Restart: the engine comes back on it.
+    for (const socket of sockets) socket.destroy()
+    await new Promise<void>(resolve => blocker.close(() => resolve()))
+    service.restart()
+    await until(() => service.state === 'ready' && service.port === first)
+    expect(service.port).toBe(first)
+    service.stop()
+  }, 30_000)
 })

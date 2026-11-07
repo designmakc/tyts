@@ -15,7 +15,7 @@
 // settings and how to use; the tray menu has the quick switches. The keyboard
 // helper (keyboard.ts, kbd-worker.ts) switches and fixes layouts as one types.
 // The speech engine (speechhost.ts: Python, installed in parts when first
-// wanted) serves Dictate (dictation.ts), Transcribe and the Chrome extension.
+// wanted) serves Dictate (dictation.ts), Transcribe and the calls.
 //
 // %APPDATA%\Kryakl\ (moved over from Krya's, Altype's, 2Talker's or tu-talk's folder, once: oldfolder.ts)
 //   settings.json   see settings.ts
@@ -49,7 +49,6 @@ import { keyShots, shotAt, shownShots, speakerHints, type Shot } from './shots'
 import { createSummarizer, type ScreenText, type SummaryTemplate } from './summary'
 import { autoSummaryWanted, summaryInput, type SummarySource } from './summaryflow'
 import { createEditor, type Editor } from './dictedit'
-import { openInChrome } from './chrome'
 import { DoubleCopy } from './clipboard'
 import { ClipboardGuard } from './clipguard'
 import { Dictation } from './dictation'
@@ -121,7 +120,7 @@ import { vocabularyFor } from './vocabulary'
 import { VoiceStore, type VoiceManifest } from './voicestore'
 import { wordDiff } from './worddiff'
 import { focus, focusedElement, release, saysNothingSelected, selectedText } from './uia'
-import { allowForeground, ctrlHeld, handleOf, inFront, keysLetGo, pressAddressBar, pressCopy, pressEnter, pressPaste, pressSelectBack, watchClipboard, watchRendering } from './winclip'
+import { allowForeground, ctrlHeld, handleOf, inFront, keysLetGo, pressCopy, pressPaste, pressSelectBack, watchClipboard, watchRendering } from './winclip'
 import {
   privateCopy,
   readers as clipboardReaders,
@@ -3299,7 +3298,7 @@ function applyCallAuto(): void {
 
 function onMicUsers(users: MicUser[] | null): void {
   if (!capture) return
-  const blocked = settings.paused || !speech?.installed || dictation?.state !== 'idle' || micRecording || !!speech?.meeting
+  const blocked = settings.paused || !speech?.installed || dictation?.state !== 'idle' || micRecording
   const [next, act] = stepCall(callWatch, { users, now: Date.now(), mode: settings.callAuto, blocked, recording: capture.busy, own: { pid: process.pid, exe: process.execPath } })
   callWatch = next
   callAct(act)
@@ -3557,9 +3556,9 @@ function trayPoint(): { x: number; y: number } {
   return { x: x + width, y: y + height }
 }
 
-/** Something records now: dictation listening (any of its keys), the microphone on the Transcribe page, a call, or a meeting through the Chrome extension. */
+/** Something records now: dictation listening (any of its keys), the microphone on the Transcribe page, or a call. */
 function recordingNow(): boolean {
-  return dictation?.state === 'recording' || micRecording || !!capture?.busy || !!speech?.meeting
+  return dictation?.state === 'recording' || micRecording || !!capture?.busy
 }
 
 /** The taskbar's theme, which the tray's icon follows (not the app's theme setting). */
@@ -3842,21 +3841,6 @@ async function typeText(text: string): Promise<void> {
   await borrowClipboard(() => pasteText(text))
 }
 
-/**
- * Types an address into the browser window in front: Ctrl+L, the address typed as characters, Delete (the
- * rest Chrome completes it with, "…/shortcuts", goes), Enter. Not pasted: the clipboard guard handed Chrome
- * an empty paste there (2026-11-03, a blank new tab), and typing leaves the clipboard alone.
- */
-const VK_DELETE = 0x2e
-async function typeAddress(url: string): Promise<void> {
-  const pause = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-  await pressAddressBar()
-  await pause(120)
-  press([{ char: url }, { vk: VK_DELETE }])
-  await pause(120)
-  pressEnter()
-}
-
 function balloon(title: string, content: string, click?: () => void): void {
   balloonClick = click
   tray?.displayBalloon({ title, content })
@@ -3870,7 +3854,6 @@ function setUpSpeechEngine(): void {
     root: localPart('speech'),
     userDir: userDir(),
     engineDir: unpacked('engine'),
-    extensionDir: unpacked('extension'),
     sharedCache: sharedUvCache(),
     port: speechPort,
     open: url => openStream(url),
@@ -3919,8 +3902,10 @@ function setUpSpeechEngine(): void {
   })
   // The app window plays a transcript's sound from the engine in an <audio>, which sends no header of its own:
   // main adds the engine's key to that window's requests to the engine, and to no other window's.
-  session.defaultSession.webRequest.onBeforeSendHeaders({ urls: [`http://127.0.0.1:${speechPort}/*`] }, (details, done) => {
+  // Any port: the engine moves to the next free one when its own is taken (speechservice.ts freePort).
+  session.defaultSession.webRequest.onBeforeSendHeaders({ urls: ['http://127.0.0.1:*/*'] }, (details, done) => {
     const fromApp = !!appWin && !appWin.isDestroyed() && details.webContentsId === appWin.webContents.id
+      && new URL(details.url).port === String(speech.port)
     const key = fromApp ? speech.token : undefined
     done({ requestHeaders: key ? { ...details.requestHeaders, 'X-Krya-Token': key } : details.requestHeaders })
   })
@@ -3977,11 +3962,6 @@ async function hostCall(request: HostCall): Promise<unknown> {
     case 'copy':
       await clipboard.writeText(request.text)
       return null
-    case 'openChrome': {
-      const opened = await openInChrome(request.url, { front: foreground, exeOf, allowFront: allowForeground, typeAddress })
-      log(`chrome: ${request.url} ${opened}`)
-      return opened
-    }
     case 'runningApps':
       return windowedApps().filter(exe => exe !== path.win32.basename(process.execPath).toLowerCase())
   }

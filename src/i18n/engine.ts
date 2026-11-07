@@ -51,6 +51,7 @@ const WITH_REASON: readonly [RegExp, (m: RegExpMatchArray) => string][] = [
   [/^Could not remove (\S+): (.+)$/s, m => t('engine.notRemoved', { name: m[1] ?? '', why: m[2] ?? '' })],
   [/^The speech engine keeps stopping \((.+?)\): see (.+)$/s, m => t('engine.keepsStopping', { code: m[1] ?? '', log: m[2] ?? '' })],
   [/^Port (\d+) is used by another program: quit it, then press Restart$/, m => t('engine.portTaken', { port: m[1] ?? '' })],
+  [/^Ports (\d+)–(\d+) are all taken by other programs: quit one, then press Restart$/, m => t('engine.portsTaken', { from: m[1] ?? '', to: m[2] ?? '' })],
   [/^Installing the speech engine failed \((.+?)\): (.*)$/s, m => t('engine.installFailed', { code: m[1] ?? '', why: m[2] ?? '' })],
   [/^Could not unpack the Python manager: (.*)$/s, m => t('engine.unpackFailed', { why: m[1] ?? '' })],
   [/^Hugging Face answered (.+)$/s, m => t('engine.hfAnswered', { status: m[1] ?? '' })],

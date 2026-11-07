@@ -404,7 +404,7 @@ class Worker:
 
         # Loading the model, finding the language and cutting the silence come before the first words.
         progress("words")
-        # A meeting (the extension's tab) or a call (the computer's sound): the microphone is "me", the rest by voice.
+        # A call (the computer's sound; a meeting of the Chrome extension's days, its tab, alike): the microphone is "me", the rest by voice.
         other = next((t for t in ("tab", "system") if t in tracks), None)
         if kind in ("meet", "system") and "mic" in tracks and other:
             mine = audio.pad(*tracks["mic"])

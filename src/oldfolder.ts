@@ -9,7 +9,7 @@ import { execFileSync, spawn } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-import { POWERSHELL } from './system32'
+import { pathOf, POWERSHELL } from './system32'
 
 /** A move that failed: what was said, the error, and the folder or file that stayed (`from`). */
 export type Warn = (message: string, error: unknown, from?: string) => void
@@ -22,8 +22,8 @@ export const OLD_LOCAL_FOLDERS = ['Krya', 'Altype']
 export const OLD_PROGRAMS = ['krya.exe', 'altype.exe']
 /**
  * What moves: the app's own files, never Electron's caches beside them. The
- * settings and the lists, the device profile, the speech engine's settings and
- * the extension's hello, the logs (the old log under the new name), the
+ * settings and the lists, the device profile, the speech engine's settings
+ * (and extension.json, the Chrome extension's hello until 2026-11-07, so the old folder can be emptied), the logs (the old log under the new name), the
  * updater's id, and the downloads that lived here until 0.10.1.
  */
 export const ITEMS: readonly (string | readonly [from: string, to: string])[] = [
@@ -238,8 +238,9 @@ export function parseProcesses(text: string): RunningProcess[] {
  * Kryakl itself (`self`), and never Krya.exe or Altype.exe, which Kryakl waits for instead (main.ts oldAppRunning).
  */
 export function holdersIn(processes: readonly RunningProcess[], dir: string, self = process.pid): RunningProcess[] {
-  const root = path.resolve(dir).toLowerCase().replace(/[\\/]+$/, '') + path.sep
-  return processes.filter(p => p.pid !== self && !OLD_PROGRAMS.includes(p.name.toLowerCase()) && path.resolve(p.path).toLowerCase().startsWith(root))
+  const P = pathOf(dir)
+  const root = P.resolve(dir).toLowerCase().replace(/[\\/]+$/, '') + P.sep
+  return processes.filter(p => p.pid !== self && !OLD_PROGRAMS.includes(p.name.toLowerCase()) && P.resolve(p.path).toLowerCase().startsWith(root))
 }
 
 /** Every program Windows lets this user see, with its executable's path (UTF-8, for folders named in any language). */

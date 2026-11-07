@@ -177,10 +177,6 @@ export type SpeechView = {
   trouble?: string
   health?: SpeechHealth
   port: number
-  /** The Chrome extension's folder, for Load unpacked. */
-  extensionDir: string
-  /** The extension's version in that folder: Chrome runs an older copy until Reload. */
-  extensionShipped: string
   download: { core: number; gpu: number; speakers: number }
   /** What each choice takes on the disk once installed, in MB. */
   installed: { core: number; gpu: number; speakers: number }
@@ -390,7 +386,7 @@ export type ToView =
   | { type: 'keyEvent'; code: string; down: boolean; at: number }
   /** The tray's panel's whole state. */
   | { type: 'tray'; view: TrayView }
-  /** Show this transcript in the app window (a finished note's balloon, the extension). */
+  /** Show this transcript in the app window (a finished note's balloon). */
   | { type: 'openTranscript'; id: string }
   /** A report was made at `file` for the person to attach, or could not be. */
   | { type: 'reported'; file?: string; error?: string }
@@ -595,8 +591,6 @@ export type HostCall =
   /** Save a transcript: a Save dialog, then the engine writes the file. */
   | { call: 'exportTranscript'; id: string; format: string; name: string }
   | { call: 'copy'; text: string }
-  /** Open a page of Chrome's own (the extensions, their keys, one extension's card), which a link cannot: answers chrome.ts `ChromeOpened` (typed, opened, missing, refused). */
-  | { call: 'openChrome'; url: string }
   /** The programs with a window open now, by .exe name, for the Programs page: answers string[]. */
   | { call: 'runningApps' }
 

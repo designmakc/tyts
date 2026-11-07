@@ -82,7 +82,6 @@ ipcMain.handle('host-call', async (_e, r: { call: string; method?: string; route
     return { ok: true, status: 200, data: {} }
   }
   if (r.call === 'copy') return true
-  if (r.call === 'openChrome') return true
   return null
 })
 
@@ -323,7 +322,7 @@ async function appShots(theme: 'dark' | 'light', narrow = false): Promise<void> 
     send(w, { type: 'app', view: v })
     await esc(w)
     await sleep(400)
-    await page('recordings', ['transcripts', 'meet', 'speakers'])
+    await page('recordings', ['transcripts', 'speakers'])
     await page('layout', ['kept', 'learned', 'programs', 'layouts', 'fixing'])
     await page('settings', ['languages'])
     // The page's end: Backup and Reset.
@@ -355,12 +354,6 @@ async function appShots(theme: 'dark' | 'light', narrow = false): Promise<void> 
     send(w, { type: 'app', view: appView({ paused: true }) })
     await sleep(500)
     await shot(w, tag('home-paused'))
-    // Chrome holds an older copy of the extension than Kryakl's folder.
-    const stale = appView()
-    stale.speech = { ...stale.speech, extensionShipped: '0.2.1' }
-    send(w, { type: 'app', view: stale })
-    await sleep(300)
-    await page('recordings', ['meet'], 'recordings-stale')
     // Who spoke when installed on the card; then the processor picked, so it offers to switch.
     const card = appView()
     card.speech = { ...card.speech, pack: { status: 'ready', parts: ['core', 'gpu', 'speakers'], nvidia: true, speakersOn: 'cuda' }, health: { ...card.speech.health!, diarization: 'ready', parts: { core: true, gpu: true, speakers: true } } }
@@ -376,7 +369,6 @@ async function appShots(theme: 'dark' | 'light', narrow = false): Promise<void> 
     await page('recordings', ['speakers'], 'tr-switch')
   } else {
     await page('english')
-    await page('recordings', ['meet'])
     await page('layout', ['fixing'])
     await focused('layout', 'kept')
     await page('settings')

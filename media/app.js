@@ -558,7 +558,6 @@
     "speech.download": "Download",
     "speech.needsDictate": "Voice typing needs the speech engine",
     "speech.needsTranscribe": "Recordings need the speech engine",
-    "speech.needsMeet": "Google Meet needs the speech engine",
     "speech.needs": "{feature} needs the speech engine",
     "speech.dlStopped": "The download stopped: {why}",
     "speech.unknownError": "unknown error",
@@ -725,7 +724,6 @@
     "tr.tipDrop": "Drop a video or audio file into this window",
     "tr.tipMic": "Record from the microphone on the Recordings and meetings page",
     "tr.tipNote": "Dictate a note: {keys} in any program",
-    "tr.tipMeet": "Record a Google Meet call with the Chrome extension",
     "tr.failed": "failed",
     "tr.recordingChip": "recording",
     "tr.waiting": "waiting",
@@ -1031,6 +1029,7 @@
     "engine.notInstalled": "The speech engine is not installed",
     "engine.keepsStopping": "The speech engine keeps stopping ({code}): see {log}",
     "engine.portTaken": "Port {port} is used by another program: quit it, then press Restart",
+    "engine.portsTaken": "Ports {from}\u2013{to} are all taken by other programs: quit one, then press Restart",
     "engine.installFailed": "Installing the speech engine failed ({code}): {why}",
     "engine.unpackFailed": "Could not unpack the Python manager: {why}",
     "engine.installRunning": "An install is running",
@@ -1139,40 +1138,6 @@
     "dictate.minAgo": { one: "{n} min ago", other: "{n} min ago" },
     "dictate.hAgo": { one: "{n} h ago", other: "{n} h ago" },
     "dictate.yesterday": "yesterday",
-    "meet.chromeOpen": "Chrome is open: the address is copied, paste it into its address bar and press Enter.",
-    "meet.noChrome": "Chrome was not found. The address is copied: paste it into Chrome\u2019s address bar.",
-    "meet.setUp": "set up in Chrome",
-    "meet.loadAgain": "Load again in Chrome \xB7 v{from} \u2192 v{to}",
-    "meet.reload": "Reload in Chrome \xB7 v{from} \u2192 v{to}",
-    "meet.installed": "Installed \xB7 v{version}",
-    "meet.note": "record a call in Chrome with the Tyts extension",
-    "meet.notSetUp": "Not set up yet",
-    "meet.threeSteps": "four steps in Chrome, once; this line says when the extension is in",
-    "meet.needsEngine": "the speech engine must run for the extension to work",
-    "meet.oldId": "Chrome runs v{version}, which Tyts no longer takes recordings from",
-    "meet.oldIdNote": "remove it on Chrome\u2019s extensions page (Remove on its card), then Load unpacked again: steps 1 and 2 below; Chrome asks for the microphone once more",
-    "meet.stale": "Chrome runs v{from}; Tyts has v{to}",
-    "meet.staleNote": "press the round arrow \u21BB on the Tyts card in Chrome: Open in Chrome goes straight to it",
-    "meet.openInChrome": "Open in Chrome",
-    "meet.installedIn": "Installed in Chrome \xB7 v{version}",
-    "meet.seen": "seen {ago} \xB7 the call\u2019s sound and your microphone go to the speech engine on this computer",
-    "meet.extension": "Chrome extension",
-    "meet.setItUp": "Set it up",
-    "meet.step1": "1 \xB7 Open Chrome\u2019s extensions page and turn on Developer mode",
-    "meet.step1Note": "the Developer mode switch is at the top right of that page",
-    "meet.step2": "2 \xB7 Copy path, then Load unpacked",
-    "meet.step2Note": "Load unpacked is at the top left once Developer mode is on \xB7 in the window that opens, click the address line at the top, Ctrl+V, Enter, then Select folder",
-    "meet.stepMic": "3 \xB7 Allow the microphone, once",
-    "meet.stepMicNote": "after step 2: on the page that opens, press Allow the microphone, then Allow when Chrome asks \xB7 without it, only the others are in the transcript",
-    "meet.showFolder": "Show the folder",
-    "meet.copyPath": "Copy path",
-    "meet.step3": "4 \xB7 In a meeting: the Tyts icon in Chrome\u2019s toolbar \u2192 Record, or the key",
-    "meet.step3Note": "no icon? It is under the puzzle piece at the top right: pin it there \xB7 the transcript appears in Transcripts",
-    "meet.off": "If something is off",
-    "meet.keyNothing": "The key does nothing",
-    "meet.keyNothingNote": "Keyboard shortcuts, on the left of the extensions page: set one for Tyts: meeting recorder",
-    "meet.afterUpdate": "After Tyts updates, reload the extension",
-    "meet.afterUpdateNote": "the round arrow \u21BB on the Tyts card, beside its switch \xB7 Chrome keeps the old copy until then",
     "transcribe.speakers": "Who spoke when",
     "transcribe.speakersNote": "the words are recognized already; this tells the voices apart",
     "transcribe.downloading": "downloading\u2026",
@@ -2046,7 +2011,6 @@
     "speech.download": "\u0421\u043A\u0430\u0447\u0430\u0442\u044C",
     "speech.needsDictate": "\u0414\u043B\u044F \u0433\u043E\u043B\u043E\u0441\u043E\u0432\u043E\u0433\u043E \u0432\u0432\u043E\u0434\u0430 \u043D\u0443\u0436\u0435\u043D \u0434\u0432\u0438\u0436\u043E\u043A \u0440\u0435\u0447\u0438",
     "speech.needsTranscribe": "\u0414\u043B\u044F \u0437\u0430\u043F\u0438\u0441\u0435\u0439 \u043D\u0443\u0436\u0435\u043D \u0434\u0432\u0438\u0436\u043E\u043A \u0440\u0435\u0447\u0438",
-    "speech.needsMeet": "\u0414\u043B\u044F Google Meet \u043D\u0443\u0436\u0435\u043D \u0434\u0432\u0438\u0436\u043E\u043A \u0440\u0435\u0447\u0438",
     "speech.needs": "\xAB{feature}\xBB: \u043D\u0443\u0436\u0435\u043D \u0434\u0432\u0438\u0436\u043E\u043A \u0440\u0435\u0447\u0438",
     "speech.dlStopped": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u043E\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u043B\u0430\u0441\u044C: {why}",
     "speech.unknownError": "\u043D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u0430\u044F \u043E\u0448\u0438\u0431\u043A\u0430",
@@ -2213,7 +2177,6 @@
     "tr.tipDrop": "\u041F\u0435\u0440\u0435\u0442\u0430\u0449\u0438\u0442\u0435 \u0432\u0438\u0434\u0435\u043E- \u0438\u043B\u0438 \u0430\u0443\u0434\u0438\u043E\u0444\u0430\u0439\u043B \u0432 \u044D\u0442\u043E \u043E\u043A\u043D\u043E",
     "tr.tipMic": "\u0417\u0430\u043F\u0438\u0448\u0438\u0442\u0435 \u0441 \u043C\u0438\u043A\u0440\u043E\u0444\u043E\u043D\u0430 \u043D\u0430 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0435 \xAB\u0417\u0430\u043F\u0438\u0441\u0438 \u0438 \u0432\u0441\u0442\u0440\u0435\u0447\u0438\xBB",
     "tr.tipNote": "\u041D\u0430\u0434\u0438\u043A\u0442\u0443\u0439\u0442\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0443: {keys} \u0432 \u043B\u044E\u0431\u043E\u0439 \u043F\u0440\u043E\u0433\u0440\u0430\u043C\u043C\u0435",
-    "tr.tipMeet": "\u0417\u0430\u043F\u0438\u0448\u0438\u0442\u0435 \u0437\u0432\u043E\u043D\u043E\u043A Google Meet \u0440\u0430\u0441\u0448\u0438\u0440\u0435\u043D\u0438\u0435\u043C \u0434\u043B\u044F Chrome",
     "tr.failed": "\u043E\u0448\u0438\u0431\u043A\u0430",
     "tr.recordingChip": "\u0437\u0430\u043F\u0438\u0441\u044C",
     "tr.waiting": "\u0432 \u043E\u0447\u0435\u0440\u0435\u0434\u0438",
@@ -2519,6 +2482,7 @@
     "engine.notInstalled": "\u0414\u0432\u0438\u0436\u043E\u043A \u0440\u0435\u0447\u0438 \u043D\u0435 \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D",
     "engine.keepsStopping": "\u0414\u0432\u0438\u0436\u043E\u043A \u0440\u0435\u0447\u0438 \u0442\u043E \u0438 \u0434\u0435\u043B\u043E \u043E\u0441\u0442\u0430\u043D\u0430\u0432\u043B\u0438\u0432\u0430\u0435\u0442\u0441\u044F ({code}): \u0441\u043C. {log}",
     "engine.portTaken": "\u041F\u043E\u0440\u0442 {port} \u0437\u0430\u043D\u044F\u0442 \u0434\u0440\u0443\u0433\u043E\u0439 \u043F\u0440\u043E\u0433\u0440\u0430\u043C\u043C\u043E\u0439: \u0437\u0430\u043A\u0440\u043E\u0439\u0442\u0435 \u0435\u0451, \u0437\u0430\u0442\u0435\u043C \u043F\u0435\u0440\u0435\u0437\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u0435 \u0434\u0432\u0438\u0436\u043E\u043A \u0440\u0435\u0447\u0438",
+    "engine.portsTaken": "\u041F\u043E\u0440\u0442\u044B {from}\u2013{to} \u0437\u0430\u043D\u044F\u0442\u044B \u0434\u0440\u0443\u0433\u0438\u043C\u0438 \u043F\u0440\u043E\u0433\u0440\u0430\u043C\u043C\u0430\u043C\u0438: \u0437\u0430\u043A\u0440\u043E\u0439\u0442\u0435 \u043E\u0434\u043D\u0443 \u0438\u0437 \u043D\u0438\u0445, \u0437\u0430\u0442\u0435\u043C \u043F\u0435\u0440\u0435\u0437\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u0435 \u0434\u0432\u0438\u0436\u043E\u043A \u0440\u0435\u0447\u0438",
     "engine.installFailed": "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C \u0434\u0432\u0438\u0436\u043E\u043A \u0440\u0435\u0447\u0438 ({code}): {why}",
     "engine.unpackFailed": "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0440\u0430\u0441\u043F\u0430\u043A\u043E\u0432\u0430\u0442\u044C \u043C\u0435\u043D\u0435\u0434\u0436\u0435\u0440 Python: {why}",
     "engine.installRunning": "\u0423\u0436\u0435 \u0438\u0434\u0451\u0442 \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043A\u0430",
@@ -2627,40 +2591,6 @@
     "dictate.minAgo": { one: "{n} \u043C\u0438\u043D \u043D\u0430\u0437\u0430\u0434", few: "{n} \u043C\u0438\u043D \u043D\u0430\u0437\u0430\u0434", many: "{n} \u043C\u0438\u043D \u043D\u0430\u0437\u0430\u0434", other: "{n} \u043C\u0438\u043D \u043D\u0430\u0437\u0430\u0434" },
     "dictate.hAgo": { one: "{n} \u0447 \u043D\u0430\u0437\u0430\u0434", few: "{n} \u0447 \u043D\u0430\u0437\u0430\u0434", many: "{n} \u0447 \u043D\u0430\u0437\u0430\u0434", other: "{n} \u0447 \u043D\u0430\u0437\u0430\u0434" },
     "dictate.yesterday": "\u0432\u0447\u0435\u0440\u0430",
-    "meet.chromeOpen": "Chrome \u043E\u0442\u043A\u0440\u044B\u0442: \u0430\u0434\u0440\u0435\u0441 \u0441\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u043D, \u0432\u0441\u0442\u0430\u0432\u044C\u0442\u0435 \u0435\u0433\u043E \u0432 \u0430\u0434\u0440\u0435\u0441\u043D\u0443\u044E \u0441\u0442\u0440\u043E\u043A\u0443 \u0438 \u043D\u0430\u0436\u043C\u0438\u0442\u0435 Enter.",
-    "meet.noChrome": "Chrome \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D. \u0410\u0434\u0440\u0435\u0441 \u0441\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u043D: \u0432\u0441\u0442\u0430\u0432\u044C\u0442\u0435 \u0435\u0433\u043E \u0432 \u0430\u0434\u0440\u0435\u0441\u043D\u0443\u044E \u0441\u0442\u0440\u043E\u043A\u0443 Chrome.",
-    "meet.setUp": "\u043D\u0430\u0441\u0442\u0440\u043E\u0438\u0442\u044C \u0432 Chrome",
-    "meet.loadAgain": "\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0441\u043D\u043E\u0432\u0430 \u0432 Chrome \xB7 v{from} \u2192 v{to}",
-    "meet.reload": "\u041E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u0432 Chrome \xB7 v{from} \u2192 v{to}",
-    "meet.installed": "\u0423\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E \xB7 v{version}",
-    "meet.note": "\u0437\u0430\u043F\u0438\u0441\u0430\u0442\u044C \u0437\u0432\u043E\u043D\u043E\u043A \u0432 Chrome \u0441 \u0440\u0430\u0441\u0448\u0438\u0440\u0435\u043D\u0438\u0435\u043C \u0422\u0438\u0446\u044C",
-    "meet.notSetUp": "\u0415\u0449\u0451 \u043D\u0435 \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043D\u043E",
-    "meet.threeSteps": "\u0447\u0435\u0442\u044B\u0440\u0435 \u0448\u0430\u0433\u0430 \u0432 Chrome, \u043E\u0434\u0438\u043D \u0440\u0430\u0437; \u044D\u0442\u0430 \u0441\u0442\u0440\u043E\u043A\u0430 \u043F\u043E\u043A\u0430\u0436\u0435\u0442, \u043A\u043E\u0433\u0434\u0430 \u0440\u0430\u0441\u0448\u0438\u0440\u0435\u043D\u0438\u0435 \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E",
-    "meet.needsEngine": "\u0447\u0442\u043E\u0431\u044B \u0440\u0430\u0441\u0448\u0438\u0440\u0435\u043D\u0438\u0435 \u0440\u0430\u0431\u043E\u0442\u0430\u043B\u043E, \u0434\u043E\u043B\u0436\u0435\u043D \u0431\u044B\u0442\u044C \u0437\u0430\u043F\u0443\u0449\u0435\u043D \u0434\u0432\u0438\u0436\u043E\u043A \u0440\u0435\u0447\u0438",
-    "meet.oldId": "\u0412 Chrome \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442 v{version}, \u043E\u0442 \u043A\u043E\u0442\u043E\u0440\u043E\u0439 \u0422\u0438\u0446\u044C \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0435 \u043F\u0440\u0438\u043D\u0438\u043C\u0430\u0435\u0442 \u0437\u0430\u043F\u0438\u0441\u0438",
-    "meet.oldIdNote": "\u0443\u0434\u0430\u043B\u0438\u0442\u0435 \u0435\u0433\u043E \u043D\u0430 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0435 \u0440\u0430\u0441\u0448\u0438\u0440\u0435\u043D\u0438\u0439 Chrome (\xAB\u0423\u0434\u0430\u043B\u0438\u0442\u044C\xBB \u043D\u0430 \u0435\u0433\u043E \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0435), \u043F\u043E\u0442\u043E\u043C \u0441\u043D\u043E\u0432\u0430 \xAB\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0440\u0430\u0441\u043F\u0430\u043A\u043E\u0432\u0430\u043D\u043D\u043E\u0435\xBB: \u0448\u0430\u0433\u0438 1 \u0438 2 \u043D\u0438\u0436\u0435; Chrome \u0435\u0449\u0451 \u0440\u0430\u0437 \u043F\u043E\u043F\u0440\u043E\u0441\u0438\u0442 \u0434\u043E\u0441\u0442\u0443\u043F \u043A \u043C\u0438\u043A\u0440\u043E\u0444\u043E\u043D\u0443",
-    "meet.stale": "\u0412 Chrome \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442 v{from}; \u0443 \u0422\u0438\u0446\u044C \u2014 v{to}",
-    "meet.staleNote": "\u043D\u0430\u0436\u043C\u0438\u0442\u0435 \u043A\u0440\u0443\u0433\u043B\u0443\u044E \u0441\u0442\u0440\u0435\u043B\u043A\u0443 \u21BB \u043D\u0430 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0435 \u0422\u0438\u0446\u044C \u0432 Chrome: \xAB\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0432 Chrome\xBB \u0432\u0435\u0434\u0451\u0442 \u043F\u0440\u044F\u043C\u043E \u0442\u0443\u0434\u0430",
-    "meet.openInChrome": "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0432 Chrome",
-    "meet.installedIn": "\u0423\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E \u0432 Chrome \xB7 v{version}",
-    "meet.seen": "\u043F\u043E\u0441\u043B\u0435\u0434\u043D\u0438\u0439 \u0440\u0430\u0437 \u043D\u0430 \u0441\u0432\u044F\u0437\u0438: {ago} \xB7 \u0437\u0432\u0443\u043A \u0437\u0432\u043E\u043D\u043A\u0430 \u0438 \u0432\u0430\u0448 \u043C\u0438\u043A\u0440\u043E\u0444\u043E\u043D \u0438\u0434\u0443\u0442 \u0432 \u0434\u0432\u0438\u0436\u043E\u043A \u0440\u0435\u0447\u0438 \u043D\u0430 \u044D\u0442\u043E\u043C \u043A\u043E\u043C\u043F\u044C\u044E\u0442\u0435\u0440\u0435",
-    "meet.extension": "\u0420\u0430\u0441\u0448\u0438\u0440\u0435\u043D\u0438\u0435 Chrome",
-    "meet.setItUp": "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0430",
-    "meet.step1": "1 \xB7 \u041E\u0442\u043A\u0440\u043E\u0439\u0442\u0435 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0443 \u0440\u0430\u0441\u0448\u0438\u0440\u0435\u043D\u0438\u0439 Chrome \u0438 \u0432\u043A\u043B\u044E\u0447\u0438\u0442\u0435 \xAB\u0420\u0435\u0436\u0438\u043C \u0440\u0430\u0437\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u0430\xBB",
-    "meet.step1Note": "\u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0430\u0442\u0435\u043B\u044C \xAB\u0420\u0435\u0436\u0438\u043C \u0440\u0430\u0437\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u0430\xBB (Developer mode) \u0432\u0432\u0435\u0440\u0445\u0443 \u0441\u043F\u0440\u0430\u0432\u0430 \u043D\u0430 \u0442\u043E\u0439 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0435",
-    "meet.step2": "2 \xB7 \xAB\u041A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043F\u0443\u0442\u044C\xBB, \u043F\u043E\u0442\u043E\u043C \xAB\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0440\u0430\u0441\u043F\u0430\u043A\u043E\u0432\u0430\u043D\u043D\u043E\u0435\xBB",
-    "meet.step2Note": "\xAB\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0440\u0430\u0441\u043F\u0430\u043A\u043E\u0432\u0430\u043D\u043D\u043E\u0435\xBB (Load unpacked) \u043F\u043E\u044F\u0432\u0438\u0442\u0441\u044F \u0432\u0432\u0435\u0440\u0445\u0443 \u0441\u043B\u0435\u0432\u0430, \u043A\u0430\u043A \u0442\u043E\u043B\u044C\u043A\u043E \u0432\u043A\u043B\u044E\u0447\u0451\u043D \u0440\u0435\u0436\u0438\u043C \u0440\u0430\u0437\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u0430 \xB7 \u0432 \u043E\u0442\u043A\u0440\u044B\u0432\u0448\u0435\u043C\u0441\u044F \u043E\u043A\u043D\u0435 \u0449\u0451\u043B\u043A\u043D\u0438\u0442\u0435 \u0430\u0434\u0440\u0435\u0441\u043D\u0443\u044E \u0441\u0442\u0440\u043E\u043A\u0443 \u0432\u0432\u0435\u0440\u0445\u0443, Ctrl+V, Enter, \u043F\u043E\u0442\u043E\u043C \xAB\u0412\u044B\u0431\u043E\u0440 \u043F\u0430\u043F\u043A\u0438\xBB",
-    "meet.stepMic": "3 \xB7 \u0420\u0430\u0437\u0440\u0435\u0448\u0438\u0442\u0435 \u043C\u0438\u043A\u0440\u043E\u0444\u043E\u043D, \u043E\u0434\u0438\u043D \u0440\u0430\u0437",
-    "meet.stepMicNote": "\u043F\u043E\u0441\u043B\u0435 \u0448\u0430\u0433\u0430 2: \u043D\u0430 \u043E\u0442\u043A\u0440\u044B\u0432\u0448\u0435\u0439\u0441\u044F \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0435 \u043D\u0430\u0436\u043C\u0438\u0442\u0435 \xAB\u0420\u0430\u0437\u0440\u0435\u0448\u0438\u0442\u044C \u043C\u0438\u043A\u0440\u043E\u0444\u043E\u043D\xBB (Allow the microphone), \u043F\u043E\u0442\u043E\u043C \xAB\u0420\u0430\u0437\u0440\u0435\u0448\u0438\u0442\u044C\xBB (Allow), \u043A\u043E\u0433\u0434\u0430 \u0441\u043F\u0440\u043E\u0441\u0438\u0442 Chrome \xB7 \u0431\u0435\u0437 \u044D\u0442\u043E\u0433\u043E \u0432 \u0440\u0430\u0441\u0448\u0438\u0444\u0440\u043E\u0432\u043A\u0435 \u0431\u0443\u0434\u0443\u0442 \u0442\u043E\u043B\u044C\u043A\u043E \u043E\u0441\u0442\u0430\u043B\u044C\u043D\u044B\u0435",
-    "meet.showFolder": "\u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u043F\u0430\u043F\u043A\u0443",
-    "meet.copyPath": "\u041A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043F\u0443\u0442\u044C",
-    "meet.step3": "4 \xB7 \u041D\u0430 \u0432\u0441\u0442\u0440\u0435\u0447\u0435: \u0437\u043D\u0430\u0447\u043E\u043A \u0422\u0438\u0446\u044C \u043D\u0430 \u043F\u0430\u043D\u0435\u043B\u0438 Chrome \u2192 Record \u0438\u043B\u0438 \u043A\u043B\u0430\u0432\u0438\u0448\u0430",
-    "meet.step3Note": "\u043D\u0435\u0442 \u0437\u043D\u0430\u0447\u043A\u0430? \u041E\u043D \u043F\u043E\u0434 \u043F\u0430\u0437\u043B\u043E\u043C \u0432\u0432\u0435\u0440\u0445\u0443 \u0441\u043F\u0440\u0430\u0432\u0430: \u0437\u0430\u043A\u0440\u0435\u043F\u0438\u0442\u0435 \u0435\u0433\u043E \u0442\u0430\u043C \xB7 \u0440\u0430\u0441\u0448\u0438\u0444\u0440\u043E\u0432\u043A\u0430 \u043F\u043E\u044F\u0432\u0438\u0442\u0441\u044F \u0432 \xAB\u0420\u0430\u0441\u0448\u0438\u0444\u0440\u043E\u0432\u043A\u0430\u0445\xBB",
-    "meet.off": "\u0415\u0441\u043B\u0438 \u0447\u0442\u043E-\u0442\u043E \u043D\u0435 \u0442\u0430\u043A",
-    "meet.keyNothing": "\u041A\u043B\u0430\u0432\u0438\u0448\u0430 \u043D\u0438\u0447\u0435\u0433\u043E \u043D\u0435 \u0434\u0435\u043B\u0430\u0435\u0442",
-    "meet.keyNothingNote": "\xAB\u0411\u044B\u0441\u0442\u0440\u044B\u0435 \u043A\u043B\u0430\u0432\u0438\u0448\u0438\xBB (Keyboard shortcuts) \u0441\u043B\u0435\u0432\u0430 \u043D\u0430 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0435 \u0440\u0430\u0441\u0448\u0438\u0440\u0435\u043D\u0438\u0439: \u0437\u0430\u0434\u0430\u0439\u0442\u0435 \u0435\u0451 \u0434\u043B\u044F \xAB\u0422\u0438\u0446\u044C: \u0437\u0430\u043F\u0438\u0441\u044C \u0432\u0441\u0442\u0440\u0435\u0447\xBB",
-    "meet.afterUpdate": "\u041F\u043E\u0441\u043B\u0435 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u044F \u0422\u0438\u0446\u044C \u043F\u0435\u0440\u0435\u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u0440\u0430\u0441\u0448\u0438\u0440\u0435\u043D\u0438\u0435",
-    "meet.afterUpdateNote": "\u043A\u0440\u0443\u0433\u043B\u0430\u044F \u0441\u0442\u0440\u0435\u043B\u043A\u0430 \u21BB \u043D\u0430 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0435 \u0422\u0438\u0446\u044C, \u0440\u044F\u0434\u043E\u043C \u0441 \u0435\u0451 \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0430\u0442\u0435\u043B\u0435\u043C \xB7 \u0434\u043E \u044D\u0442\u043E\u0433\u043E Chrome \u0434\u0435\u0440\u0436\u0438\u0442 \u0441\u0442\u0430\u0440\u0443\u044E \u043A\u043E\u043F\u0438\u044E",
     "transcribe.speakers": "\u041A\u0442\u043E \u043A\u043E\u0433\u0434\u0430 \u0433\u043E\u0432\u043E\u0440\u0438\u043B",
     "transcribe.speakersNote": "\u0441\u043B\u043E\u0432\u0430 \u0443\u0436\u0435 \u0440\u0430\u0441\u043F\u043E\u0437\u043D\u0430\u043D\u044B; \u044D\u0442\u043E \u0440\u0430\u0437\u043B\u0438\u0447\u0430\u0435\u0442 \u0433\u043E\u043B\u043E\u0441\u0430",
     "transcribe.downloading": "\u0441\u043A\u0430\u0447\u0438\u0432\u0430\u043D\u0438\u0435\u2026",
@@ -3533,7 +3463,6 @@
     "speech.download": "\u0417\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0438\u0442\u0438",
     "speech.needsDictate": "\u0414\u043B\u044F \u0433\u043E\u043B\u043E\u0441\u043E\u0432\u043E\u0433\u043E \u0432\u0432\u0435\u0434\u0435\u043D\u043D\u044F \u043F\u043E\u0442\u0440\u0456\u0431\u0435\u043D \u0440\u0443\u0448\u0456\u0439 \u043C\u043E\u0432\u043B\u0435\u043D\u043D\u044F",
     "speech.needsTranscribe": "\u0414\u043B\u044F \u0437\u0430\u043F\u0438\u0441\u0456\u0432 \u043F\u043E\u0442\u0440\u0456\u0431\u0435\u043D \u0440\u0443\u0448\u0456\u0439 \u043C\u043E\u0432\u043B\u0435\u043D\u043D\u044F",
-    "speech.needsMeet": "\u0414\u043B\u044F Google Meet \u043F\u043E\u0442\u0440\u0456\u0431\u0435\u043D \u0440\u0443\u0448\u0456\u0439 \u043C\u043E\u0432\u043B\u0435\u043D\u043D\u044F",
     "speech.needs": "\xAB{feature}\xBB: \u043F\u043E\u0442\u0440\u0456\u0431\u0435\u043D \u0440\u0443\u0448\u0456\u0439 \u043C\u043E\u0432\u043B\u0435\u043D\u043D\u044F",
     "speech.dlStopped": "\u0417\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0435\u043D\u043D\u044F \u0437\u0443\u043F\u0438\u043D\u0438\u043B\u043E\u0441\u044F: {why}",
     "speech.unknownError": "\u043D\u0435\u0432\u0456\u0434\u043E\u043C\u0430 \u043F\u043E\u043C\u0438\u043B\u043A\u0430",
@@ -3700,7 +3629,6 @@
     "tr.tipDrop": "\u041F\u0435\u0440\u0435\u0442\u044F\u0433\u043D\u0456\u0442\u044C \u0432\u0456\u0434\u0435\u043E- \u0430\u0431\u043E \u0430\u0443\u0434\u0456\u043E\u0444\u0430\u0439\u043B \u0443 \u0446\u0435 \u0432\u0456\u043A\u043D\u043E",
     "tr.tipMic": "\u0417\u0430\u043F\u0438\u0448\u0456\u0442\u044C \u0437 \u043C\u0456\u043A\u0440\u043E\u0444\u043E\u043D\u0430 \u043D\u0430 \u0441\u0442\u043E\u0440\u0456\u043D\u0446\u0456 \xAB\u0417\u0430\u043F\u0438\u0441\u0438 \u0439 \u0437\u0443\u0441\u0442\u0440\u0456\u0447\u0456\xBB",
     "tr.tipNote": "\u041D\u0430\u0434\u0438\u043A\u0442\u0443\u0439\u0442\u0435 \u043D\u043E\u0442\u0430\u0442\u043A\u0443: {keys} \u0443 \u0431\u0443\u0434\u044C-\u044F\u043A\u0456\u0439 \u043F\u0440\u043E\u0433\u0440\u0430\u043C\u0456",
-    "tr.tipMeet": "\u0417\u0430\u043F\u0438\u0448\u0456\u0442\u044C \u0434\u0437\u0432\u0456\u043D\u043E\u043A Google Meet \u0440\u043E\u0437\u0448\u0438\u0440\u0435\u043D\u043D\u044F\u043C \u0434\u043B\u044F Chrome",
     "tr.failed": "\u043F\u043E\u043C\u0438\u043B\u043A\u0430",
     "tr.recordingChip": "\u0437\u0430\u043F\u0438\u0441",
     "tr.waiting": "\u0443 \u0447\u0435\u0440\u0437\u0456",
@@ -4006,6 +3934,7 @@
     "engine.notInstalled": "\u0420\u0443\u0448\u0456\u0439 \u043C\u043E\u0432\u043B\u0435\u043D\u043D\u044F \u043D\u0435 \u0432\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E",
     "engine.keepsStopping": "\u0420\u0443\u0448\u0456\u0439 \u043C\u043E\u0432\u043B\u0435\u043D\u043D\u044F \u0440\u0430\u0437 \u0443 \u0440\u0430\u0437 \u0437\u0443\u043F\u0438\u043D\u044F\u0454\u0442\u044C\u0441\u044F ({code}): \u0434\u0438\u0432. {log}",
     "engine.portTaken": "\u041F\u043E\u0440\u0442 {port} \u0437\u0430\u0439\u043D\u044F\u043B\u0430 \u0456\u043D\u0448\u0430 \u043F\u0440\u043E\u0433\u0440\u0430\u043C\u0430: \u0437\u0430\u043A\u0440\u0438\u0439\u0442\u0435 \u0457\u0457, \u043F\u043E\u0442\u0456\u043C \u043F\u0435\u0440\u0435\u0437\u0430\u043F\u0443\u0441\u0442\u0456\u0442\u044C \u0440\u0443\u0448\u0456\u0439 \u043C\u043E\u0432\u043B\u0435\u043D\u043D\u044F",
+    "engine.portsTaken": "\u041F\u043E\u0440\u0442\u0438 {from}\u2013{to} \u0437\u0430\u0439\u043D\u044F\u043B\u0438 \u0456\u043D\u0448\u0456 \u043F\u0440\u043E\u0433\u0440\u0430\u043C\u0438: \u0437\u0430\u043A\u0440\u0438\u0439\u0442\u0435 \u043E\u0434\u043D\u0443 \u0437 \u043D\u0438\u0445, \u043F\u043E\u0442\u0456\u043C \u043F\u0435\u0440\u0435\u0437\u0430\u043F\u0443\u0441\u0442\u0456\u0442\u044C \u0440\u0443\u0448\u0456\u0439 \u043C\u043E\u0432\u043B\u0435\u043D\u043D\u044F",
     "engine.installFailed": "\u041D\u0435 \u0432\u0434\u0430\u043B\u043E\u0441\u044F \u0432\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u0438 \u0440\u0443\u0448\u0456\u0439 \u043C\u043E\u0432\u043B\u0435\u043D\u043D\u044F ({code}): {why}",
     "engine.unpackFailed": "\u041D\u0435 \u0432\u0434\u0430\u043B\u043E\u0441\u044F \u0440\u043E\u0437\u043F\u0430\u043A\u0443\u0432\u0430\u0442\u0438 \u043C\u0435\u043D\u0435\u0434\u0436\u0435\u0440 Python: {why}",
     "engine.installRunning": "\u0423\u0436\u0435 \u0439\u0434\u0435 \u0432\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043D\u044F",
@@ -4114,40 +4043,6 @@
     "dictate.minAgo": { one: "{n} \u0445\u0432 \u0442\u043E\u043C\u0443", few: "{n} \u0445\u0432 \u0442\u043E\u043C\u0443", many: "{n} \u0445\u0432 \u0442\u043E\u043C\u0443", other: "{n} \u0445\u0432 \u0442\u043E\u043C\u0443" },
     "dictate.hAgo": { one: "{n} \u0433\u043E\u0434 \u0442\u043E\u043C\u0443", few: "{n} \u0433\u043E\u0434 \u0442\u043E\u043C\u0443", many: "{n} \u0433\u043E\u0434 \u0442\u043E\u043C\u0443", other: "{n} \u0433\u043E\u0434 \u0442\u043E\u043C\u0443" },
     "dictate.yesterday": "\u0443\u0447\u043E\u0440\u0430",
-    "meet.chromeOpen": "Chrome \u0432\u0456\u0434\u043A\u0440\u0438\u0442\u043E: \u0430\u0434\u0440\u0435\u0441\u0443 \u0441\u043A\u043E\u043F\u0456\u0439\u043E\u0432\u0430\u043D\u043E, \u0432\u0441\u0442\u0430\u0432\u0442\u0435 \u0457\u0457 \u0432 \u0430\u0434\u0440\u0435\u0441\u043D\u0438\u0439 \u0440\u044F\u0434\u043E\u043A \u0456 \u043D\u0430\u0442\u0438\u0441\u043D\u0456\u0442\u044C Enter.",
-    "meet.noChrome": "Chrome \u043D\u0435 \u0437\u043D\u0430\u0439\u0434\u0435\u043D\u043E. \u0410\u0434\u0440\u0435\u0441\u0443 \u0441\u043A\u043E\u043F\u0456\u0439\u043E\u0432\u0430\u043D\u043E: \u0432\u0441\u0442\u0430\u0432\u0442\u0435 \u0457\u0457 \u0432 \u0430\u0434\u0440\u0435\u0441\u043D\u0438\u0439 \u0440\u044F\u0434\u043E\u043A Chrome.",
-    "meet.setUp": "\u043D\u0430\u043B\u0430\u0448\u0442\u0443\u0432\u0430\u0442\u0438 \u0432 Chrome",
-    "meet.loadAgain": "\u0417\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0438\u0442\u0438 \u0437\u043D\u043E\u0432\u0443 \u0432 Chrome \xB7 v{from} \u2192 v{to}",
-    "meet.reload": "\u041F\u0435\u0440\u0435\u0437\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0438\u0442\u0438 \u0432 Chrome \xB7 v{from} \u2192 v{to}",
-    "meet.installed": "\u0412\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E \xB7 v{version}",
-    "meet.note": "\u0437\u0430\u043F\u0438\u0441\u0430\u0442\u0438 \u0434\u0437\u0432\u0456\u043D\u043E\u043A \u0443 Chrome \u0437 \u0440\u043E\u0437\u0448\u0438\u0440\u0435\u043D\u043D\u044F\u043C \u0422\u0438\u0446\u044C",
-    "meet.notSetUp": "\u0429\u0435 \u043D\u0435 \u043D\u0430\u043B\u0430\u0448\u0442\u043E\u0432\u0430\u043D\u043E",
-    "meet.threeSteps": "\u0447\u043E\u0442\u0438\u0440\u0438 \u043A\u0440\u043E\u043A\u0438 \u0432 Chrome, \u043E\u0434\u0438\u043D \u0440\u0430\u0437; \u0446\u0435\u0439 \u0440\u044F\u0434\u043E\u043A \u043F\u043E\u043A\u0430\u0436\u0435, \u043A\u043E\u043B\u0438 \u0440\u043E\u0437\u0448\u0438\u0440\u0435\u043D\u043D\u044F \u0432\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E",
-    "meet.needsEngine": "\u0449\u043E\u0431 \u0440\u043E\u0437\u0448\u0438\u0440\u0435\u043D\u043D\u044F \u043F\u0440\u0430\u0446\u044E\u0432\u0430\u043B\u043E, \u043C\u0430\u0454 \u0431\u0443\u0442\u0438 \u0437\u0430\u043F\u0443\u0449\u0435\u043D\u0438\u0439 \u0440\u0443\u0448\u0456\u0439 \u043C\u043E\u0432\u043B\u0435\u043D\u043D\u044F",
-    "meet.oldId": "\u0423 Chrome \u043F\u0440\u0430\u0446\u044E\u0454 v{version}, \u0432\u0456\u0434 \u044F\u043A\u043E\u0457 \u0422\u0438\u0446\u044C \u0431\u0456\u043B\u044C\u0448\u0435 \u043D\u0435 \u043F\u0440\u0438\u0439\u043C\u0430\u0454 \u0437\u0430\u043F\u0438\u0441\u0438",
-    "meet.oldIdNote": "\u0432\u0438\u0434\u0430\u043B\u0456\u0442\u044C \u0439\u043E\u0433\u043E \u043D\u0430 \u0441\u0442\u043E\u0440\u0456\u043D\u0446\u0456 \u0440\u043E\u0437\u0448\u0438\u0440\u0435\u043D\u044C Chrome (\xAB\u0412\u0438\u043B\u0443\u0447\u0438\u0442\u0438\xBB \u043D\u0430 \u0439\u043E\u0433\u043E \u043A\u0430\u0440\u0442\u0446\u0456), \u043F\u043E\u0442\u0456\u043C \u0437\u043D\u043E\u0432\u0443 \xAB\u0417\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0438\u0442\u0438 \u0440\u043E\u0437\u043F\u0430\u043A\u043E\u0432\u0430\u043D\u0435\xBB: \u043A\u0440\u043E\u043A\u0438 1 \u0456 2 \u043D\u0438\u0436\u0447\u0435; Chrome \u0449\u0435 \u0440\u0430\u0437 \u043F\u043E\u043F\u0440\u043E\u0441\u0438\u0442\u044C \u0434\u043E\u0441\u0442\u0443\u043F \u0434\u043E \u043C\u0456\u043A\u0440\u043E\u0444\u043E\u043D\u0430",
-    "meet.stale": "\u0423 Chrome \u043F\u0440\u0430\u0446\u044E\u0454 v{from}; \u0443 \u0422\u0438\u0446\u044C \u2014 v{to}",
-    "meet.staleNote": "\u043D\u0430\u0442\u0438\u0441\u043D\u0456\u0442\u044C \u043A\u0440\u0443\u0433\u043B\u0443 \u0441\u0442\u0440\u0456\u043B\u043A\u0443 \u21BB \u043D\u0430 \u043A\u0430\u0440\u0442\u0446\u0456 \u0422\u0438\u0446\u044C \u0432 Chrome: \xAB\u0412\u0456\u0434\u043A\u0440\u0438\u0442\u0438 \u0432 Chrome\xBB \u0432\u0435\u0434\u0435 \u043F\u0440\u044F\u043C\u043E \u0442\u0443\u0434\u0438",
-    "meet.openInChrome": "\u0412\u0456\u0434\u043A\u0440\u0438\u0442\u0438 \u0432 Chrome",
-    "meet.installedIn": "\u0412\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E \u0432 Chrome \xB7 v{version}",
-    "meet.seen": "\u0432\u043E\u0441\u0442\u0430\u043D\u043D\u0454 \u043D\u0430 \u0437\u0432\u2019\u044F\u0437\u043A\u0443: {ago} \xB7 \u0437\u0432\u0443\u043A \u0434\u0437\u0432\u0456\u043D\u043A\u0430 \u0456 \u0432\u0430\u0448 \u043C\u0456\u043A\u0440\u043E\u0444\u043E\u043D \u0456\u0434\u0443\u0442\u044C \u0434\u043E \u0440\u0443\u0448\u0456\u044F \u043C\u043E\u0432\u043B\u0435\u043D\u043D\u044F \u043D\u0430 \u0446\u044C\u043E\u043C\u0443 \u043A\u043E\u043C\u043F\u2019\u044E\u0442\u0435\u0440\u0456",
-    "meet.extension": "\u0420\u043E\u0437\u0448\u0438\u0440\u0435\u043D\u043D\u044F Chrome",
-    "meet.setItUp": "\u041D\u0430\u043B\u0430\u0448\u0442\u0443\u0432\u0430\u043D\u043D\u044F",
-    "meet.step1": "1 \xB7 \u0412\u0456\u0434\u043A\u0440\u0438\u0439\u0442\u0435 \u0441\u0442\u043E\u0440\u0456\u043D\u043A\u0443 \u0440\u043E\u0437\u0448\u0438\u0440\u0435\u043D\u044C Chrome \u0456 \u0432\u0432\u0456\u043C\u043A\u043D\u0456\u0442\u044C \xAB\u0420\u0435\u0436\u0438\u043C \u0440\u043E\u0437\u0440\u043E\u0431\u043D\u0438\u043A\u0430\xBB",
-    "meet.step1Note": "\u043F\u0435\u0440\u0435\u043C\u0438\u043A\u0430\u0447 \xAB\u0420\u0435\u0436\u0438\u043C \u0440\u043E\u0437\u0440\u043E\u0431\u043D\u0438\u043A\u0430\xBB (Developer mode) \u0443\u0433\u043E\u0440\u0456 \u043F\u0440\u0430\u0432\u043E\u0440\u0443\u0447 \u043D\u0430 \u0442\u0456\u0439 \u0441\u0442\u043E\u0440\u0456\u043D\u0446\u0456",
-    "meet.step2": "2 \xB7 \xAB\u041A\u043E\u043F\u0456\u044E\u0432\u0430\u0442\u0438 \u0448\u043B\u044F\u0445\xBB, \u043F\u043E\u0442\u0456\u043C \xAB\u0417\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0438\u0442\u0438 \u0440\u043E\u0437\u043F\u0430\u043A\u043E\u0432\u0430\u043D\u0435\xBB",
-    "meet.step2Note": "\xAB\u0417\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0438\u0442\u0438 \u0440\u043E\u0437\u043F\u0430\u043A\u043E\u0432\u0430\u043D\u0435\xBB (Load unpacked) \u0437\u2019\u044F\u0432\u0438\u0442\u044C\u0441\u044F \u0432\u0433\u043E\u0440\u0456 \u043B\u0456\u0432\u043E\u0440\u0443\u0447, \u0449\u043E\u0439\u043D\u043E \u0432\u0432\u0456\u043C\u043A\u043D\u0435\u043D\u043E \u0440\u0435\u0436\u0438\u043C \u0440\u043E\u0437\u0440\u043E\u0431\u043D\u0438\u043A\u0430 \xB7 \u0443 \u0432\u0456\u043A\u043D\u0456, \u0449\u043E \u0432\u0456\u0434\u043A\u0440\u0438\u0454\u0442\u044C\u0441\u044F, \u043A\u043B\u0430\u0446\u043D\u0456\u0442\u044C \u0430\u0434\u0440\u0435\u0441\u043D\u0438\u0439 \u0440\u044F\u0434\u043E\u043A \u0443\u0433\u043E\u0440\u0456, Ctrl+V, Enter, \u043F\u043E\u0442\u0456\u043C \xAB\u0412\u0438\u0431\u0456\u0440 \u043F\u0430\u043F\u043A\u0438\xBB",
-    "meet.stepMic": "3 \xB7 \u0414\u043E\u0437\u0432\u043E\u043B\u044C\u0442\u0435 \u043C\u0456\u043A\u0440\u043E\u0444\u043E\u043D, \u043E\u0434\u0438\u043D \u0440\u0430\u0437",
-    "meet.stepMicNote": "\u043F\u0456\u0441\u043B\u044F \u043A\u0440\u043E\u043A\u0443 2: \u043D\u0430 \u0441\u0442\u043E\u0440\u0456\u043D\u0446\u0456, \u0449\u043E \u0432\u0456\u0434\u043A\u0440\u0438\u0454\u0442\u044C\u0441\u044F, \u043D\u0430\u0442\u0438\u0441\u043D\u0456\u0442\u044C \xAB\u0414\u043E\u0437\u0432\u043E\u043B\u0438\u0442\u0438 \u043C\u0456\u043A\u0440\u043E\u0444\u043E\u043D\xBB (Allow the microphone), \u043F\u043E\u0442\u0456\u043C \xAB\u0414\u043E\u0437\u0432\u043E\u043B\u0438\u0442\u0438\xBB (Allow), \u043A\u043E\u043B\u0438 \u0441\u043F\u0438\u0442\u0430\u0454 Chrome \xB7 \u0431\u0435\u0437 \u0446\u044C\u043E\u0433\u043E \u0432 \u0440\u043E\u0437\u0448\u0438\u0444\u0440\u043E\u0432\u0446\u0456 \u0431\u0443\u0434\u0443\u0442\u044C \u043B\u0438\u0448\u0435 \u0456\u043D\u0448\u0456",
-    "meet.showFolder": "\u041F\u043E\u043A\u0430\u0437\u0430\u0442\u0438 \u043F\u0430\u043F\u043A\u0443",
-    "meet.copyPath": "\u041A\u043E\u043F\u0456\u044E\u0432\u0430\u0442\u0438 \u0448\u043B\u044F\u0445",
-    "meet.step3": "4 \xB7 \u041D\u0430 \u0437\u0443\u0441\u0442\u0440\u0456\u0447\u0456: \u0437\u043D\u0430\u0447\u043E\u043A \u0422\u0438\u0446\u044C \u043D\u0430 \u043F\u0430\u043D\u0435\u043B\u0456 Chrome \u2192 Record \u0430\u0431\u043E \u043A\u043B\u0430\u0432\u0456\u0448\u0430",
-    "meet.step3Note": "\u043D\u0435\u043C\u0430\u0454 \u0437\u043D\u0430\u0447\u043A\u0430? \u0412\u0456\u043D \u043F\u0456\u0434 \u043F\u0430\u0437\u043B\u043E\u043C \u0443\u0433\u043E\u0440\u0456 \u043F\u0440\u0430\u0432\u043E\u0440\u0443\u0447: \u0437\u0430\u043A\u0440\u0456\u043F\u0456\u0442\u044C \u0439\u043E\u0433\u043E \u0442\u0430\u043C \xB7 \u0440\u043E\u0437\u0448\u0438\u0444\u0440\u043E\u0432\u043A\u0430 \u0437\u2019\u044F\u0432\u0438\u0442\u044C\u0441\u044F \u0432 \xAB\u0420\u043E\u0437\u0448\u0438\u0444\u0440\u043E\u0432\u043A\u0430\u0445\xBB",
-    "meet.off": "\u042F\u043A\u0449\u043E \u0449\u043E\u0441\u044C \u043D\u0435 \u0442\u0430\u043A",
-    "meet.keyNothing": "\u041A\u043B\u0430\u0432\u0456\u0448\u0430 \u043D\u0456\u0447\u043E\u0433\u043E \u043D\u0435 \u0440\u043E\u0431\u0438\u0442\u044C",
-    "meet.keyNothingNote": "\xAB\u041A\u043E\u043C\u0431\u0456\u043D\u0430\u0446\u0456\u0457 \u043A\u043B\u0430\u0432\u0456\u0448\xBB (Keyboard shortcuts) \u043B\u0456\u0432\u043E\u0440\u0443\u0447 \u043D\u0430 \u0441\u0442\u043E\u0440\u0456\u043D\u0446\u0456 \u0440\u043E\u0437\u0448\u0438\u0440\u0435\u043D\u044C: \u0437\u0430\u0434\u0430\u0439\u0442\u0435 \u0457\u0457 \u0434\u043B\u044F \xAB\u0422\u0438\u0446\u044C: \u0437\u0430\u043F\u0438\u0441 \u0437\u0443\u0441\u0442\u0440\u0456\u0447\u0435\u0439\xBB",
-    "meet.afterUpdate": "\u041F\u0456\u0441\u043B\u044F \u043E\u043D\u043E\u0432\u043B\u0435\u043D\u043D\u044F \u0422\u0438\u0446\u044C \u043F\u0435\u0440\u0435\u0437\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0442\u0435 \u0440\u043E\u0437\u0448\u0438\u0440\u0435\u043D\u043D\u044F",
-    "meet.afterUpdateNote": "\u043A\u0440\u0443\u0433\u043B\u0430 \u0441\u0442\u0440\u0456\u043B\u043A\u0430 \u21BB \u043D\u0430 \u043A\u0430\u0440\u0442\u0446\u0456 \u0422\u0438\u0446\u044C, \u0431\u0456\u043B\u044F \u0457\u0457 \u043F\u0435\u0440\u0435\u043C\u0438\u043A\u0430\u0447\u0430 \xB7 \u0434\u043E \u0442\u043E\u0433\u043E Chrome \u0442\u0440\u0438\u043C\u0430\u0454 \u0441\u0442\u0430\u0440\u0443 \u043A\u043E\u043F\u0456\u044E",
     "transcribe.speakers": "\u0425\u0442\u043E \u043A\u043E\u043B\u0438 \u0433\u043E\u0432\u043E\u0440\u0438\u0432",
     "transcribe.speakersNote": "\u0441\u043B\u043E\u0432\u0430 \u0432\u0436\u0435 \u0440\u043E\u0437\u043F\u0456\u0437\u043D\u0430\u043D\u043E; \u0446\u0435 \u0440\u043E\u0437\u0440\u0456\u0437\u043D\u044F\u0454 \u0433\u043E\u043B\u043E\u0441\u0438",
     "transcribe.downloading": "\u0437\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0435\u043D\u043D\u044F\u2026",
@@ -6247,7 +6142,6 @@
   function needsEngine(feature) {
     if (feature === "Dictate") return t("speech.needsDictate");
     if (feature === "Transcribe") return t("speech.needsTranscribe");
-    if (feature === "Google Meet") return t("speech.needsMeet");
     return t("speech.needs", { feature });
   }
   var size = sizeText;
@@ -7423,8 +7317,7 @@
           {},
           tip("cloud-upload", t("tr.tipDrop")),
           tip("mic", t("tr.tipMic")),
-          tip("note", ...phrase(t("tr.tipNote"), { keys: caps(v.settings.noteKey) })),
-          tip("organization", t("tr.tipMeet"))
+          tip("note", ...phrase(t("tr.tipNote"), { keys: caps(v.settings.noteKey) }))
         )
       );
     }
@@ -8259,7 +8152,6 @@
   var said = (hotkey) => hotkey === COPY_TWICE2 ? t("keys.copyTwice") : hotkey.endsWith("*2") ? t("keys.twice", { key: hotkeyLabel(hotkey.slice(0, -2)) }) : hotkeyLabel(hotkey);
   var isTap = (hotkey) => /^(Left|Right)(Control|Shift|Alt|Super)(\*2)?$/.test(hotkey);
   var usage = (hotkey) => t(isTap(hotkey) ? "keys.tap" : "keys.press", { key: said(hotkey) });
-  var MEET_KEY = "Alt+Shift+M";
   function cycleOf(v) {
     const chosen = v.settings.layouts.map((id) => v.layouts.find((l) => l.id === id)).filter((l) => !!l);
     if (chosen.length > 0) return chosen;
@@ -8793,7 +8685,6 @@
     talkWindow: { title: () => t("act.talkWindow"), body: talkWindowPage },
     notes: { title: () => t("dictate.notesFolder"), body: kbRows },
     edit: { title: () => t("edit.title"), body: editPage },
-    meet: { title: "Google Meet", body: meetPage },
     speakers: { title: () => t("page.speakers"), body: speakerRows, valid: installed },
     fixing: { title: () => t("page.fixing"), body: fixingPage },
     program: { title: () => programOpen, body: programPage, valid: () => !!programOpen },
@@ -8952,7 +8843,6 @@
     { name: "voice", sub: "edit" },
     { name: "layout", sub: "fixing" },
     { name: "recordings", sub: "speakers" },
-    { name: "recordings", sub: "meet" },
     { name: "vocabulary" },
     { name: "kept" },
     { name: "learned" },
@@ -9978,86 +9868,6 @@ ${t("dictate.said", { heard: e.heard })}` : e.text,
     return `${formatDate(at, { day: "numeric", month: "short" })} ${time}`;
   }
   var copyText = (text) => void window.tutorHost.call({ call: "copy", text }).then(() => toast(t("dictate.copiedText", { text })), fault);
-  function ago(epochSeconds) {
-    const s = Math.max(0, Date.now() / 1e3 - epochSeconds);
-    if (s < 90) return t("dictate.justNow");
-    if (s < 3600) return t("dictate.minAgo", { n: Math.round(s / 60) });
-    if (s < 86400) return t("dictate.hAgo", { n: Math.round(s / 3600) });
-    if (s < 2 * 86400) return t("dictate.yesterday");
-    return formatDate(new Date(epochSeconds * 1e3), { day: "numeric", month: "short" });
-  }
-  function openChrome(url) {
-    void window.tutorHost.call({ call: "openChrome", url }).then((opened) => {
-      if (opened === "typed") return;
-      const say = opened === "opened" ? t("meet.chromeOpen") : t("meet.noChrome");
-      void window.tutorHost.call({ call: "copy", text: url }).then(() => toast(say), fault);
-    }, fault);
-  }
-  var extensionSeen = (v) => v.speech.health?.extension ?? null;
-  function olderVersion(a, b) {
-    const x = a.split(".").map(Number);
-    const y = b.split(".").map(Number);
-    for (let i = 0; i < Math.max(x.length, y.length); i++) {
-      const d = (x[i] || 0) - (y[i] || 0);
-      if (d) return d < 0;
-    }
-    return false;
-  }
-  var extensionStale = (v) => {
-    const ext = extensionSeen(v);
-    return !!ext && !!v.speech.extensionShipped && olderVersion(ext.version, v.speech.extensionShipped);
-  };
-  var FIXED_ID_SINCE = "0.4.0";
-  var extensionReload = (v) => {
-    const ext = extensionSeen(v);
-    return !!ext && olderVersion(ext.version, FIXED_ID_SINCE);
-  };
-  var MIC_PAGE = "chrome-extension://phokhlmnodckgejnaogjgpmfjnjkefpa/permission.html";
-  var extensionsPage = (v) => {
-    const id = extensionSeen(v)?.id;
-    return id && /^[a-p]{32}$/.test(id) ? `chrome://extensions/?id=${id}` : "chrome://extensions/";
-  };
-  function meetCard(v) {
-    const ext = extensionSeen(v);
-    const stale = extensionStale(v);
-    const value = !ext ? t("meet.setUp") : extensionReload(v) ? t("meet.loadAgain", { from: ext.version, to: v.speech.extensionShipped ?? "" }) : stale ? t("meet.reload", { from: ext.version, to: v.speech.extensionShipped ?? "" }) : t("meet.installed", { version: ext.version });
-    return navCard("video", "Google Meet", t("meet.note"), value, () => openSub("meet"), "meet", !!ext && !stale);
-  }
-  function meetPage(v) {
-    const dir = v.speech.extensionDir;
-    const ext = extensionSeen(v);
-    const offer = engineRows(v, "Google Meet");
-    const status = !ext ? card("video", t("meet.notSetUp"), [running(v) ? t("meet.threeSteps") : t("meet.needsEngine")], null) : extensionReload(v) ? card(
-      "rotate-cw",
-      t("meet.oldId", { version: ext.version }),
-      [t("meet.oldIdNote")],
-      btn(t("meet.openInChrome"), () => openChrome("chrome://extensions/"), "primary")
-    ) : extensionStale(v) ? card("rotate-cw", t("meet.stale", { from: ext.version, to: v.speech.extensionShipped ?? "" }), [t("meet.staleNote")], btn(t("meet.openInChrome"), () => openChrome(extensionsPage(v)), "primary")) : card("circle-check", t("meet.installedIn", { version: ext.version }), [el("small", { class: "ok" }, t("meet.seen", { ago: ago(ext.seen) }))], caps(MEET_KEY));
-    return [
-      ...offer.length ? [grp(t("dictate.engine")), ...offer] : [],
-      grp(t("meet.extension")),
-      status,
-      grp(t("meet.setItUp")),
-      card("external-link", t("meet.step1"), [t("meet.step1Note")], btn(t("meet.openInChrome"), () => openChrome("chrome://extensions/"))),
-      card(
-        "folder",
-        t("meet.step2"),
-        [pathNote(dir), t("meet.step2Note")],
-        el("span", { class: "kchg" }, linkBtn(t("meet.showFolder"), () => post({ type: "showInFolder", path: dir })), btn([lucide("copy", "s"), t("meet.copyPath")], () => copyText(dir), "primary"))
-      ),
-      // Chrome asks for the microphone only on the extension's own page; it opens once the extension is in.
-      card(
-        "mic",
-        t("meet.stepMic"),
-        [t("meet.stepMicNote")],
-        ext && !extensionReload(v) ? btn(t("meet.openInChrome"), () => openChrome(MIC_PAGE)) : null
-      ),
-      card("video", t("meet.step3"), [t("meet.step3Note")], caps(MEET_KEY)),
-      grp(t("meet.off")),
-      card("keyboard", t("meet.keyNothing"), [t("meet.keyNothingNote")], btn(t("meet.openInChrome"), () => openChrome("chrome://extensions/shortcuts"))),
-      card("rotate-cw", t("meet.afterUpdate"), [t("meet.afterUpdateNote")], btn(t("meet.openInChrome"), () => openChrome(extensionsPage(v))))
-    ].filter((n) => n !== null);
-  }
   function speakersCard(v, open2 = () => openSub("speakers"), quiet = false) {
     if (!installed(v)) return null;
     const s = v.speech;
@@ -10106,7 +9916,6 @@ ${t("dictate.said", { heard: e.heard })}` : e.text,
       ...summarySettings(v),
       ...running(v) ? [grp(t("transcribe.new")), ...newRows(v)] : [],
       grp(t("transcribe.setup")),
-      meetCard(v),
       speakersCard(v),
       dataDir ? card("folder", t("transcribe.keptIn"), [pathNote(dataDir)], linkBtn(t("tray.open"), () => post({ type: "openPath", path: dataDir }))) : null,
       enginePlate([{ title: t("dictate.speechModel"), value: speechValue(v, "transcripts"), open: () => go("models", "forTranscribe") }])

@@ -182,8 +182,6 @@ const isTap = (hotkey: string) => /^(Left|Right)(Control|Shift|Alt|Super)(\*2)?$
 /** How a key is used, in a few words: a modifier alone is tapped, anything else pressed. */
 const usage = (hotkey: string) => t(isTap(hotkey) ? 'keys.tap' : 'keys.press', { key: said(hotkey) })
 
-/** The Chrome extension's key for recording a meeting (extension/manifest.json). */
-const MEET_KEY = 'Alt+Shift+M'
 
 /** The layouts the keys go through, in order: those chosen that Windows has, or all of them. */
 function cycleOf(v: AppView): KeyboardLayout[] {
@@ -771,7 +769,7 @@ function finishMoment(): void {
 // was scrolled to, as a browser does.
 
 /** A page of a page: a long part of it, opened from a line with a chevron or a tile. */
-type SubId = 'card' | 'screen' | 'aboutYou' | 'talkWindow' | 'notes' | 'edit' | 'meet' | 'speakers' | 'fixing' | 'program' | 'languages' | 'forTranslate' | 'forCheck' | 'forDictate' | 'forTranscribe' | 'forVoice'
+type SubId = 'card' | 'screen' | 'aboutYou' | 'talkWindow' | 'notes' | 'edit' | 'speakers' | 'fixing' | 'program' | 'languages' | 'forTranslate' | 'forCheck' | 'forDictate' | 'forTranscribe' | 'forVoice'
 
 type Place = { name: Page; sub?: SubId }
 
@@ -878,7 +876,6 @@ const SUBS: Record<SubId, Sub> = {
   talkWindow: { title: () => t('act.talkWindow'), body: talkWindowPage },
   notes: { title: () => t('dictate.notesFolder'), body: kbRows },
   edit: { title: () => t('edit.title'), body: editPage },
-  meet: { title: 'Google Meet', body: meetPage },
   speakers: { title: () => t('page.speakers'), body: speakerRows, valid: installed },
   fixing: { title: () => t('page.fixing'), body: fixingPage },
   program: { title: () => programOpen, body: programPage, valid: () => !!programOpen },
@@ -1063,7 +1060,6 @@ const SEARCHED: Place[] = [
   { name: 'voice', sub: 'edit' },
   { name: 'layout', sub: 'fixing' },
   { name: 'recordings', sub: 'speakers' },
-  { name: 'recordings', sub: 'meet' },
   { name: 'vocabulary' },
   { name: 'kept' },
   { name: 'learned' },
@@ -2377,121 +2373,6 @@ function whenSaid(iso: string, now: number): string {
 const copyText = (text: string) => void window.tutorHost.call({ call: 'copy', text }).then(() => toast(t('dictate.copiedText', { text })), fault)
 
 /** "just now", "4 min ago", "2 h ago", "yesterday", "26 Oct": a moment, as of now. */
-function ago(epochSeconds: number): string {
-  const s = Math.max(0, Date.now() / 1000 - epochSeconds)
-  if (s < 90) return t('dictate.justNow')
-  if (s < 3600) return t('dictate.minAgo', { n: Math.round(s / 60) })
-  if (s < 86_400) return t('dictate.hAgo', { n: Math.round(s / 3600) })
-  if (s < 2 * 86_400) return t('dictate.yesterday')
-  return formatDate(new Date(epochSeconds * 1000), { day: 'numeric', month: 'short' })
-}
-
-/**
- * Chrome's own page: Kryakl opens a new Chrome window and types the address into it. When the window did not
- * come to the front, or there is no Chrome, the address is copied for the person to paste.
- */
-function openChrome(url: string): void {
-  void window.tutorHost.call({ call: 'openChrome', url }).then(opened => {
-    if (opened === 'typed') return
-    const say = opened === 'opened' ? t('meet.chromeOpen') : t('meet.noChrome')
-    void window.tutorHost.call({ call: 'copy', text: url }).then(() => toast(say), fault)
-  }, fault)
-}
-
-/** The extension as the engine last saw it: it says hello when Chrome starts it, and every quarter of an hour. */
-const extensionSeen = (v: AppView) => v.speech.health?.extension ?? null
-
-/** 0.2.0 before 0.2.1: the version parts compared as numbers. */
-function olderVersion(a: string, b: string): boolean {
-  const x = a.split('.').map(Number)
-  const y = b.split('.').map(Number)
-  for (let i = 0; i < Math.max(x.length, y.length); i++) {
-    const d = (x[i] || 0) - (y[i] || 0)
-    if (d) return d < 0
-  }
-  return false
-}
-
-/** Chrome runs an older copy of the extension than the one in Kryakl's folder: Reload brings the new one in. */
-const extensionStale = (v: AppView) => {
-  const ext = extensionSeen(v)
-  return !!ext && !!v.speech.extensionShipped && olderVersion(ext.version, v.speech.extensionShipped)
-}
-
-/** The first version with a fixed id (the manifest's key, engine/auth.py): an older copy is refused, and Reload cannot help. */
-const FIXED_ID_SINCE = '0.4.0'
-/** Chrome runs a copy from before the fixed id: it must be removed and loaded again. */
-const extensionReload = (v: AppView) => {
-  const ext = extensionSeen(v)
-  return !!ext && olderVersion(ext.version, FIXED_ID_SINCE)
-}
-
-/** The extension's page that asks for the microphone (its fixed id, chrome.ts EXTENSION_ID). */
-const MIC_PAGE = 'chrome-extension://phokhlmnodckgejnaogjgpmfjnjkefpa/permission.html'
-
-/** The extensions page, at Kryakl's own card when Chrome has told its id. */
-const extensionsPage = (v: AppView) => {
-  const id = extensionSeen(v)?.id
-  return id && /^[a-p]{32}$/.test(id) ? `chrome://extensions/?id=${id}` : 'chrome://extensions/'
-}
-
-/** The card that opens the Google Meet page: whether the extension is in Chrome. */
-function meetCard(v: AppView): HTMLElement {
-  const ext = extensionSeen(v)
-  const stale = extensionStale(v)
-  const value = !ext
-    ? t('meet.setUp')
-    : extensionReload(v)
-      ? t('meet.loadAgain', { from: ext.version, to: v.speech.extensionShipped ?? '' })
-      : stale
-        ? t('meet.reload', { from: ext.version, to: v.speech.extensionShipped ?? '' })
-        : t('meet.installed', { version: ext.version })
-  return navCard('video', 'Google Meet', t('meet.note'), value, () => openSub('meet'), 'meet', !!ext && !stale)
-}
-
-/** How to record a Google Meet call: the Chrome extension, loaded from Kryakl's folder, and whether it is there. */
-function meetPage(v: AppView): HTMLElement[] {
-  const dir = v.speech.extensionDir
-  const ext = extensionSeen(v)
-  const offer = engineRows(v, 'Google Meet')
-  const status = !ext
-    ? card('video', t('meet.notSetUp'), [running(v) ? t('meet.threeSteps') : t('meet.needsEngine')], null)
-    : extensionReload(v)
-      ? card(
-          'rotate-cw',
-          t('meet.oldId', { version: ext.version }),
-          [t('meet.oldIdNote')],
-          btn(t('meet.openInChrome'), () => openChrome('chrome://extensions/'), 'primary'),
-        )
-      : extensionStale(v)
-      ? card('rotate-cw', t('meet.stale', { from: ext.version, to: v.speech.extensionShipped ?? '' }), [t('meet.staleNote')], btn(t('meet.openInChrome'), () => openChrome(extensionsPage(v)), 'primary'))
-      : card('circle-check', t('meet.installedIn', { version: ext.version }), [el('small', { class: 'ok' }, t('meet.seen', { ago: ago(ext.seen) }))], caps(MEET_KEY))
-  return [
-    ...(offer.length ? [grp(t('dictate.engine')), ...offer] : []),
-    grp(t('meet.extension')),
-    status,
-    grp(t('meet.setItUp')),
-    card('external-link', t('meet.step1'), [t('meet.step1Note')], btn(t('meet.openInChrome'), () => openChrome('chrome://extensions/'))),
-    card(
-      'folder',
-      t('meet.step2'),
-      [pathNote(dir), t('meet.step2Note')],
-      el('span', { class: 'kchg' }, linkBtn(t('meet.showFolder'), () => post({ type: 'showInFolder', path: dir })), btn([lucide('copy', 's'), t('meet.copyPath')], () => copyText(dir), 'primary')),
-    ),
-    // Chrome asks for the microphone only on the extension's own page; it opens once the extension is in.
-    card(
-      'mic',
-      t('meet.stepMic'),
-      [t('meet.stepMicNote')],
-      ext && !extensionReload(v) ? btn(t('meet.openInChrome'), () => openChrome(MIC_PAGE)) : null,
-    ),
-    card('video', t('meet.step3'), [t('meet.step3Note')], caps(MEET_KEY)),
-    grp(t('meet.off')),
-    card('keyboard', t('meet.keyNothing'), [t('meet.keyNothingNote')], btn(t('meet.openInChrome'), () => openChrome('chrome://extensions/shortcuts'))),
-    card('rotate-cw', t('meet.afterUpdate'), [t('meet.afterUpdateNote')], btn(t('meet.openInChrome'), () => openChrome(extensionsPage(v)))),
-  ].filter((n): n is HTMLElement => n !== null)
-}
-
 /** The card that opens who spoke when: where it runs, whether it is here, its model's state; `quiet` (Models): where it runs, grey like the other actions, a problem still named. */
 function speakersCard(v: AppView, open = () => openSub('speakers'), quiet = false): HTMLElement | null {
   if (!installed(v)) return null
@@ -2543,7 +2424,6 @@ function recordingsPage(v: AppView): HTMLElement[] {
     ...summarySettings(v),
     ...(running(v) ? [grp(t('transcribe.new')), ...newRows(v)] : []),
     grp(t('transcribe.setup')),
-    meetCard(v),
     speakersCard(v),
     dataDir ? card('folder', t('transcribe.keptIn'), [pathNote(dataDir)], linkBtn(t('tray.open'), () => post({ type: 'openPath', path: dataDir }))) : null,
     enginePlate([{ title: t('dictate.speechModel'), value: speechValue(v, 'transcripts'), open: () => go('models', 'forTranscribe') }]),

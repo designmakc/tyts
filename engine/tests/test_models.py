@@ -78,7 +78,7 @@ def test_a_failed_removal_says_so(client, models, monkeypatch):
     assert answer.status_code == 409 and "in use" in answer.json()["detail"]
 
 
-def test_the_extension_cannot_remove_a_model(client, models):
+def test_a_page_or_no_key_cannot_remove_a_model(client, models):
     whisper_here("tiny")
     assert client.request("DELETE", "/models/tiny", headers={**OURS, **KEY}).status_code == 403
     assert client.request("DELETE", "/models/tiny").status_code == 401

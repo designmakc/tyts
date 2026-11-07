@@ -80,7 +80,8 @@ describe('makeReport', () => {
     for (const d of temp.splice(0)) fs.rmSync(d, { recursive: true, force: true })
   })
 
-  it('takes the logs and the computer, cleaned, and never the speech settings or the lists', async () => {
+  // The zip is tar's `-a` of bsdtar (Windows, a Mac); GNU tar on Linux writes no zip.
+  it.skipIf(process.platform === 'linux')('takes the logs and the computer, cleaned, and never the speech settings or the lists', async () => {
     const home = dir()
     fs.writeFileSync(path.join(home, 'kryakl.log'), 'start: Kryakl\ncopy: came in 30 ms from C:\\Users\\creoo\\Code.exe\n')
     fs.writeFileSync(path.join(home, 'kryakl.old.log'), 'before\n')

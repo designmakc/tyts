@@ -1,6 +1,5 @@
 // A call recording's chunks on their way to the speech engine, one track at a
-// time, as the Chrome extension sends a meeting's (extension/offscreen.js): in
-// order, each tried five times; 409 is the engine saying it has it. A chunk
+// time, in order, each tried five times; 409 is the engine saying it has it. A chunk
 // that never goes is counted, never fatal: the recording goes on, and the count
 // goes with `finish` as `lost`.
 

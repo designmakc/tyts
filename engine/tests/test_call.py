@@ -194,12 +194,12 @@ def test_screenshots_are_kept_beside_the_sound_and_listed_by_time(client, fake_s
     client.request("PUT", f"/recordings/{id}/system/0", headers=KEY, content=b"webm")
     assert client.request("PUT", f"/recordings/{id}/shots/12000", headers=KEY, content=JPEG).status_code == 204
     assert client.request("PUT", f"/recordings/{id}/shots/4000", headers=KEY, content=JPEG, params={"manual": "1"}).status_code == 204
-    # Not a JPEG, too large, a time out of range, no key, the extension's Origin: refused.
+    # Not a JPEG, too large, a time out of range, no key, a page's Origin: refused.
     assert client.request("PUT", f"/recordings/{id}/shots/1", headers=KEY, content=b"png").status_code == 415
     assert client.request("PUT", f"/recordings/{id}/shots/1", headers=KEY, content=b"\xff\xd8" + b"x" * (2 << 20)).status_code == 413
     assert client.request("PUT", f"/recordings/{id}/shots/-1", headers=KEY, content=JPEG).status_code == 400
     assert client.request("PUT", f"/recordings/{id}/shots/1", content=JPEG).status_code == 401
-    assert client.request("PUT", f"/recordings/{id}/shots/1", headers={"origin": engine.auth.EXTENSION_ORIGIN}, content=JPEG).status_code == 403
+    assert client.request("PUT", f"/recordings/{id}/shots/1", headers={"origin": "chrome-extension://" + "a" * 32}, content=JPEG).status_code == 403
     assert client.post(f"/recordings/{id}/finish", headers=KEY, json={}).status_code == 200
     # The call has ended: no more.
     assert client.request("PUT", f"/recordings/{id}/shots/20000", headers=KEY, content=JPEG).status_code == 409
@@ -248,6 +248,6 @@ def test_key_screenshots_and_speaker_hints_are_marks_not_edits(client, fake_soun
     client.request("PATCH", f"/transcripts/{id}", headers=KEY, json={"shots": {"12000.jpg": {"key": False}}, "speakerHints": {speaker: None}})
     t = store.transcript(id)
     assert "key" not in t["shots"][0] and "speakerHints" not in t
-    # Only Kryakl: no key, or the extension's Origin, is refused.
+    # Only Kryakl: no key, or a page's Origin, is refused.
     assert client.request("PATCH", f"/transcripts/{id}", json={"shots": {}}).status_code == 401
-    assert client.request("PATCH", f"/transcripts/{id}", headers={"origin": engine.auth.EXTENSION_ORIGIN}, json={"shots": {}}).status_code in (401, 403)
+    assert client.request("PATCH", f"/transcripts/{id}", headers={"origin": "chrome-extension://" + "a" * 32}, json={"shots": {}}).status_code in (401, 403)

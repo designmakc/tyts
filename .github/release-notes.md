@@ -1,3 +1,7 @@
+## Tyts 0.2.1
+
+**The Mac version is built by GitHub Actions** beside the Windows installer, so every release now carries `Tyts-<version>-arm64.dmg` too. Otherwise the same as 0.2.0.
+
 ## Tyts 0.2.0
 
 **The speech engine starts even when Windows holds port 8765.** On some computers Windows reserves port 8765 (an excluded port range, Hyper-V's or WSL's), and the engine failed at every start with "keeps stopping (3)". The engine now takes the first free port of 8765–8774, and the first line of `speech.log` at each start names it.

@@ -1,5 +1,6 @@
 # Every push and pull request: the tests, the typecheck and the build on Windows,
-# where Tyts runs (the engine's tests on its core part). A read-only token:
+# where Tyts runs (the engine's tests on its core part), and the Mac dmg on Apple
+# silicon, as release.yml makes it, so a tag never finds the Mac build broken. A read-only token:
 # the steps run code from npm and PyPI. Actions pinned by commit, as in release.yml.
 name: CI
 
@@ -32,3 +33,16 @@ jobs:
       - run: uv sync --frozen --group dev
         working-directory: engine
       - run: npm run test:engine
+
+  mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run dist:mac -- --publish never

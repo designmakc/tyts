@@ -2625,7 +2625,7 @@ function programPage(v: AppView): HTMLElement[] {
   const part = (p: AppPart, iconName: LucideName, label: string, note: string) =>
     toggleCard(iconName, label, !rule.off.includes(p), on => change({ off: on ? rule.off.filter(x => x !== p) : [...rule.off, p] }), note)
   return [
-    grp(t('kb.hereKryakl')),
+    grp(t('kb.hereTyts')),
     part('fix', 'spell-check', t('kb.fixes'), t('kb.fixesNote')),
     part('switch', 'keyboard', t('kb.switches'), t('kb.switchesNote')),
     part('badge', 'type', t('kb.shows'), t('kb.partBadge')),
@@ -3007,7 +3007,7 @@ function oldNotice(v: AppView, s: StorageView): HTMLElement | null {
       el('small', {}, t('storage.usesThere', { names })),
       s.old.why ? el('small', { class: 'bad' }, t('storage.notMoved', { why: s.old.why })) : null,
     ),
-    s.old.moving ? el('span', { class: 'v' }, t('storage.moving')) : btn(t('storage.move'), () => post({ type: 'moveToKryakl' }), 'primary'),
+    s.old.moving ? el('span', { class: 'v' }, t('storage.moving')) : btn(t('storage.move'), () => post({ type: 'moveToTyts' }), 'primary'),
   )
 }
 

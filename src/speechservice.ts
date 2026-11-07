@@ -213,7 +213,7 @@ export class SpeechService {
     log.write(`\n--- ${new Date().toISOString()} start on port ${this.port}\n`)
     const child = spawn(python, ['app.py', '--port', String(this.port)], {
       cwd: this.o.engineDir,
-      env: { ...process.env, ...this.o.env, KRYA_SPEECH_TOKEN: this.o.token, PYTHONIOENCODING: 'utf-8', PYTHONUNBUFFERED: '1', PYTHONPYCACHEPREFIX: this.o.pycache },
+      env: { ...process.env, ...this.o.env, TYTS_SPEECH_TOKEN: this.o.token, PYTHONIOENCODING: 'utf-8', PYTHONUNBUFFERED: '1', PYTHONPYCACHEPREFIX: this.o.pycache },
       windowsHide: true,
     })
     child.stdout.pipe(log, { end: false })
@@ -250,14 +250,14 @@ export class SpeechService {
     try {
       // The proof first, without the key: the key goes only to an engine that shows it has it.
       const nonce = randomBytes(16).toString('hex')
-      const look = (await this.askHealth({ 'x-krya-nonce': nonce })) as { proof?: unknown } | null
+      const look = (await this.askHealth({ 'x-tyts-nonce': nonce })) as { proof?: unknown } | null
       if (!provesKey(this.o.token, nonce, look?.proof)) {
         this.proved = false
         this.health = undefined
         // An engine of an older Kryakl (it answers as one, but holds no key), left running: it goes, once, and Kryakl starts its own.
         if (!this.staleStopped && !this.child && !this.launching && looksLikeEngine(look) && this.o.stopStale) {
           this.staleStopped = true
-          this.stopping = this.o.stopStale().catch(error => console.warn('Kryakl: could not stop the older speech engine', error))
+          this.stopping = this.o.stopStale().catch(error => console.warn('Tyts: could not stop the older speech engine', error))
           await this.stopping
           this.stopping = undefined
           if (!this.stopped && !this.child) void this.launch()
@@ -300,7 +300,7 @@ export class SpeechService {
   }
 
   private get auth(): Record<string, string> {
-    return { 'x-krya-token': this.o.token }
+    return { 'x-tyts-token': this.o.token }
   }
 
   private set(state: SpeechServiceState, trouble?: string): void {

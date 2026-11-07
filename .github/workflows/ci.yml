@@ -1,5 +1,5 @@
-# Every push and pull request: the tests, the typecheck and the build on Windows,
-# where Tyts runs (the engine's tests on its core part), and the Mac dmg on Apple
+# Every push and pull request: the tests, the typecheck, the build and the installer on Windows,
+# where Tyts runs (the engine's tests on its core part; the installer kept 7 days as an artifact), and the Mac dmg on Apple
 # silicon, as release.yml makes it, so a tag never finds the Mac build broken. A read-only token:
 # the steps run code from npm and PyPI. Actions pinned by commit, as in release.yml.
 name: CI
@@ -33,6 +33,14 @@ jobs:
       - run: uv sync --frozen --group dev
         working-directory: engine
       - run: npm run test:engine
+      # The installer of this very commit, to try a branch live before it is merged: Actions › the run › Artifacts › installer.
+      - run: npm run dist -- --publish never
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: installer
+          path: release/Tyts-Setup-*.exe
+          if-no-files-found: error
+          retention-days: 7
 
   mac:
     runs-on: macos-latest

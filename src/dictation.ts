@@ -333,7 +333,7 @@ export class Dictation {
       await this.o.paste(`${text} `)
     } catch (error) {
       // Said in the badge, never an unhandled rejection; the phrase is still kept in the list below.
-      console.warn('Kryakl: could not type the phrase', error)
+      console.warn('Tyts: could not type the phrase', error)
       this.fail(`Could not type it: ${error instanceof Error ? error.message : String(error)}`)
     }
     if (note) this.hideSoon(NOTE_SHOWN_MS)
@@ -345,8 +345,8 @@ export class Dictation {
   typeAgain(): void {
     if (this.state !== 'idle' || this.opening) return
     const last = this.o.log.last()
-    if (!last) return this.o.balloon('Kryakl', 'Nothing dictated yet')
-    this.o.paste(`${last.text} `).catch(error => console.warn('Kryakl: could not type the phrase again', error))
+    if (!last) return this.o.balloon('Tyts', 'Nothing dictated yet')
+    this.o.paste(`${last.text} `).catch(error => console.warn('Tyts: could not type the phrase again', error))
   }
 
   clearLog(): void {
@@ -427,7 +427,7 @@ export class Dictation {
       alwaysOnTop: true,
       // The program being typed in keeps the focus, so the text lands there.
       focusable: false,
-      title: 'Kryakl dictation',
+      title: 'Tyts dictation',
       // The page draws the pill itself (its 16 px corners and 1 px edge, dictation.css): the window around it is
       // see-through, on Windows 10 and 11 alike, as DWM's own round corner is fixed at about 8 px.
       transparent: true,
@@ -476,7 +476,7 @@ export class Dictation {
     try {
       putOnTop(handleOf(b))
     } catch (error) {
-      console.warn('Kryakl: Windows did not put the badge on top', error)
+      console.warn('Tyts: Windows did not put the badge on top', error)
     }
   }
 
@@ -485,7 +485,7 @@ export class Dictation {
     try {
       return sightOf(handleOf(b))
     } catch (error) {
-      console.warn('Kryakl: could not ask Windows about the badge', error)
+      console.warn('Tyts: could not ask Windows about the badge', error)
       return undefined
     }
   }
@@ -540,7 +540,7 @@ export class Dictation {
       const rect = windowRect(foreground().hwnd)
       if (rect) return screen.getDisplayMatching(screen.screenToDipRect(null, rect)).workArea
     } catch (error) {
-      console.warn('Kryakl: could not find the window in front', error)
+      console.warn('Tyts: could not find the window in front', error)
     }
     return screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea
   }

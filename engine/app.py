@@ -1,7 +1,7 @@
 """Kryakl's speech service: a local HTTP service on 127.0.0.1 for Kryakl and other apps.
 
 Run: python app.py [--port 8765]. Only this computer can reach it, and only
-callers with the engine's key (X-Krya-Token, see auth.py) are served; a web
+callers with the engine's key (X-Tyts-Token, see auth.py) are served; a web
 page or a browser extension cannot call it (see `guard`).
 
 What other apps may use, and keep using:
@@ -22,7 +22,7 @@ What other apps may use, and keep using:
   POST /transcripts {path}            a file on this computer -> a transcript in the library
   POST /recordings ...                a recording that arrives in chunks (a call, the microphone, a note)
   GET  /health                        what is installed (parts), loaded and busy; without
-                                      the key only {ok}, or with X-Krya-Nonce only {proof}
+                                      the key only {ok}, or with X-Tyts-Nonce only {proof}
   GET  /transcripts/<id>/file?format= the transcript as txt, md, srt, vtt, docx or json (bytes)
 
 Kryakl alone uses: PUT /settings {plan, vocabulary: [{word, heard}]} (which model runs
@@ -60,6 +60,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 import asr
 import audio
 import auth
+import calls
 import diarize
 import export
 import notes
@@ -77,9 +78,9 @@ PORT = 8765
 SOURCES = ("file", "mic", "meet", "note", "system")
 # "system" is the whole computer's sound in a call (Kryakl's own recorder); "meet" was the Chrome extension's, kept for the transcripts it made.
 TRACKS = ("main", "mic", "tab", "system")
-MEDIA = {".mp4", ".mkv", ".webm", ".mov", ".avi", ".m4v", ".mp3", ".m4a", ".wav", ".ogg", ".oga", ".opus", ".flac", ".aac", ".wma"}
+MEDIA = calls.MEDIA
 
-log = logging.getLogger("kryakl")
+log = logging.getLogger("tyts")
 settings = Settings()
 
 
@@ -103,7 +104,7 @@ worker.dictating = sessions.active
 # The speed test runs only while nothing else does: no transcription, no phrase being recognized.
 calibrator = Calibrator(worker.bench, lambda: worker.idle() and not _dictating.locked() and not sessions.active(), worker.unload_all, lambda: worker.activity, worker.threads)
 # No /docs, /redoc or /openapi.json: Swagger's page would load scripts from a CDN onto the engine's own origin.
-app = FastAPI(title="Kryakl speech", version=VERSION, docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI(title="Tyts speech", version=VERSION, docs_url=None, redoc_url=None, openapi_url=None)
 TOKEN = auth.load_token()
 
 
@@ -118,9 +119,9 @@ async def guard(request: Request, call_next):
     if host not in ("127.0.0.1", "localhost") or request.headers.get("origin"):
         return JSONResponse({"detail": "forbidden"}, status_code=403)
     method, path = request.method, request.url.path
-    if not auth.token_ok(request.headers.get("x-krya-token", ""), TOKEN):
+    if not auth.token_ok(request.headers.get("x-tyts-token", ""), TOKEN):
         if method == "GET" and path == "/health":
-            nonce = request.headers.get("x-krya-nonce", "")
+            nonce = request.headers.get("x-tyts-nonce", "")
             # Kryakl's first look, before it sends the key: the proof alone, so a program that took the port never gets it.
             if auth.nonce_ok(nonce):
                 return JSONResponse({"proof": auth.proof(TOKEN, nonce)})
@@ -143,7 +144,7 @@ def planned(feature: str) -> dict:
 
 @app.get("/health")
 def health(request: Request):
-    nonce = request.headers.get("x-krya-nonce", "")
+    nonce = request.headers.get("x-tyts-nonce", "")
     # The proof that this engine holds the key (auth.py), as without it; Kryakl asks it without the key first (guard).
     return {**health_view(), **({"proof": auth.proof(TOKEN, nonce)} if auth.nonce_ok(nonce) else {})}
 
@@ -217,7 +218,7 @@ def _prepare() -> None:
 @app.post("/dictate/prepare")
 def prepare_dictation():
     """Loads (and the first time downloads) the dictation model in the background; /health shows how far."""
-    threading.Thread(target=_prepare, name="kryakl-prepare", daemon=True).start()
+    threading.Thread(target=_prepare, name="tyts-prepare", daemon=True).start()
     return planned("dictation")
 
 
@@ -301,7 +302,7 @@ def open_session(body: dict = Body(default={})):
     # stream.py calls a recognizer with (sound, language, expected, before) only; strictness rides along here.
     recognize = functools.partial(_piece, strict=body.get("strict") is True)
     session = sessions.open(Session(recognize, kind, expected, language))
-    threading.Thread(target=_prepare, name="kryakl-prepare", daemon=True).start()
+    threading.Thread(target=_prepare, name="tyts-prepare", daemon=True).start()
     return {"id": session.id, "model": planned("dictation")}
 
 
@@ -363,7 +364,7 @@ def download_model(name: str):
             except Exception:
                 log.exception("could not download %s", name)
 
-        threading.Thread(target=fetch, name=f"kryakl-fetch-{name}", daemon=True).start()
+        threading.Thread(target=fetch, name=f"tyts-fetch-{name}", daemon=True).start()
     return asr.model_state(name)
 
 
@@ -441,6 +442,8 @@ def put_settings(changes: dict = Body(...)):
     settings.update(changes)
     if "plan" in changes:
         worker.drop_unplanned(_dictating.locked)
+    if "callsDir" in changes:
+        worker.scan_calls()
     if isinstance(changes.get("hfToken"), str) and changes["hfToken"].strip():
         setup.start(settings["hfToken"])
     return public_settings()
@@ -566,7 +569,18 @@ def put_summary(id: str, body: dict = Body(...)):
         if isinstance(summary.get("edited"), str):
             t["summary"]["edited"] = summary["edited"]
     store.save(id, t)
+    if row.get("file"):
+        try:
+            calls.write_md(t, row["file"])
+        except OSError as error:
+            log.warning("calls folder: could not write the Markdown: %s", error)
     return {"ok": True}
+
+
+@app.get("/ask")
+def ask(q: str = ""):
+    """The pieces of the transcripts that answer a question best, for Kryakl's local model to answer from."""
+    return calls.passages(state.get_store(), q)
 
 
 @app.post("/transcripts/{id}/speakers")
@@ -682,7 +696,8 @@ def from_file(body: dict = Body(...)):
         "speakers": body.get("speakers") or None,
     }
     store = state.get_store()
-    id = store.create(body.get("title") or path.stem, "file", "queued", job)
+    # Named as its file, so the calls folder does not import it again.
+    id = store.create(body.get("title") or path.stem, "file", "queued", job, file=os.path.abspath(path))
     worker.submit(id)
     return {"id": id}
 
@@ -786,7 +801,7 @@ def cancel(id: str):
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type=int, default=int(os.environ.get("KRYA_SPEECH_PORT") or os.environ.get("ALTYPE_SPEECH_PORT") or PORT))
+    parser.add_argument("--port", type=int, default=int(os.environ.get("TYTS_SPEECH_PORT") or os.environ.get("ALTYPE_SPEECH_PORT") or PORT))
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
     # Only a real start adopts Altscribe's folders, never an import (the tests import this module).

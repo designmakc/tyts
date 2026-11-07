@@ -9,8 +9,8 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 
 const minutes = Number(process.argv[2] ?? 5)
-const home = process.env.KRYA_TEST_HOME ?? path.join(process.env.APPDATA ?? '', 'Kryakl')
-const port = Number(process.env.KRYA_SPEECH_PORT ?? 8765)
+const home = process.env.TYTS_TEST_HOME ?? path.join(process.env.APPDATA ?? "", "Tyts")
+const port = Number(process.env.TYTS_SPEECH_PORT ?? 8765)
 
 if (minutes > 0) {
   console.log(`Waiting ${minutes} min; use nothing of Kryakl's meanwhile…`)
@@ -23,7 +23,7 @@ const listing = execFileSync(ps, ['-NoProfile', '-Command', 'Get-Process | Where
 const repo = path.resolve('.').toLowerCase()
 const mine = JSON.parse(listing).filter(p => {
   const exe = p.Path.toLowerCase()
-  return /\\kryakl\.exe$/.test(exe) || (exe.startsWith(repo) && /electron\.exe$/.test(exe)) || /\\llama-server\.exe$/.test(exe) || (/\\(kryakl|krya|altype)\\speech\\/.test(exe) && /pythonw?\.exe$/.test(exe))
+  return /\\tyts\.exe$/.test(exe) || (exe.startsWith(repo) && /electron\.exe$/.test(exe)) || /\\llama-server\.exe$/.test(exe) || (/\\(tyts|kryakl|krya|altype)\\speech\\/.test(exe) && /pythonw?\.exe$/.test(exe))
 })
 const mb = bytes => Math.round(bytes / 1048576)
 console.log('\nKryakl\'s processes (private memory):')
@@ -41,9 +41,9 @@ try {
 const base = `http://127.0.0.1:${port}`
 try {
   const nonce = randomBytes(16).toString('hex')
-  const look = await (await fetch(`${base}/health`, { headers: { 'x-krya-nonce': nonce } })).json()
+  const look = await (await fetch(`${base}/health`, { headers: { 'x-tyts-nonce': nonce } })).json()
   if (!token || look.proof !== createHmac('sha256', token).update(nonce).digest('hex')) throw new Error('not Kryakl\'s engine, or no key here')
-  const health = await (await fetch(`${base}/health`, { headers: { 'x-krya-token': token } })).json()
+  const health = await (await fetch(`${base}/health`, { headers: { 'x-tyts-token': token } })).json()
   const loaded = health.loaded
   if (!loaded) console.log(`\nThe speech engine (${health.version}) does not say what it has in memory: one of Kryakl 0.12.0 or older`)
   else console.log(`\nThe speech engine has in memory: ${loaded.length ? loaded.map(m => `${m.model} (${m.device})`).join(', ') : 'nothing'}`)

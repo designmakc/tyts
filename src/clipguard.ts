@@ -119,7 +119,7 @@ export class ClipboardGuard<S> {
     this.cancelTimer()
     this.timer = setTimeout(() => {
       this.timer = undefined
-      void this.putBack().catch(error => console.warn('Kryakl: could not put the clipboard back', error))
+      void this.putBack().catch(error => console.warn('Tyts: could not put the clipboard back', error))
     }, ms)
   }
 
@@ -143,7 +143,7 @@ export class ClipboardGuard<S> {
     try {
       this.backend.restore(saved)
     } catch (error) {
-      console.warn('Kryakl: could not put the clipboard back on quitting', error)
+      console.warn('Tyts: could not put the clipboard back on quitting', error)
     }
   }
 

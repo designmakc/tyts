@@ -143,7 +143,7 @@
     "lang.yours": "your language",
     // ------------------------------------------------------------ the tray's panel
     "tray.open": "Open",
-    "tray.openKryakl": "Open Tyts",
+    "tray.openTyts": "Open Tyts",
     "tray.built": "Built {build}",
     "tray.actions": "Actions",
     "tray.listenCopied": "Translate and read aloud",
@@ -745,6 +745,14 @@
     "tr.toKb": "To knowledge base",
     "tr.inKb": "In the knowledge base: {file}",
     "tr.chooseFolder": "Choose a folder",
+    "tr.callsFolder": "Calls folder",
+    "tr.callsFolderNote": "recordings already in it are transcribed, each with a Markdown of its text beside it; the calls recorded here are saved there too",
+    "tr.callsSet": "Calls folder: {folder}",
+    "tr.ask": "Ask the recordings: what did we decide about\u2026",
+    "tr.askBtn": "Ask",
+    "tr.asking": "Looking through the recordings\u2026",
+    "tr.askNothing": "Nothing in the recordings matches the question.",
+    "tr.askNeedModel": "A question needs the local model: pick Accurate on the Models page.",
     "tr.deleteAsk": "Delete for good?",
     "tr.keep": "Keep",
     "tr.deleted": "Deleted",
@@ -1202,7 +1210,7 @@
     "kb.startsIn": "starts in {layout}",
     "kb.nothingLeftOut": "nothing left out",
     "kb.noLonger": "This program is no longer in the list.",
-    "kb.hereKryakl": "Here, Tyts",
+    "kb.hereTyts": "Here, Tyts",
     "kb.fixes": "Fixes words as you type",
     "kb.fixesNote": "off: words stay as typed; the fix key still works",
     "kb.switches": "Switches the layout by its keys",
@@ -1596,7 +1604,7 @@
     "lang.yours": "\u0432\u0430\u0448 \u044F\u0437\u044B\u043A",
     // ------------------------------------------------------------ the tray's panel
     "tray.open": "\u041E\u0442\u043A\u0440\u044B\u0442\u044C",
-    "tray.openKryakl": "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0422\u0438\u0446\u044C",
+    "tray.openTyts": "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0422\u0438\u0446\u044C",
     "tray.built": "\u0421\u043E\u0431\u0440\u0430\u043D\u043E {build}",
     "tray.actions": "\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u044F",
     "tray.listenCopied": "\u041F\u0435\u0440\u0435\u0432\u0435\u0441\u0442\u0438 \u0438 \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u0442\u044C \u0432\u0441\u043B\u0443\u0445",
@@ -2198,6 +2206,14 @@
     "tr.toKb": "\u0412 \u0431\u0430\u0437\u0443 \u0437\u043D\u0430\u043D\u0438\u0439",
     "tr.inKb": "\u0412 \u0431\u0430\u0437\u0435 \u0437\u043D\u0430\u043D\u0438\u0439: {file}",
     "tr.chooseFolder": "\u0412\u044B\u0431\u0440\u0430\u0442\u044C \u043F\u0430\u043F\u043A\u0443",
+    "tr.callsFolder": "\u041F\u0430\u043F\u043A\u0430 \u0441\u043E\u0437\u0432\u043E\u043D\u043E\u0432",
+    "tr.callsFolderNote": "\u0437\u0430\u043F\u0438\u0441\u0438, \u0447\u0442\u043E \u0443\u0436\u0435 \u043B\u0435\u0436\u0430\u0442 \u0432 \u043D\u0435\u0439, \u0440\u0430\u0441\u043F\u043E\u0437\u043D\u0430\u044E\u0442\u0441\u044F, \u0440\u044F\u0434\u043E\u043C \u0441 \u043A\u0430\u0436\u0434\u043E\u0439 Markdown \u0441 \u0442\u0435\u043A\u0441\u0442\u043E\u043C; \u0441\u043E\u0437\u0432\u043E\u043D\u044B, \u0437\u0430\u043F\u0438\u0441\u0430\u043D\u043D\u044B\u0435 \u0437\u0434\u0435\u0441\u044C, \u0442\u043E\u0436\u0435 \u0441\u043E\u0445\u0440\u0430\u043D\u044F\u044E\u0442\u0441\u044F \u0442\u0443\u0434\u0430",
+    "tr.callsSet": "\u041F\u0430\u043F\u043A\u0430 \u0441\u043E\u0437\u0432\u043E\u043D\u043E\u0432: {folder}",
+    "tr.ask": "\u0421\u043F\u0440\u043E\u0441\u0438\u0442\u044C \u0437\u0430\u043F\u0438\u0441\u0438: \u0447\u0442\u043E \u043C\u044B \u0440\u0435\u0448\u0438\u043B\u0438 \u043F\u043E\u2026",
+    "tr.askBtn": "\u0421\u043F\u0440\u043E\u0441\u0438\u0442\u044C",
+    "tr.asking": "\u041F\u0440\u043E\u0441\u043C\u0430\u0442\u0440\u0438\u0432\u0430\u044E \u0437\u0430\u043F\u0438\u0441\u0438\u2026",
+    "tr.askNothing": "\u0412 \u0437\u0430\u043F\u0438\u0441\u044F\u0445 \u043D\u0435\u0442 \u043D\u0438\u0447\u0435\u0433\u043E \u043E\u0431 \u044D\u0442\u043E\u043C.",
+    "tr.askNeedModel": "\u0414\u043B\u044F \u0432\u043E\u043F\u0440\u043E\u0441\u0430 \u043D\u0443\u0436\u043D\u0430 \u043B\u043E\u043A\u0430\u043B\u044C\u043D\u0430\u044F \u043C\u043E\u0434\u0435\u043B\u044C: \u0432\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \xAB\u0422\u043E\u0447\u043D\u044B\u0439\xBB \u043D\u0430 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0435 \u041C\u043E\u0434\u0435\u043B\u0438.",
     "tr.deleteAsk": "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u043D\u0430\u0432\u0441\u0435\u0433\u0434\u0430?",
     "tr.keep": "\u041E\u0441\u0442\u0430\u0432\u0438\u0442\u044C",
     "tr.deleted": "\u0423\u0434\u0430\u043B\u0435\u043D\u043E",
@@ -2655,7 +2671,7 @@
     "kb.startsIn": "\u043D\u0430\u0447\u0430\u043B\u044C\u043D\u0430\u044F \u0440\u0430\u0441\u043A\u043B\u0430\u0434\u043A\u0430: {layout}",
     "kb.nothingLeftOut": "\u043D\u0438\u0447\u0435\u0433\u043E \u043D\u0435 \u043E\u0442\u043A\u043B\u044E\u0447\u0435\u043D\u043E",
     "kb.noLonger": "\u042D\u0442\u043E\u0439 \u043F\u0440\u043E\u0433\u0440\u0430\u043C\u043C\u044B \u0443\u0436\u0435 \u043D\u0435\u0442 \u0432 \u0441\u043F\u0438\u0441\u043A\u0435.",
-    "kb.hereKryakl": "\u0417\u0434\u0435\u0441\u044C \u0422\u0438\u0446\u044C",
+    "kb.hereTyts": "\u0417\u0434\u0435\u0441\u044C \u0422\u0438\u0446\u044C",
     "kb.fixes": "\u0418\u0441\u043F\u0440\u0430\u0432\u043B\u044F\u0435\u0442 \u0441\u043B\u043E\u0432\u0430 \u043F\u0440\u0438 \u043D\u0430\u0431\u043E\u0440\u0435",
     "kb.fixesNote": "\u0432\u044B\u043A\u043B\u044E\u0447\u0435\u043D\u043E: \u0441\u043B\u043E\u0432\u0430 \u043E\u0441\u0442\u0430\u044E\u0442\u0441\u044F \u043A\u0430\u043A \u043D\u0430\u0431\u0440\u0430\u043D\u044B; \u043A\u043B\u0430\u0432\u0438\u0448\u0430 \u0438\u0441\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u044F \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442",
     "kb.switches": "\u041F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0430\u0435\u0442 \u0440\u0430\u0441\u043A\u043B\u0430\u0434\u043A\u0443 \u0441\u0432\u043E\u0438\u043C\u0438 \u043A\u043B\u0430\u0432\u0438\u0448\u0430\u043C\u0438",
@@ -3048,7 +3064,7 @@
     "lang.yours": "\u0432\u0430\u0448\u0430 \u043C\u043E\u0432\u0430",
     // ------------------------------------------------------------ the tray's panel
     "tray.open": "\u0412\u0456\u0434\u043A\u0440\u0438\u0442\u0438",
-    "tray.openKryakl": "\u0412\u0456\u0434\u043A\u0440\u0438\u0442\u0438 \u0422\u0438\u0446\u044C",
+    "tray.openTyts": "\u0412\u0456\u0434\u043A\u0440\u0438\u0442\u0438 \u0422\u0438\u0446\u044C",
     "tray.built": "\u0417\u0456\u0431\u0440\u0430\u043D\u043E {build}",
     "tray.actions": "\u0414\u0456\u0457",
     "tray.listenCopied": "\u041F\u0435\u0440\u0435\u043A\u043B\u0430\u0441\u0442\u0438 \u0439 \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u0442\u0438 \u0432\u0433\u043E\u043B\u043E\u0441",
@@ -3650,6 +3666,14 @@
     "tr.toKb": "\u0423 \u0431\u0430\u0437\u0443 \u0437\u043D\u0430\u043D\u044C",
     "tr.inKb": "\u0423 \u0431\u0430\u0437\u0456 \u0437\u043D\u0430\u043D\u044C: {file}",
     "tr.chooseFolder": "\u0412\u0438\u0431\u0440\u0430\u0442\u0438 \u043F\u0430\u043F\u043A\u0443",
+    "tr.callsFolder": "\u041F\u0430\u043F\u043A\u0430 \u0434\u0437\u0432\u0456\u043D\u043A\u0456\u0432",
+    "tr.callsFolderNote": "\u0437\u0430\u043F\u0438\u0441\u0438, \u0449\u043E \u0432\u0436\u0435 \u043B\u0435\u0436\u0430\u0442\u044C \u0443 \u043D\u0456\u0439, \u0440\u043E\u0437\u0448\u0438\u0444\u0440\u043E\u0432\u0443\u044E\u0442\u044C\u0441\u044F, \u043F\u043E\u0440\u0443\u0447 \u0456\u0437 \u043A\u043E\u0436\u043D\u043E\u044E Markdown \u0437 \u0442\u0435\u043A\u0441\u0442\u043E\u043C; \u0434\u0437\u0432\u0456\u043D\u043A\u0438, \u0437\u0430\u043F\u0438\u0441\u0430\u043D\u0456 \u0442\u0443\u0442, \u0442\u0435\u0436 \u0437\u0431\u0435\u0440\u0456\u0433\u0430\u044E\u0442\u044C\u0441\u044F \u0442\u0443\u0434\u0438",
+    "tr.callsSet": "\u041F\u0430\u043F\u043A\u0430 \u0434\u0437\u0432\u0456\u043D\u043A\u0456\u0432: {folder}",
+    "tr.ask": "\u0417\u0430\u043F\u0438\u0442\u0430\u0442\u0438 \u0437\u0430\u043F\u0438\u0441\u0438: \u0449\u043E \u043C\u0438 \u0432\u0438\u0440\u0456\u0448\u0438\u043B\u0438 \u0449\u043E\u0434\u043E\u2026",
+    "tr.askBtn": "\u0417\u0430\u043F\u0438\u0442\u0430\u0442\u0438",
+    "tr.asking": "\u041F\u0435\u0440\u0435\u0433\u043B\u044F\u0434\u0430\u044E \u0437\u0430\u043F\u0438\u0441\u0438\u2026",
+    "tr.askNothing": "\u0423 \u0437\u0430\u043F\u0438\u0441\u0430\u0445 \u043D\u0435\u043C\u0430\u0454 \u043D\u0456\u0447\u043E\u0433\u043E \u043F\u0440\u043E \u0446\u0435.",
+    "tr.askNeedModel": "\u0414\u043B\u044F \u0437\u0430\u043F\u0438\u0442\u0430\u043D\u043D\u044F \u043F\u043E\u0442\u0440\u0456\u0431\u043D\u0430 \u043B\u043E\u043A\u0430\u043B\u044C\u043D\u0430 \u043C\u043E\u0434\u0435\u043B\u044C: \u0432\u0438\u0431\u0435\u0440\u0456\u0442\u044C \xAB\u0422\u043E\u0447\u043D\u0438\u0439\xBB \u043D\u0430 \u0441\u0442\u043E\u0440\u0456\u043D\u0446\u0456 \u041C\u043E\u0434\u0435\u043B\u0456.",
     "tr.deleteAsk": "\u0412\u0438\u0434\u0430\u043B\u0438\u0442\u0438 \u043D\u0430\u0437\u0430\u0432\u0436\u0434\u0438?",
     "tr.keep": "\u0417\u0430\u043B\u0438\u0448\u0438\u0442\u0438",
     "tr.deleted": "\u0412\u0438\u0434\u0430\u043B\u0435\u043D\u043E",
@@ -4107,7 +4131,7 @@
     "kb.startsIn": "\u043F\u043E\u0447\u0430\u0442\u043A\u043E\u0432\u0430 \u0440\u043E\u0437\u043A\u043B\u0430\u0434\u043A\u0430: {layout}",
     "kb.nothingLeftOut": "\u043D\u0456\u0447\u043E\u0433\u043E \u043D\u0435 \u0432\u0438\u043C\u043A\u043D\u0435\u043D\u043E",
     "kb.noLonger": "\u0426\u0456\u0454\u0457 \u043F\u0440\u043E\u0433\u0440\u0430\u043C\u0438 \u0432\u0436\u0435 \u043D\u0435\u043C\u0430\u0454 \u0432 \u0441\u043F\u0438\u0441\u043A\u0443.",
-    "kb.hereKryakl": "\u0422\u0443\u0442 \u0422\u0438\u0446\u044C",
+    "kb.hereTyts": "\u0422\u0443\u0442 \u0422\u0438\u0446\u044C",
     "kb.fixes": "\u0412\u0438\u043F\u0440\u0430\u0432\u043B\u044F\u0454 \u0441\u043B\u043E\u0432\u0430 \u043F\u0456\u0434 \u0447\u0430\u0441 \u043D\u0430\u0431\u043E\u0440\u0443",
     "kb.fixesNote": "\u0432\u0438\u043C\u043A\u043D\u0435\u043D\u043E: \u0441\u043B\u043E\u0432\u0430 \u043B\u0438\u0448\u0430\u044E\u0442\u044C\u0441\u044F \u044F\u043A \u043D\u0430\u0431\u0440\u0430\u043D\u0456; \u043A\u043B\u0430\u0432\u0456\u0448\u0430 \u0432\u0438\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043D\u044F \u043F\u0440\u0430\u0446\u044E\u0454",
     "kb.switches": "\u041F\u0435\u0440\u0435\u043C\u0438\u043A\u0430\u0454 \u0440\u043E\u0437\u043A\u043B\u0430\u0434\u043A\u0443 \u0441\u0432\u043E\u0457\u043C\u0438 \u043A\u043B\u0430\u0432\u0456\u0448\u0430\u043C\u0438",
@@ -6858,6 +6882,18 @@
     );
   }
 
+  // src/ask.ts
+  var REQUEST_MS = 3 * 6e4;
+  var CITE = /\[(\d{1,2})\]/g;
+  function cited(text, count) {
+    const out = [];
+    for (const m of text.matchAll(CITE)) {
+      const n = Number(m[1]);
+      if (n >= 1 && n <= count && !out.includes(n)) out.push(n);
+    }
+    return out;
+  }
+
   // src/shots.ts
   var shownShots = (shots = []) => shots.filter((s) => s.manual || s.key).sort((a, b) => a.at - b.at);
   var POINTER = new RegExp(
@@ -7108,6 +7144,13 @@
     row: void 0,
     transcript: void 0,
     recorder: void 0,
+    /** A question to the calls (ask.ts): the one asked, its answer, or why there is none. */
+    question: "",
+    asking: false,
+    answer: void 0,
+    askError: "",
+    /** A moment to play from once the transcript opens (a cited passage). */
+    seekTo: void 0,
     language: "auto",
     speakers: 0,
     /** The delete button was tapped once: it asks. */
@@ -7274,8 +7317,68 @@
     if (!running(v)) return [row(t("speech.starting"), [t("tr.startingNote")], null)];
     return tx.openId ? transcriptPage(v) : libraryPage(v);
   }
+  var pathNote = (path) => el("small", { class: "path", title: path }, el("bdi", {}, path));
+  async function pickCalls() {
+    const folder = await window.tutorHost.call({ call: "pickFolder", title: t("tr.callsFolder"), current: engineSettings(hooks.view())?.callsDir ?? "" });
+    if (folder && await saveEngine({ callsDir: folder })) {
+      toast(t("tr.callsSet", { folder }));
+      void loadRows();
+    }
+  }
+  async function askCalls(question) {
+    tx.question = question;
+    tx.answer = void 0;
+    tx.askError = "";
+    tx.asking = true;
+    redrawPage();
+    try {
+      tx.answer = await window.tutorHost.call({ call: "askCalls", question });
+    } catch (error) {
+      tx.askError = problem(error) === "needModel" ? t("tr.askNeedModel") : problem(error);
+    }
+    tx.asking = false;
+    redrawPage();
+  }
+  function askRows() {
+    const input = el("input", { type: "search", placeholder: t("tr.ask"), value: tx.question });
+    const form = el(
+      "form",
+      { class: "search ask", onsubmit: (event) => (event.preventDefault(), input.value.trim() && !tx.asking && void askCalls(input.value.trim())) },
+      icon("comment-discussion"),
+      input,
+      btn(t("tr.askBtn"), () => form.requestSubmit(), "primary")
+    );
+    const out = [form];
+    if (tx.asking) out.push(el("p", { class: "answer muted" }, t("tr.asking")));
+    else if (tx.askError) out.push(el("p", { class: "answer muted" }, tx.askError));
+    else if (tx.answer) {
+      const a = tx.answer;
+      if (!a.sources.length) out.push(el("p", { class: "answer muted" }, t("tr.askNothing")));
+      else {
+        const open2 = (n) => {
+          const p = a.sources[n - 1];
+          if (p) openTranscript(p.id, p.at);
+        };
+        const text = el("div", { class: "answer" });
+        let last = 0;
+        for (const m of a.text.matchAll(CITE)) {
+          text.append(a.text.slice(last, m.index), el("button", { class: "cite", onclick: () => open2(Number(m[1])) }, m[1]));
+          last = (m.index ?? 0) + m[0].length;
+        }
+        text.append(a.text.slice(last));
+        const used = cited(a.text, a.sources.length);
+        const list2 = (used.length ? used : a.sources.map((_, i) => i + 1)).map((n) => {
+          const p = a.sources[n - 1];
+          return el("li", {}, el("button", { class: "cite", onclick: () => open2(n) }, String(n)), " ", linkBtn(`${p.title} \xB7 ${formatDate(new Date(p.created), DATE)} \xB7 ${clock(p.at)}`, () => open2(n)));
+        });
+        out.push(text, el("ul", { class: "sources" }, ...list2));
+      }
+    }
+    return out;
+  }
   function libraryPage(v) {
     const kb = v.speech.health?.kbDir;
+    const callsDir = engineSettings(v)?.callsDir;
     return [
       el(
         "div",
@@ -7297,6 +7400,8 @@
         ),
         btn([icon("add"), t("tr.new")], () => hooks.setup(), "", t("tr.newTitle"))
       ),
+      ...askRows(),
+      card("folder", t("tr.callsFolder"), [callsDir ? pathNote(callsDir) : t("tr.callsFolderNote")], linkBtn(callsDir ? t("dictate.change") : t("dictate.choose"), () => void pickCalls())),
       kb === "" ? aside("book-open", t("tr.needKb"), " ", linkBtn(t("tr.choose"), () => void pickKb())) : null,
       speakersMissing(v, () => hooks.setup()),
       list(v)
@@ -7354,9 +7459,10 @@
     if (r.status === "queued") return el("span", { class: "chip off" }, t("tr.waiting"));
     return el("span", { class: "chip lit" }, `${Math.round(r.progress * 100)}%`);
   }
-  function openTranscript(id) {
+  function openTranscript(id, at) {
     if (id !== tx.openId) stopPlayer();
     tx.openId = id;
+    tx.seekTo = at;
     tx.deleting = tx.exporting = tx.redoing = false;
     if (id && tx.row?.id !== id) {
       tx.row = void 0;
@@ -7421,7 +7527,13 @@
       stopPlayer();
       return [head, progressCard(r)];
     }
-    return [head, actions(tr), ...notices(v, r, tr), summaryBlock(v, tr), speakersStrip(tr), utterances(v, tr), player(v, tr)].filter((n) => n !== null);
+    const nodes = [head, actions(tr), ...notices(v, r, tr), summaryBlock(v, tr), speakersStrip(tr), utterances(v, tr), player(v, tr)].filter((n) => n !== null);
+    if (tx.seekTo !== void 0) {
+      const at = tx.seekTo;
+      tx.seekTo = void 0;
+      window.setTimeout(() => jumpTo(tr, at), 0);
+    }
+    return nodes;
   }
   function progressCard(r) {
     if (r.status === "failed") {
@@ -9683,7 +9795,7 @@ ${whenSaid(e.at, Date.now())}`,
       list2
     ];
   }
-  var pathNote = (path) => el("small", { class: "path", title: path }, el("bdi", {}, path));
+  var pathNote2 = (path) => el("small", { class: "path", title: path }, el("bdi", {}, path));
   function kbRows(v) {
     const e = engineSettings(v);
     if (!running(v) || !e) return [card("folder", t("dictate.notesFolder"), [installed(v) ? t("dictate.folderShown") : t("dictate.folderChosen")], null)];
@@ -9697,7 +9809,7 @@ ${whenSaid(e.at, Date.now())}`,
       onchange: (event) => void saveEngine({ kbInbox: event.target.value.trim() })
     });
     return [
-      card("folder", t("dictate.notesFolder"), [e.kbDir ? pathNote(e.kbDir) : t("dictate.folderNone")], linkBtn(e.kbDir ? t("dictate.change") : t("dictate.choose"), () => void pickKb())),
+      card("folder", t("dictate.notesFolder"), [e.kbDir ? pathNote2(e.kbDir) : t("dictate.folderNone")], linkBtn(e.kbDir ? t("dictate.change") : t("dictate.choose"), () => void pickKb())),
       card("notebook-pen", t("dictate.subfolder"), [t("dictate.subfolderNote")], inbox)
     ];
   }
@@ -9917,7 +10029,7 @@ ${t("dictate.said", { heard: e.heard })}` : e.text,
       ...running(v) ? [grp(t("transcribe.new")), ...newRows(v)] : [],
       grp(t("transcribe.setup")),
       speakersCard(v),
-      dataDir ? card("folder", t("transcribe.keptIn"), [pathNote(dataDir)], linkBtn(t("tray.open"), () => post({ type: "openPath", path: dataDir }))) : null,
+      dataDir ? card("folder", t("transcribe.keptIn"), [pathNote2(dataDir)], linkBtn(t("tray.open"), () => post({ type: "openPath", path: dataDir }))) : null,
       enginePlate([{ title: t("dictate.speechModel"), value: speechValue(v, "transcripts"), open: () => go("models", "forTranscribe") }])
     ].filter((n) => n !== null);
   }
@@ -10089,7 +10201,7 @@ ${t("dictate.said", { heard: e.heard })}` : e.text,
     const change = (next) => save({ apps: apps().map((a) => a.exe === rule.exe ? { ...a, ...next } : a) });
     const part = (p, iconName, label, note) => toggleCard(iconName, label, !rule.off.includes(p), (on) => change({ off: on ? rule.off.filter((x) => x !== p) : [...rule.off, p] }), note);
     return [
-      grp(t("kb.hereKryakl")),
+      grp(t("kb.hereTyts")),
       part("fix", "spell-check", t("kb.fixes"), t("kb.fixesNote")),
       part("switch", "keyboard", t("kb.switches"), t("kb.switchesNote")),
       part("badge", "type", t("kb.shows"), t("kb.partBadge")),
@@ -10351,7 +10463,7 @@ ${t("dictate.said", { heard: e.heard })}` : e.text,
     const key = `${p.id}:${p.item ?? ""}`;
     const label = el("span", {}, storedName(v, p), p.unused ? el("span", { class: "chip unused" }, t("storage.notUsed")) : null);
     const size2 = el("span", { class: "v num" }, size(p.bytes / 1e6));
-    const where2 = p.away ? pathNote(p.path) : null;
+    const where2 = p.away ? pathNote2(p.path) : null;
     if (p.id === "yours" || p.id === "transcripts") return row(label, [storedNote(v, p), where2], el("span", { class: "kchg" }, size2, linkBtn(t("tray.open"), () => post({ type: "openPath", path: p.path }))));
     const remove2 = () => {
       asking2 = "";
@@ -10379,7 +10491,7 @@ ${t("dictate.said", { heard: e.heard })}` : e.text,
       grp(t("storage.downloads")),
       row(
         t("storage.everything", { size: size(downloadsMb(s)) }),
-        [t(away ? "storage.inFolderAway" : "storage.inFolder", { free: size(s.freeMb), drive: s.drive }), pathNote(s.root)],
+        [t(away ? "storage.inFolderAway" : "storage.inFolder", { free: size(s.freeMb), drive: s.drive }), pathNote2(s.root)],
         linkBtn(t("storage.openFolder"), () => post({ type: "openPath", path: s.root }))
       ),
       grp(t("storage.models")),
@@ -10406,7 +10518,7 @@ ${t("dictate.said", { heard: e.heard })}` : e.text,
         el("small", {}, t("storage.usesThere", { names })),
         s.old.why ? el("small", { class: "bad" }, t("storage.notMoved", { why: s.old.why })) : null
       ),
-      s.old.moving ? el("span", { class: "v" }, t("storage.moving")) : btn(t("storage.move"), () => post({ type: "moveToKryakl" }), "primary")
+      s.old.moving ? el("span", { class: "v" }, t("storage.moving")) : btn(t("storage.move"), () => post({ type: "moveToTyts" }), "primary")
     );
   }
   var languageName2 = (code) => languageName(code);

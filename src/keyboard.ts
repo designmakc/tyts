@@ -346,7 +346,7 @@ export class KeyboardHelper {
         this.events.menuClosed()
         return
       case 'note':
-        console.warn(`Kryakl keyboard: ${message.text}`)
+        console.warn(`Tyts keyboard: ${message.text}`)
         return
       case 'error':
         this.events.failed(message.message)

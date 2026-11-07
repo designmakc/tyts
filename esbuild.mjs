@@ -33,7 +33,7 @@ const main = {
   entryPoints: ['src/main.ts'],
   external: ['electron', 'koffi'],
   outfile: 'dist/main.js',
-  define: { KRYA_BUILD: JSON.stringify(buildStamp()) },
+  define: { TYTS_BUILD: JSON.stringify(buildStamp()) },
 }
 
 /** @type {import('esbuild').BuildOptions} */

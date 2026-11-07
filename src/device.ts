@@ -223,7 +223,7 @@ export async function probeDevice(): Promise<DeviceProfile> {
   try {
     profile = parseWindows(await powershell(), base)
   } catch (error) {
-    console.warn('Kryakl: could not ask Windows about this computer', error)
+    console.warn('Tyts: could not ask Windows about this computer', error)
   }
   return withNvidia(profile, parseNvidiaSmi(await nvidiaSmi()))
 }
@@ -252,7 +252,7 @@ function writeDeviceFile(file: string, changes: DeviceFile): void {
     fs.mkdirSync(path.dirname(file), { recursive: true })
     fs.writeFileSync(file, JSON.stringify({ ...readDeviceFile(file), ...changes }, null, 2))
   } catch (error) {
-    console.warn('Kryakl: could not save device.json', error)
+    console.warn('Tyts: could not save device.json', error)
   }
 }
 

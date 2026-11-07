@@ -1,3 +1,17 @@
+## Tyts 0.3.0
+
+**Your calls folder (new).** On the Calls page, pick the folder where your call recordings live, even ones another program made. Tyts transcribes every recording already in it, one at a time in the background, dated by the file, and never moves or copies your files. The calls Tyts records are saved into the same folder. Each recording gets a Markdown file beside it with the text and the summary, so Obsidian or any notes app opens the folder as a knowledge base. New files that appear there are picked up within a few minutes; a recording you delete from Tyts is not imported again.
+
+**Ask your recordings (new).** Above the list of calls, ask in your own words: "what did we decide about the badge colours?". Tyts finds the moments where it was discussed and the local model answers from them alone, with numbered links; a link opens that call at that minute. It runs on this computer, like the summaries, and needs the Accurate model (Settings › Models).
+
+**Layout switching and fixing work in a maximized window again (Windows).** Windows reports any window that fills the screen as "a program on the full screen", and Tyts turned all its keys off there to stay out of games and videos. A maximized window such as Claude's counted too, so the switch key and fixing as you type did nothing in it. Now only a window that really covers its whole monitor (a game, a video in full screen, a presentation) quiets Tyts. The local model no longer unloads for a maximized window either.
+
+**A switch the window ignored no longer blocks the fix.** When a program does not take the layout Tyts asks for, the next word is still fixed as you type, and `tyts.log` says which program kept its layout.
+
+**A call's sound plays again** when the speech engine runs on a port other than 8765.
+
+**The log is `tyts.log`** (in `%APPDATA%\Tyts` on Windows); the old `kryakl.log` there is renamed at the first start. The keyboard now writes in it what it sees, which program is in front and whether it went quiet, so a report says why a key did nothing. Every name left over from Kryakl that a person or another program could see is now Tyts's; backups made by older versions still import.
+
 ## Tyts 0.2.1
 
 **The Mac version is built by GitHub Actions** beside the Windows installer, so every release now carries `Tyts-<version>-arm64.dmg` too. Otherwise the same as 0.2.0.

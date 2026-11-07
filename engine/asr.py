@@ -23,7 +23,7 @@ import phantoms
 from audio import RATE
 from settings import CATALOG, MODELS_DIR
 
-log = logging.getLogger("kryakl.asr")
+log = logging.getLogger("tyts.asr")
 
 # Whisper writes in the style of the text before it; without one it sometimes
 # drops capitals and full stops for a whole recording.

@@ -208,7 +208,7 @@ function render(v: TrayView): void {
   const openApp = () => post({ type: 'tray', command: 'open' })
   // The brand opens the window too; Open is the one the keys reach. The version beside it: a run from source says so, and when it was built.
   const version = el('span', { class: 'ver', title: t('tray.built', { build: v.build }) }, v.dev ? `${versionText(v.version)} dev` : versionText(v.version))
-  const brand = el('button', { class: 'brand', tabindex: '-1', title: t('tray.openKryakl'), onclick: openApp }, logo(), version)
+  const brand = el('button', { class: 'brand', tabindex: '-1', title: t('tray.openTyts'), onclick: openApp }, logo(), version)
   const open = el('button', { class: 'open', 'data-nav': true, 'data-id': 'open', onclick: openApp }, t('tray.open'))
   const panel = el(
     'div',

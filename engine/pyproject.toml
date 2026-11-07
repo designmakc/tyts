@@ -11,7 +11,7 @@
 #                 silicon only; src/speechpack.ts adds it to core)    ~800 MB (torch ~530, mlx 236, llvmlite 129; 2026-11-06)
 
 [project]
-name = "krya-speech"
+name = "tyts-speech"
 version = "0.1.0"
 description = "Kryakl's local speech engine: Whisper for the words, pyannote for the speakers."
 requires-python = ">=3.12,<3.13"

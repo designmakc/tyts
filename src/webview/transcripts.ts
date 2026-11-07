@@ -7,6 +7,8 @@
 // place, so its light keeps running.
 
 import { formatDate, languageName, levelName, t } from '../i18n'
+import type { Answer } from '../ask'
+import { CITE, cited } from '../ask'
 import type { AppView } from '../protocol'
 import { SUMMARY_OWN_MAX } from '../settings'
 import type { SummaryTemplate } from '../summary'
@@ -18,6 +20,7 @@ import { ChunkRecorder, micTrouble } from './recorder'
 import {
   api,
   clock,
+  engineSettings,
   fault,
   fileName,
   installed,
@@ -29,6 +32,7 @@ import {
   problem,
   redrawPage,
   running,
+  saveEngine,
   showFile,
   SpeechError,
   size as speechSize,
@@ -93,6 +97,13 @@ const tx = {
   row: undefined as Row | undefined,
   transcript: undefined as Transcript | undefined,
   recorder: undefined as ChunkRecorder | undefined,
+  /** A question to the calls (ask.ts): the one asked, its answer, or why there is none. */
+  question: '',
+  asking: false,
+  answer: undefined as Answer | undefined,
+  askError: '',
+  /** A moment to play from once the transcript opens (a cited passage). */
+  seekTo: undefined as number | undefined,
   language: 'auto',
   speakers: 0,
   /** The delete button was tapped once: it asks. */
@@ -289,8 +300,74 @@ export function transcriptsBody(v: AppView): HTMLElement[] {
   return tx.openId ? transcriptPage(v) : libraryPage(v)
 }
 
+const pathNote = (path: string) => el('small', { class: 'path', title: path }, el('bdi', {}, path))
+
+/** The calls folder (engine/calls.py): chosen here, the engine imports what is in it and saves the calls recorded here into it. */
+async function pickCalls(): Promise<void> {
+  const folder = (await window.tutorHost.call({ call: 'pickFolder', title: t('tr.callsFolder'), current: engineSettings(hooks.view()!)?.callsDir ?? '' })) as string | null
+  if (folder && (await saveEngine({ callsDir: folder }))) {
+    toast(t('tr.callsSet', { folder }))
+    void loadRows()
+  }
+}
+
+async function askCalls(question: string): Promise<void> {
+  tx.question = question
+  tx.answer = undefined
+  tx.askError = ''
+  tx.asking = true
+  redrawPage()
+  try {
+    tx.answer = (await window.tutorHost.call({ call: 'askCalls', question })) as Answer
+  } catch (error) {
+    tx.askError = problem(error) === 'needModel' ? t('tr.askNeedModel') : problem(error)
+  }
+  tx.asking = false
+  redrawPage()
+}
+
+/** The question's field, and under it the answer with its citations as links into the calls. */
+function askRows(): HTMLElement[] {
+  const input = el('input', { type: 'search', placeholder: t('tr.ask'), value: tx.question })
+  const form = el(
+    'form',
+    { class: 'search ask', onsubmit: (event: Event) => (event.preventDefault(), input.value.trim() && !tx.asking && void askCalls(input.value.trim())) },
+    icon('comment-discussion'),
+    input,
+    btn(t('tr.askBtn'), () => form.requestSubmit(), 'primary'),
+  )
+  const out: HTMLElement[] = [form]
+  if (tx.asking) out.push(el('p', { class: 'answer muted' }, t('tr.asking')))
+  else if (tx.askError) out.push(el('p', { class: 'answer muted' }, tx.askError))
+  else if (tx.answer) {
+    const a = tx.answer
+    if (!a.sources.length) out.push(el('p', { class: 'answer muted' }, t('tr.askNothing')))
+    else {
+      const open = (n: number) => {
+        const p = a.sources[n - 1]
+        if (p) openTranscript(p.id, p.at)
+      }
+      const text = el('div', { class: 'answer' })
+      let last = 0
+      for (const m of a.text.matchAll(CITE)) {
+        text.append(a.text.slice(last, m.index), el('button', { class: 'cite', onclick: () => open(Number(m[1])) }, m[1] as string))
+        last = (m.index ?? 0) + m[0].length
+      }
+      text.append(a.text.slice(last))
+      const used = cited(a.text, a.sources.length)
+      const list = (used.length ? used : a.sources.map((_, i) => i + 1)).map(n => {
+        const p = a.sources[n - 1]!
+        return el('li', {}, el('button', { class: 'cite', onclick: () => open(n) }, String(n)), ' ', linkBtn(`${p.title} · ${formatDate(new Date(p.created), DATE)} · ${clock(p.at)}`, () => open(n)))
+      })
+      out.push(text, el('ul', { class: 'sources' }, ...list))
+    }
+  }
+  return out
+}
+
 function libraryPage(v: AppView): HTMLElement[] {
   const kb = v.speech.health?.kbDir
+  const callsDir = engineSettings(v)?.callsDir
   return [
     el(
       'div',
@@ -312,6 +389,8 @@ function libraryPage(v: AppView): HTMLElement[] {
       ),
       btn([icon('add'), t('tr.new')], () => hooks.setup(), '', t('tr.newTitle')),
     ),
+    ...askRows(),
+    card('folder', t('tr.callsFolder'), [callsDir ? pathNote(callsDir) : t('tr.callsFolderNote')], linkBtn(callsDir ? t('dictate.change') : t('dictate.choose'), () => void pickCalls())),
     kb === '' ? aside('book-open', t('tr.needKb'), ' ', linkBtn(t('tr.choose'), () => void pickKb())) : null,
     speakersMissing(v, () => hooks.setup()),
     list(v),
@@ -377,9 +456,10 @@ function statusChip(r: Row): HTMLElement | null {
 // ---------------------------------------------------------------- a transcript
 
 /** Opens a transcript on the Transcripts page; an empty id, the library. */
-export function openTranscript(id: string): void {
+export function openTranscript(id: string, at?: number): void {
   if (id !== tx.openId) stopPlayer()
   tx.openId = id
+  tx.seekTo = at
   tx.deleting = tx.exporting = tx.redoing = false
   if (id && tx.row?.id !== id) {
     tx.row = undefined
@@ -452,7 +532,13 @@ function transcriptPage(v: AppView): HTMLElement[] {
     stopPlayer()
     return [head, progressCard(r)]
   }
-  return [head, actions(tr), ...notices(v, r, tr), summaryBlock(v, tr), speakersStrip(tr), utterances(v, tr), player(v, tr)].filter((n): n is HTMLElement => n !== null)
+  const nodes = [head, actions(tr), ...notices(v, r, tr), summaryBlock(v, tr), speakersStrip(tr), utterances(v, tr), player(v, tr)].filter((n): n is HTMLElement => n !== null)
+  if (tx.seekTo !== undefined) {
+    const at = tx.seekTo
+    tx.seekTo = undefined
+    window.setTimeout(() => jumpTo(tr, at), 0)
+  }
+  return nodes
 }
 
 function progressCard(r: Row): HTMLElement {

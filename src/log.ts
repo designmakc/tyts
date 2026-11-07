@@ -1,8 +1,8 @@
 // Kryakl's own log: a line per thing worth knowing after the fact (a window
-// that did not show, a download that failed), in %APPDATA%\Kryakl\kryakl.log,
+// that did not show, a download that failed), in %APPDATA%\Kryakl\tyts.log,
 // beside the engine's speech.log. The console gets the same line; main.ts
 // sends its warnings here too. Kept small: past 1 MB the file starts over,
-// the last one kept as kryakl.old.log, so a report (report.ts) still has the
+// the last one kept as tyts.old.log, so a report (report.ts) still has the
 // lines before a problem.
 
 import * as fs from 'node:fs'
@@ -14,10 +14,19 @@ let file = ''
 
 /** Where the log goes; until this is called, lines go to the console only. */
 export function logTo(dir: string): void {
-  file = path.join(dir, 'kryakl.log')
+  file = path.join(dir, 'tyts.log')
+  // A log written under the old name (kryakl.log, until 2026-11-07) goes on as this one, its .old.log with it.
+  const was = path.join(dir, 'kryakl.log')
+  for (const [from, to] of [[was, file], [oldLog(was), oldLog(file)]] as const) {
+    try {
+      if (fs.existsSync(from) && !fs.existsSync(to)) fs.renameSync(from, to)
+    } catch {
+      // Held or unreadable: a new log starts beside it.
+    }
+  }
 }
 
-/** The log before this one: kryakl.log → kryakl.old.log. */
+/** The log before this one: tyts.log → tyts.old.log. */
 export const oldLog = (file: string): string => `${file.replace(/\.log$/, '')}.old.log`
 
 /** Starts a log afresh once it is past `most` bytes, the last one kept beside it (`oldLog`). */
@@ -31,7 +40,7 @@ export function rotate(file: string, most: number): void {
 
 export function log(line: string): void {
   const stamp = new Date().toISOString().slice(11, 23)
-  console.log(`Kryakl ${stamp} ${line}`)
+  console.log(`Tyts ${stamp} ${line}`)
   if (!file) return
   try {
     rotate(file, MOST)

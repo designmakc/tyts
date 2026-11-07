@@ -24,7 +24,7 @@ import audio
 from asr import CudaFailed, backend, recognizer
 from audio import RATE
 
-log = logging.getLogger("kryakl.bench")
+log = logging.getLogger("tyts.bench")
 
 # ~39 s of English read by Kryakl's natural voice (Kokoro): made for this test, nobody's recording.
 CLIP = Path(__file__).resolve().parent / "calibration" / "clip.ogg"
@@ -167,7 +167,7 @@ class Calibrator:
         self.done = 0
         self.message = ""
         self.state = "waiting"
-        self._thread = threading.Thread(target=self._run, args=(runs, expected), name="kryakl-calibrate", daemon=True)
+        self._thread = threading.Thread(target=self._run, args=(runs, expected), name="tyts-calibrate", daemon=True)
         self._thread.start()
         return True
 

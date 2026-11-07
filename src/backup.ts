@@ -13,9 +13,9 @@
 import { t } from './i18n'
 import type { LearnedLists } from './learning'
 
-export const BACKUP_KIND = 'krya-backup'
-/** The kind a backup of Altype's days (0.10.2) carries: read as Kryakl's. */
-export const OLD_BACKUP_KINDS: readonly unknown[] = ['altype-backup']
+export const BACKUP_KIND = 'tyts-backup'
+/** The kinds Kryakl's and Altype's backups carry: read as Tyts's own. */
+export const OLD_BACKUP_KINDS: readonly unknown[] = ['krya-backup', 'altype-backup']
 
 export type BackupParts = {
   words: unknown[]

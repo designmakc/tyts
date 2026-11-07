@@ -29,7 +29,7 @@ afterEach(async () => {
 
 describe('the speech engine\'s key', () => {
   test('is made once, random, and kept beside the engine\'s settings', () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kryakl-token-'))
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tyts-token-'))
     dirs.push(dir)
     const file = path.join(dir, 'Kryakl', 'speech-token')
     const first = speechToken(file)
@@ -53,8 +53,8 @@ describe('the engine on the port', () => {
 
   /** Kryakl's engine as app.py's guard answers: the proof alone without the key, everything with it. */
   const realEngine = (req: http.IncomingMessage) => {
-    const keyed = req.headers['x-krya-token'] === 'k'
-    const nonce = req.headers['x-krya-nonce'] ? String(req.headers['x-krya-nonce']) : ''
+    const keyed = req.headers['x-tyts-token'] === 'k'
+    const nonce = req.headers['x-tyts-nonce'] ? String(req.headers['x-tyts-nonce']) : ''
     if (req.url === '/health') return keyed ? { ...ENGINE, ...(nonce ? { proof: answer('k', nonce) } : {}) } : nonce ? { proof: answer('k', nonce) } : { ok: true }
     return keyed ? { items: [] } : undefined
   }
@@ -73,7 +73,7 @@ describe('the engine on the port', () => {
       res.end(JSON.stringify(body ?? { detail: 'the engine\'s key is needed' }))
     })
     await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kryakl-engine-'))
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tyts-engine-'))
     dirs.push(dir)
     const stopStale = vi.fn(async () => undefined)
     const service: SpeechService = new SpeechService({
@@ -91,7 +91,7 @@ describe('the engine on the port', () => {
     await then?.(service)
     service.stop()
     await new Promise<void>(resolve => server.close(() => resolve()))
-    return { ...seen, stopStale, received, keyed: received.filter(r => 'x-krya-token' in r.headers) }
+    return { ...seen, stopStale, received, keyed: received.filter(r => 'x-tyts-token' in r.headers) }
   }
 
   test('Kryakl\'s own engine proves it holds the key before it gets it, and is then used', async () => {
@@ -101,7 +101,7 @@ describe('the engine on the port', () => {
     })
     // The first look carries the nonce alone; the key follows the proof.
     expect(r.received[0]).toMatchObject({ url: '/health' })
-    expect(r.received[0]!.headers).not.toHaveProperty('x-krya-token')
+    expect(r.received[0]!.headers).not.toHaveProperty('x-tyts-token')
     expect(r.keyed.map(k => k.url)).toEqual(['/health', '/transcripts'])
     expect(r.state).toBe('ready')
     expect(r.token).toBe('k')
@@ -161,9 +161,9 @@ describe('the engine\'s port', () => {
   const FAKE_ENGINE = `
     const http = require('http'); const { createHmac } = require('crypto')
     const port = Number(process.argv[process.argv.indexOf('--port') + 1])
-    const key = process.env.KRYA_SPEECH_TOKEN
+    const key = process.env.TYTS_SPEECH_TOKEN
     http.createServer((req, res) => {
-      const nonce = req.headers['x-krya-nonce']
+      const nonce = req.headers['x-tyts-nonce']
       res.setHeader('content-type', 'application/json')
       res.end(JSON.stringify({ ok: true, parts: {}, diarization: 'missing', version: 'fake', ...(nonce ? { proof: createHmac('sha256', key).update(String(nonce)).digest('hex') } : {}) }))
     }).listen(port, '127.0.0.1', err => { if (err) process.exit(3) }).on('error', () => process.exit(3))
@@ -178,7 +178,7 @@ describe('the engine\'s port', () => {
     const blocker = net.createServer(socket => sockets.add(socket))
     await new Promise<void>(resolve => blocker.listen(0, '127.0.0.1', resolve))
     const first = (blocker.address() as AddressInfo).port
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kryakl-engine-'))
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tyts-engine-'))
     dirs.push(dir)
     fs.writeFileSync(path.join(dir, 'app.py'), FAKE_ENGINE)
     const service = new SpeechService({ python: () => process.execPath, engineDir: dir, port: first, log: path.join(dir, 'speech.log'), pycache: path.join(dir, 'pycache'), token: 'k', change: () => undefined })

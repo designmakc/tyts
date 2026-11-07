@@ -18,7 +18,7 @@ import notes
 import settings as settings_module
 from store import Store
 
-KEY = {"x-krya-token": os.environ["KRYA_SPEECH_TOKEN"]}
+KEY = {"x-tyts-token": os.environ["TYTS_SPEECH_TOKEN"]}
 OURS = {"origin": "chrome-extension://" + "a" * 32}  # a browser extension's Origin: refused, as any (the Chrome extension went on 2026-11-07)
 OTHER = {"origin": "chrome-extension://" + "b" * 32}
 PAGE = {"origin": "https://example.com"}
@@ -88,7 +88,7 @@ class Client:
 @pytest.mark.parametrize("route", ["/settings", "/transcripts"])
 def test_without_the_key_nothing_is_served(client, route):
     assert client.get(route).status_code == 401
-    assert client.get(route, headers={"x-krya-token": "wrong"}).status_code == 401
+    assert client.get(route, headers={"x-tyts-token": "wrong"}).status_code == 401
     assert client.get(route, headers=KEY).status_code == 200
 
 
@@ -98,15 +98,15 @@ def test_without_the_key_health_says_only_that_the_engine_is_up(client):
 
 
 def test_the_engine_proves_it_holds_the_key(client):
-    r = client.get("/health", headers={**KEY, "x-krya-nonce": "n1"}).json()
-    assert r["proof"] == auth.proof(KEY["x-krya-token"], "n1") and "dataDir" in r
+    r = client.get("/health", headers={**KEY, "x-tyts-nonce": "n1"}).json()
+    assert r["proof"] == auth.proof(KEY["x-tyts-token"], "n1") and "dataDir" in r
 
 
 def test_a_nonce_without_the_key_gets_the_proof_and_nothing_else(client):
     # Kryakl's first look: whatever holds the port learns no key from it, and the engine tells nothing but the proof.
-    r = client.get("/health", headers={"x-krya-nonce": "n1"})
-    assert r.status_code == 200 and r.json() == {"proof": auth.proof(KEY["x-krya-token"], "n1")}
-    assert client.get("/health", headers={"x-krya-nonce": "n" * (auth.NONCE_MAX + 1)}).json() == {"ok": True}
+    r = client.get("/health", headers={"x-tyts-nonce": "n1"})
+    assert r.status_code == 200 and r.json() == {"proof": auth.proof(KEY["x-tyts-token"], "n1")}
+    assert client.get("/health", headers={"x-tyts-nonce": "n" * (auth.NONCE_MAX + 1)}).json() == {"ok": True}
 
 
 def test_a_web_page_and_any_extension_are_refused_everywhere(client):
@@ -173,10 +173,10 @@ def test_pyannote_reports_nothing():
 
 
 def test_the_key_is_made_once_and_kept(tmp_path, monkeypatch):
-    monkeypatch.delenv("KRYA_SPEECH_TOKEN")
+    monkeypatch.delenv("TYTS_SPEECH_TOKEN")
     file = tmp_path / "speech-token"
     first = auth.load_token(file)
     assert len(first) == 64 and file.read_text("utf-8") == first
     assert auth.load_token(file) == first
-    monkeypatch.setenv("KRYA_SPEECH_TOKEN", "given")
+    monkeypatch.setenv("TYTS_SPEECH_TOKEN", "given")
     assert auth.load_token(file) == "given"

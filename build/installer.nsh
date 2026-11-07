@@ -14,8 +14,8 @@
 ; (Documents\Kryakl, and Krya's and Altype's). No keeps everything for a later
 ; install; an update never asks and never deletes. Notes in the person's
 ; knowledge base are theirs and are never touched. The question is in Kryakl's
-; interface language, which Kryakl keeps in HKCU\Software\Kryakl (main.ts
-; rememberUiLanguage; Krya kept it in Software\Krya, read when Kryakl has not
+; interface language, which Tyts keeps in HKCU\Software\Tyts (main.ts
+; rememberUiLanguage; Kryakl kept it in Software\Kryakl and Krya in Software\Krya, read when Tyts has not
 ; written its own yet); English when none. Both keys go with any uninstall that
 ; is not an update.
 
@@ -30,7 +30,10 @@
   ${ifNot} ${isUpdated}
     ${ifNot} ${Silent}
       SetShellVarContext current
-      ReadRegStr $1 HKCU "Software\Kryakl" "UiLanguage"
+      ReadRegStr $1 HKCU "Software\Tyts" "UiLanguage"
+      ${if} $1 == ""
+        ReadRegStr $1 HKCU "Software\Kryakl" "UiLanguage"
+      ${endIf}
       ${if} $1 == ""
         ReadRegStr $1 HKCU "Software\Krya" "UiLanguage"
       ${endIf}
@@ -58,6 +61,7 @@
         RMDir /r "$DOCUMENTS\Altype"
       ${endif}
     ${endIf}
+    DeleteRegKey HKCU "Software\Tyts"
     DeleteRegKey HKCU "Software\Kryakl"
     DeleteRegKey HKCU "Software\Krya"
   ${endIf}

@@ -9,8 +9,8 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent || '');
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-/* ---------- The page's language: the English page sets nothing; a translated one sets window.KRYAKL before this script ---------- */
-const PAGE = window.KRYAKL || {};
+/* ---------- The page's language: the English page sets nothing; a translated one sets window.TYTS before this script ---------- */
+const PAGE = window.TYTS || {};
 const merge = (base, over) => { const out = { ...base }; Object.keys(over || {}).forEach((k) => { out[k] = over[k] && typeof over[k] === 'object' && !Array.isArray(over[k]) ? merge(base[k], over[k]) : over[k]; }); return out; };
 // The page's own words. Tyts's windows drawn on the page (the cards, the talk's lines) stay in English, as in Tyts.
 const T = merge({
@@ -267,7 +267,7 @@ let lang = TR[PAGE.lang] ? PAGE.lang : 'uk';
 try {
   const pref = (navigator.languages || [navigator.language || '']).map((l) => (l || '').slice(0, 2).toLowerCase()).find((l) => TR[l]);
   if (pref && !TR[PAGE.lang]) lang = pref;
-  const saved = localStorage.getItem('kryakl-lang');
+  const saved = localStorage.getItem('tyts-lang');
   if (saved && TR[saved]) lang = saved;
 } catch (e) {}
 
@@ -434,7 +434,7 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('change', (e) => {
   if (!e.target.classList || !e.target.classList.contains('langSel')) return;
   lang = e.target.value;
-  try { localStorage.setItem('kryakl-lang', lang); } catch (err) {}
+  try { localStorage.setItem('tyts-lang', lang); } catch (err) {}
   [bandCard, floatCard].forEach((c) => { if (c.el) { const was = c.playing; c.playing = false; renderCard(c, false); if (was) readFrom(c, c.cursor); } });
   hush();
   setCheck(checkMode);

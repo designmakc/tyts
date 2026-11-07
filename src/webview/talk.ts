@@ -213,7 +213,7 @@ new ResizeObserver(() => follow()).observe(feed)
 
 /** A window this wide keeps the history beside the talk; a narrower one opens it over the talk. */
 const wide = matchMedia('(min-width: 720px)')
-const DOCKED_KEY = 'kryakl.talk.history'
+const DOCKED_KEY = 'tyts.talk.history'
 /** Beside the talk (a wide window): open until closed, kept between opens. */
 let docked = (() => {
   try {

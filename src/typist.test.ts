@@ -54,6 +54,8 @@ class Desk {
   caps = false
   /** How many more times Windows names the layout the window had before its last switch (it answers late). */
   late = 0
+  /** The window keeps its layout whatever it is asked (a Chromium window, 2026-11-07). */
+  stuck = false
   private before = 'en'
   sent: KbdOut[] = []
   /** The field typed in is a password; a program fills the screen. */
@@ -90,7 +92,7 @@ class Desk {
         elevated: () => false,
         ownExe: 'kryakl.exe',
         switchLayout: (_hwnd, id) => {
-          this.layout = id
+          if (!this.stuck) this.layout = id
         },
         press: keys => this.pressed(keys),
         later: () => {
@@ -302,6 +304,18 @@ describe('fixing as one types', () => {
     desk.switchBySystem('en', 0)
     desk.keys('ghbdtn ghbdtn ')
     expect(desk.text).toBe('привет ghbdtn привет ')
+  })
+
+  test('a switch the window ignored is no switch: the word typed after it is still fixed, and the log says so', () => {
+    const desk = new Desk({ autoFix: true, keys: { switch: 'LeftControl' } })
+    desk.layout = 'ru'
+    desk.keys('привет ', 'ru')
+    desk.stuck = true
+    desk.tap(VK_LCONTROL)
+    expect(desk.layout).toBe('ru')
+    desk.keys('цштвщцы ', 'ru')
+    expect(desk.text).toBe('привет windows ')
+    expect(desk.sent).toContainEqual({ type: 'note', text: 'switch: the window kept ru, asked for en' })
   })
 
   test('nothing is fixed in a password field, nor while a program fills the screen', () => {

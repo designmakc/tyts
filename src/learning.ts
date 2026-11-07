@@ -184,7 +184,7 @@ export class LearnStore {
       fs.mkdirSync(path.dirname(this.file), { recursive: true })
       fs.writeFileSync(this.file, JSON.stringify(this.data, null, 2) + '\n', 'utf8')
     } catch (error) {
-      console.warn('Kryakl: could not save what it learned', error)
+      console.warn('Tyts: could not save what it learned', error)
     }
   }
 }

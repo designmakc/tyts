@@ -14,7 +14,7 @@ import * as path from 'node:path'
 
 import { t } from './i18n'
 import { oldLog } from './log'
-import { system32 } from './system32'
+import { systemTar } from './download'
 
 export const REPORT_EMAIL = 'designmakc@gmail.com'
 export const ISSUES = 'https://github.com/designmakc/tyts/issues/new'
@@ -135,10 +135,10 @@ function tail(file: string, most: number): string | undefined {
   }
 }
 
-/** A zip of `files` (names in `dir`) at `out`, by Windows' own tar, which writes zip files too. */
+/** A zip of `files` (names in `dir`) at `out`, by the system's own tar (bsdtar on Windows and a Mac), which writes zip files too. */
 function zip(dir: string, files: string[], out: string): Promise<void> {
   return new Promise((resolve, reject) =>
-    execFile(process.platform === 'darwin' ? '/usr/bin/tar' : system32('tar.exe'), ['-a', '-c', '-f', out, '-C', dir, ...files], { windowsHide: true }, (error, _stdout, stderr) =>
+    execFile(systemTar(), ['-a', '-c', '-f', out, '-C', dir, ...files], { windowsHide: true }, (error, _stdout, stderr) =>
       error ? reject(new Error(`Could not make ${path.basename(out)}: ${String(stderr).trim() || error.message}`)) : resolve(),
     ),
   )

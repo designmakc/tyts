@@ -9,7 +9,7 @@ import { execFileSync, spawn } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-import { POWERSHELL } from './system32'
+import { pathOf, POWERSHELL } from './system32'
 
 /** A move that failed: what was said, the error, and the folder or file that stayed (`from`). */
 export type Warn = (message: string, error: unknown, from?: string) => void
@@ -238,8 +238,9 @@ export function parseProcesses(text: string): RunningProcess[] {
  * Kryakl itself (`self`), and never Krya.exe or Altype.exe, which Kryakl waits for instead (main.ts oldAppRunning).
  */
 export function holdersIn(processes: readonly RunningProcess[], dir: string, self = process.pid): RunningProcess[] {
-  const root = path.resolve(dir).toLowerCase().replace(/[\\/]+$/, '') + path.sep
-  return processes.filter(p => p.pid !== self && !OLD_PROGRAMS.includes(p.name.toLowerCase()) && path.resolve(p.path).toLowerCase().startsWith(root))
+  const P = pathOf(dir)
+  const root = P.resolve(dir).toLowerCase().replace(/[\\/]+$/, '') + P.sep
+  return processes.filter(p => p.pid !== self && !OLD_PROGRAMS.includes(p.name.toLowerCase()) && P.resolve(p.path).toLowerCase().startsWith(root))
 }
 
 /** Every program Windows lets this user see, with its executable's path (UTF-8, for folders named in any language). */

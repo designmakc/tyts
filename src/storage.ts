@@ -10,6 +10,8 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
+import { pathOf } from './system32'
+
 import type { StorageId, StoragePart } from './protocol'
 
 export type Measured = { bytes: number; shared: number }
@@ -39,8 +41,9 @@ export type Place = { id: StorageId; item?: string; path: string; only?: readonl
 
 /** Whether `target` is `dir` or inside it, whatever the case Windows wrote either in. */
 export function isUnder(target: string, dir: string): boolean {
-  const rel = path.relative(path.resolve(dir).toLowerCase(), path.resolve(target).toLowerCase())
-  return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel))
+  const P = pathOf(dir)
+  const rel = P.relative(P.resolve(dir).toLowerCase(), P.resolve(target).toLowerCase())
+  return rel === '' || (!rel.startsWith('..') && !P.isAbsolute(rel))
 }
 
 /** The downloads Kryakl uses from outside its folder `home` (a move that could not finish), marked `away`. */

@@ -154,8 +154,9 @@ def test_failed_jobs_point_into_the_new_folder(home, tmp_path):
     outside = tmp_path / "talk.mp3"
     outside.write_bytes(b"mp3")
     s.update(redo, job={"kind": "file", "task": "redo", "inputs": [{"path": str(home["old"] / redo / "audio.ogg"), "temp": False}]})
-    # Written in another case, as Windows may hand it over.
-    s.update(meet, job={"kind": "meet", "inputs": [{"path": str(home["old"] / meet / "incoming" / "tab.webm").upper(), "temp": True},
+    # Written in another case, as Windows may hand it over (where the file system minds the case, as it is).
+    other_case = str.upper if os.path.normcase("A") == "a" else str
+    s.update(meet, job={"kind": "meet", "inputs": [{"path": other_case(str(home["old"] / meet / "incoming" / "tab.webm")), "temp": True},
                                                     {"path": str(outside), "temp": False}]})
     s._db.close()
     assert move(home)

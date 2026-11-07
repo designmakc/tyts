@@ -248,7 +248,8 @@ test('why a part stayed: the program that holds it when Kryakl knows it, else an
   expect(whyLeft(new Error('something else'))).toBe('something else')
 })
 
-test('a part in use stays in the old folder and is used there; once let go, the next move takes it', () => {
+// Windows alone refuses to rename a folder with an open file in it (EPERM); Linux and a Mac move it under the open handle.
+test.skipIf(process.platform !== 'win32')('a part in use stays in the old folder and is used there; once let go, the next move takes it', () => {
   const local = temp('kryakl-local-')
   const old = path.join(local, 'Altype')
   const next = path.join(local, 'Kryakl')

@@ -49,6 +49,11 @@ const GetCurrentThreadId = kernel32.func('uint32 __stdcall GetCurrentThreadId()'
 const GetGUIThreadInfo = user32.func('bool __stdcall GetGUIThreadInfo(uint32 tid, _Inout_ KbdGuiThreadInfo *info)')
 const ClientToScreen = user32.func('bool __stdcall ClientToScreen(intptr hwnd, _Inout_ KbdPoint *point)')
 const GetWindowRect = user32.func('bool __stdcall GetWindowRect(intptr hwnd, _Out_ KbdRect *rect)')
+const MONITORINFO = koffi.struct('KbdMonitorInfo', { cbSize: 'uint32', rcMonitor: RECT, rcWork: RECT, dwFlags: 'uint32' })
+const MonitorFromWindow = user32.func('intptr __stdcall MonitorFromWindow(intptr hwnd, uint32 flags)')
+const GetMonitorInfoW = user32.func('bool __stdcall GetMonitorInfoW(intptr monitor, _Inout_ KbdMonitorInfo *info)')
+const IsZoomed = user32.func('bool __stdcall IsZoomed(intptr hwnd)')
+const MONITOR_DEFAULTTONEAREST = 2
 const SendInput = user32.func('uint32 __stdcall SendInput(uint32 n, KbdInput *inputs, int size)')
 const OpenProcess = kernel32.func('intptr __stdcall OpenProcess(uint32 access, bool inherit, uint32 pid)')
 const QueryFullProcessImageNameW = kernel32.func('bool __stdcall QueryFullProcessImageNameW(intptr process, uint32 flags, void *name, _Inout_ uint32 *size)')
@@ -336,7 +341,34 @@ export function windowedApps(): string[] {
 
 /** Whether a program fills the screen now: a game, a video or a presentation on the full screen. */
 export function fullScreenNow(): boolean {
-  return FULL_SCREEN_STATES.has(notificationState())
+  const state = notificationState()
+  if (!FULL_SCREEN_STATES.has(state)) return false
+  const hwnd = BigInt(GetForegroundWindow() as number | bigint)
+  const win = windowRect(hwnd)
+  const info: Record<string, unknown> = { cbSize: koffi.sizeof(MONITORINFO) }
+  const monitor = hwnd ? MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST) : 0
+  const screen = monitor && GetMonitorInfoW(monitor, info) ? (info.rcMonitor as { left: number; top: number; right: number; bottom: number }) : undefined
+  return quietFor(state, win, screen, !!hwnd && !!IsZoomed(hwnd))
+}
+
+/**
+ * Whether the keys go quiet for the screen as it is. Windows' "busy" (2) is
+ * said for any window that fills a monitor, on any monitor, and for a
+ * maximized frameless window too (2026-11-07: the owner's Claude window,
+ * maximized, kept every key of Tyts off while they typed in it), so it counts
+ * only when the window in front itself covers its whole monitor and is not
+ * merely maximized; a Direct3D program on the full screen (3) and
+ * presentation mode (4) always do.
+ */
+export function quietFor(
+  state: number,
+  win: { x: number; y: number; width: number; height: number } | undefined,
+  screen: { left: number; top: number; right: number; bottom: number } | undefined,
+  zoomed: boolean,
+): boolean {
+  if (state === 3 || state === 4) return true
+  if (state !== 2 || !win || !screen || zoomed) return false
+  return win.x <= screen.left && win.y <= screen.top && win.x + win.width >= screen.right && win.y + win.height >= screen.bottom
 }
 
 /** Windows' own word on the screen (SHQueryUserNotificationState): 2 busy, 3 a Direct3D program on the full screen, 4 presentation mode; 0 when it will not say. */

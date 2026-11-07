@@ -15,7 +15,7 @@ import { loadLib } from './native'
 
 import { lexiconOf, type KeyTable, type Lexicon } from './layoutfix'
 import { MASK_KEYS, Typist, type KbdConfig, type KbdIn, type KbdOut } from './typist'
-import { capsLockOf, caretOf, elevated, exeOf, foreground, FULL_SCREEN_STATES, installedLayouts, layoutId, layoutOf, layoutTable, MAIN_KEYS, notificationState, OWN_KEYS, press, REPLAY_KEYS, switchLayout } from './winkbd'
+import { capsLockOf, caretOf, elevated, exeOf, foreground, fullScreenNow, installedLayouts, layoutId, layoutOf, layoutTable, MAIN_KEYS, notificationState, OWN_KEYS, press, REPLAY_KEYS, switchLayout } from './winkbd'
 
 const port = (workerData as { port: MessagePort }).port
 const send = (message: KbdOut) => port.postMessage(message)
@@ -198,10 +198,10 @@ function drainField(): void {
 }
 
 function tick(): void {
-  const state = config?.quietFullScreen ? notificationState() : 0
-  const quiet = FULL_SCREEN_STATES.has(state)
+  const quiet = !!config?.quietFullScreen && fullScreenNow()
+  const state = quiet ? notificationState() : 0
   // Quiet on the full screen turns every key off without a word: tyts.log says when it starts and ends (2026-11-07).
-  if (quiet !== fullScreen) send({ type: 'note', text: quiet ? `quiet: Windows says a program is on the full screen (state ${state}); the keys do nothing until it is gone` : 'quiet: over' })
+  if (quiet !== fullScreen) send({ type: 'note', text: quiet ? `quiet: the window in front fills its screen (Windows' state ${state}, ${exeOf(foreground().pid) || '?'}); the keys do nothing until it is gone` : 'quiet: over' })
   fullScreen = quiet
   typist.tick()
 }

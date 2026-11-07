@@ -12,7 +12,8 @@ import { freePort, provesKey, SPEECH_PORTS, SpeechService, speechToken } from '.
 
 const dirs: string[] = []
 afterEach(() => {
-  for (const dir of dirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true })
+  // A stand-in engine killed by stop() is still going when the folder goes: Windows says EBUSY until it has, so a few tries.
+  for (const dir of dirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 })
 })
 
 describe('the speech engine\'s key', () => {

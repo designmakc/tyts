@@ -30,7 +30,7 @@ export function watchClipboard(window: BrowserWindow, onChange: () => void, macH
   if (process.platform !== 'win32') throw new Error('not on this system yet')
   const hwnd = handleOf(window)
   window.hookWindowMessage(WM_CLIPBOARDUPDATE, () => onChange())
-  if (!AddClipboardFormatListener(hwnd)) throw new Error('Windows did not let Kryakl watch the clipboard')
+  if (!AddClipboardFormatListener(hwnd)) throw new Error('Windows did not let Tyts watch the clipboard')
   return () => {
     RemoveClipboardFormatListener(hwnd)
     // On quitting, the window may be gone already.
@@ -85,9 +85,9 @@ function watchClipboardMac(exe: string, onChange: () => void): () => void {
     }
   })
   let stopped = false
-  child.on('error', error => console.warn('Kryakl: the clipboard watcher did not start', error))
+  child.on('error', error => console.warn('Tyts: the clipboard watcher did not start', error))
   child.on('exit', code => {
-    if (!stopped) console.warn(`Kryakl: the clipboard watcher stopped (${code})`)
+    if (!stopped) console.warn(`Tyts: the clipboard watcher stopped (${code})`)
   })
   return () => {
     stopped = true
@@ -179,7 +179,7 @@ export function allowForeground(): void {
   AllowSetForegroundWindow(ASFW_ANY)
 }
 
-/** Each side's modifier keys, by the names kryakl.log gives them. */
+/** Each side's modifier keys, by the names tyts.log gives them. */
 const SIDES: readonly [number, string][] = [
   [0xa2, 'Left Ctrl'],
   [0xa3, 'Right Ctrl'],

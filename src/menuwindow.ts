@@ -38,7 +38,7 @@ export type MenuOptions = {
   log: (win: BrowserWindow) => void
 }
 
-export class KryaklMenu {
+export class TytsMenu {
   private win: BrowserWindow | undefined
   private ready = false
   private open = false

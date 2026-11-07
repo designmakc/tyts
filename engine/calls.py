@@ -20,7 +20,7 @@ import export
 import notes
 from store import Store
 
-log = logging.getLogger("kryakl.calls")
+log = logging.getLogger("tyts.calls")
 
 MEDIA = {".mp4", ".mkv", ".webm", ".mov", ".avi", ".m4v", ".mp3", ".m4a", ".wav", ".ogg", ".oga", ".opus", ".flac", ".aac", ".wma"}
 SETTLED = 60  # seconds since the file last changed: one still being written waits

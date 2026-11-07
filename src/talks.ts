@@ -148,7 +148,7 @@ export class TalkStore {
       const saved: Saved = { ...(this.ongoing ? { current: this.ongoing } : {}), past: this.past }
       fs.writeFileSync(this.file, JSON.stringify(saved) + '\n', 'utf8')
     } catch (error) {
-      console.warn('Kryakl: could not save the talks', error)
+      console.warn('Tyts: could not save the talks', error)
     }
   }
 }

@@ -2,18 +2,18 @@ version = 1
 revision = 3
 requires-python = "==3.12.*"
 resolution-markers = [
-    "sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu'",
-    "sys_platform == 'emscripten' and extra != 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu'",
-    "sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu'",
-    "sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu'",
-    "sys_platform == 'emscripten' and extra == 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu'",
-    "sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu'",
-    "sys_platform == 'darwin' and extra == 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu'",
-    "extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu'",
+    "sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu'",
+    "sys_platform == 'emscripten' and extra != 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu'",
+    "sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu'",
+    "sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu'",
+    "sys_platform == 'emscripten' and extra == 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu'",
+    "sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu'",
+    "sys_platform == 'darwin' and extra == 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu'",
+    "extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu'",
 ]
 conflicts = [[
-    { package = "krya-speech", extra = "speakers" },
-    { package = "krya-speech", extra = "speakers-gpu" },
+    { package = "tyts-speech", extra = "speakers" },
+    { package = "tyts-speech", extra = "speakers-gpu" },
 ]]
 
 [[package]]
@@ -126,9 +126,9 @@ version = "0.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
-    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-11-krya-speech-speakers-gpu'" },
-    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-11-tyts-speech-speakers-gpu'" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
     { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/90/fa/5c2be1f96dc179f83cdd3bb267edbd1f47d08f756785c016d5c2163901a7/asteroid-filterbanks-0.4.0.tar.gz", hash = "sha256:415f89d1dcf2b13b35f03f7a9370968ac4e6fa6800633c522dac992b283409b9", size = 24599, upload-time = "2021-04-09T20:03:07.456Z" }
@@ -297,7 +297,7 @@ resolution-markers = [
     "sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "cuda-pathfinder", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'emscripten' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "cuda-pathfinder", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'emscripten' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7f/b2/8cef7e30e02e7ec3bf157ec192c0522546ed807c262752e884c693813494/cuda_bindings-12.9.10-cp312-cp312-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:aa1e07b12ae190a01ba3e0c85253be6ec1bfa13545a88eac5fd45ae4b0c04333", size = 7063851, upload-time = "2026-10-15T14:12:01.26Z" },
@@ -310,7 +310,7 @@ name = "cuda-bindings"
 version = "13.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cuda-pathfinder", marker = "(extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "cuda-pathfinder", marker = "(extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b9/a6/13d14600381bdbfe55dfc35564e4bf4a208f169ee9f6cbeb356564268aff/cuda_bindings-13.5.0-cp312-cp312-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:40eadfad6ae1554f8c1aa456620a85a49a275fc902f2c6dd93ee8c488b2c5e9f", size = 7354398, upload-time = "2026-11-05T12:06:03.542Z" },
@@ -340,37 +340,37 @@ wheels = [
 
 [package.optional-dependencies]
 cublas = [
-    { name = "nvidia-cublas-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-cublas-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 cudart = [
-    { name = "nvidia-cuda-runtime-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-cuda-runtime-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 cufft = [
-    { name = "nvidia-cufft-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-cufft-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 cufile = [
-    { name = "nvidia-cufile-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-cufile-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 cupti = [
-    { name = "nvidia-cuda-cupti-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-cuda-cupti-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 curand = [
-    { name = "nvidia-curand-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-curand-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 cusolver = [
-    { name = "nvidia-cusolver-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-cusolver-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 cusparse = [
-    { name = "nvidia-cusparse-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-cusparse-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 nvjitlink = [
-    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 nvrtc = [
-    { name = "nvidia-cuda-nvrtc-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-cuda-nvrtc-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 nvtx = [
-    { name = "nvidia-nvtx-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-nvtx-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 
 [[package]]
@@ -383,43 +383,43 @@ wheels = [
 
 [package.optional-dependencies]
 cublas = [
-    { name = "nvidia-cublas", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "nvidia-cuda-nvrtc", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-cublas", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "nvidia-cuda-nvrtc", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 cudart = [
-    { name = "nvidia-cuda-runtime", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-cuda-runtime", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 cufft = [
-    { name = "nvidia-cufft", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-cufft", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 cufile = [
-    { name = "nvidia-cufile", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'aarch64' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'x86_64' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform != 'linux' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-cufile", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'aarch64' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'x86_64' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform != 'linux' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 cupti = [
-    { name = "nvidia-cuda-cupti", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-cuda-cupti", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 curand = [
-    { name = "nvidia-curand", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-curand", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 cusolver = [
-    { name = "nvidia-cublas", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "nvidia-cusolver", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "nvidia-cusparse", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-cublas", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "nvidia-cusolver", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "nvidia-cusparse", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 cusparse = [
-    { name = "nvidia-cusparse", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-cusparse", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 nvjitlink = [
-    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 nvrtc = [
-    { name = "nvidia-cuda-nvrtc", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-cuda-nvrtc", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 nvtx = [
-    { name = "nvidia-nvtx", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-nvtx", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 
 [[package]]
@@ -610,8 +610,8 @@ name = "httpcore2"
 version = "2.16.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "h11", marker = "sys_platform != 'emscripten' or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "truststore", marker = "sys_platform != 'emscripten' or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "h11", marker = "sys_platform != 'emscripten' or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "truststore", marker = "sys_platform != 'emscripten' or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/c0/61/afa9d6b7452f9eca73f73d45324eb0bb52f098fd5e6049bf6b8263be9b4e/httpcore2-2.16.0.tar.gz", hash = "sha256:c72cd0413563b17e1cd8354677dff887466f8ec2551679759e93126534428643", size = 69886, upload-time = "2026-10-21T07:09:45.31Z" }
 wheels = [
@@ -623,11 +623,11 @@ name = "httpx2"
 version = "2.16.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "anyio", marker = "sys_platform != 'emscripten' or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "httpcore2", marker = "sys_platform != 'emscripten' or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "httpx2-jsfetch", marker = "sys_platform == 'emscripten' or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "anyio", marker = "sys_platform != 'emscripten' or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "httpcore2", marker = "sys_platform != 'emscripten' or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "httpx2-jsfetch", marker = "sys_platform == 'emscripten' or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
     { name = "idna" },
-    { name = "truststore", marker = "sys_platform != 'emscripten' or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "truststore", marker = "sys_platform != 'emscripten' or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
     { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/43/73/5ca2cedf5e4e50423d1c258877865a6b62793633b561c58499f8aeb33b7e/httpx2-2.16.0.tar.gz", hash = "sha256:0d54c98128e8f2ff7fbbde0fca8c359e5f032edeaaaac443cdb7f31f685bcd7f", size = 103116, upload-time = "2026-10-21T07:09:46.348Z" }
@@ -652,7 +652,7 @@ dependencies = [
     { name = "click" },
     { name = "filelock" },
     { name = "fsspec" },
-    { name = "hf-xet", marker = "platform_machine == 'AMD64' or platform_machine == 'ARM64' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'arm64' or platform_machine == 'x86_64' or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "hf-xet", marker = "platform_machine == 'AMD64' or platform_machine == 'ARM64' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'arm64' or platform_machine == 'x86_64' or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
     { name = "httpx2" },
     { name = "packaging" },
     { name = "pyyaml" },
@@ -711,9 +711,9 @@ name = "julius"
 version = "0.2.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-11-krya-speech-speakers-gpu'" },
-    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-11-tyts-speech-speakers-gpu'" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/1d/c6/5c2aea2b11ead1680bb5b17c996def31f8ccade471cada37cdb93855e06f/julius-0.2.8.tar.gz", hash = "sha256:d691e651200930affea4f6c849c26e95fec846087281ae3d1a7757eac90253d5", size = 48081, upload-time = "2026-06-03T16:05:34.52Z" }
 wheels = [
@@ -747,7 +747,7 @@ wheels = [
 ]
 
 [[package]]
-name = "krya-speech"
+name = "tyts-speech"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
@@ -767,12 +767,12 @@ gpu = [
     { name = "nvidia-cudnn-cu12" },
 ]
 mac = [
-    { name = "mlx-whisper", marker = "(platform_machine == 'arm64' and sys_platform == 'darwin') or (platform_machine != 'arm64' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform != 'darwin' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "mlx-whisper", marker = "(platform_machine == 'arm64' and sys_platform == 'darwin') or (platform_machine != 'arm64' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform != 'darwin' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 speakers = [
     { name = "pyannote-audio" },
-    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 speakers-gpu = [
     { name = "pyannote-audio" },
@@ -798,8 +798,8 @@ requires-dist = [
     { name = "pyannote-audio", marker = "extra == 'speakers-gpu'", specifier = ">=4.0" },
     { name = "python-docx", specifier = ">=1.1" },
     { name = "python-multipart" },
-    { name = "torch", marker = "extra == 'speakers'", specifier = ">=2.8", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "krya-speech", extra = "speakers" } },
-    { name = "torch", marker = "extra == 'speakers-gpu'", specifier = ">=2.8", index = "https://download.pytorch.org/whl/cu128", conflict = { package = "krya-speech", extra = "speakers-gpu" } },
+    { name = "torch", marker = "extra == 'speakers'", specifier = ">=2.8", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "tyts-speech", extra = "speakers" } },
+    { name = "torch", marker = "extra == 'speakers-gpu'", specifier = ">=2.8", index = "https://download.pytorch.org/whl/cu128", conflict = { package = "tyts-speech", extra = "speakers-gpu" } },
     { name = "uvicorn", specifier = ">=0.32" },
 ]
 provides-extras = ["gpu", "speakers", "speakers-gpu", "mac"]
@@ -812,14 +812,14 @@ name = "lightning"
 version = "2.6.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "fsspec", extra = ["http"], marker = "extra == 'extra-11-krya-speech-speakers' or extra == 'extra-11-krya-speech-speakers-gpu'" },
+    { name = "fsspec", extra = ["http"], marker = "extra == 'extra-11-tyts-speech-speakers' or extra == 'extra-11-tyts-speech-speakers-gpu'" },
     { name = "lightning-utilities" },
     { name = "packaging" },
     { name = "pytorch-lightning" },
     { name = "pyyaml" },
-    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-11-krya-speech-speakers-gpu'" },
-    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-11-tyts-speech-speakers-gpu'" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
     { name = "torchmetrics" },
     { name = "tqdm" },
     { name = "typing-extensions" },
@@ -968,7 +968,7 @@ name = "mlx"
 version = "0.32.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "mlx-metal", marker = "sys_platform == 'darwin' or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "mlx-metal", marker = "sys_platform == 'darwin' or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/69/b0/e726ce51e1b445e4ed08c2d0e036a01c7532f4d1a856328da546a6f883bd/mlx-0.32.4-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:ff1d7be54758ea3a875b8fe54eff13bed17ad9566505e301f5d7851bf869680f", size = 667597, upload-time = "2026-10-14T21:16:00.688Z" },
@@ -995,17 +995,17 @@ name = "mlx-whisper"
 version = "0.4.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "huggingface-hub", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-krya-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "mlx", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-krya-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "more-itertools", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-krya-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "numba", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-krya-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "numpy", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-krya-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "scipy", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-krya-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "tiktoken", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-krya-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'emscripten' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "torch", version = "2.14.1", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "tqdm", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-krya-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "huggingface-hub", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-tyts-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "mlx", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-tyts-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "more-itertools", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-tyts-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "numba", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-tyts-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "numpy", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-tyts-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "scipy", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-tyts-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "tiktoken", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-tyts-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'emscripten' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "tqdm", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-tyts-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/22/b7/a35232812a2ccfffcb7614ba96a91338551a660a0e9815cee668bf5743f0/mlx_whisper-0.4.3-py3-none-any.whl", hash = "sha256:6b82b6597a994643a3e5496c7bc229a672e5ca308458455bfe276e76ae024489", size = 890544, upload-time = "2025-08-29T14:56:13.815Z" },
@@ -1081,8 +1081,8 @@ name = "numba"
 version = "0.68.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "llvmlite", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-krya-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "numpy", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-krya-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "llvmlite", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-tyts-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "numpy", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-tyts-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/0f/a4/a60b14d955b898ce00d815dfe14435ae3b30c1dd2587aa0a172e92310cf8/numba-0.68.1.tar.gz", hash = "sha256:9de461812470173a14eeb7e0bbd27c897dffe835402a33861166842fc5f6ea57", size = 2858572, upload-time = "2026-10-27T18:13:04.352Z" }
 wheels = [
@@ -1117,7 +1117,7 @@ name = "nvidia-cublas"
 version = "13.1.1.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cuda-nvrtc", marker = "(extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-cuda-nvrtc", marker = "(extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a7/a1/0bd24ee8c8d03adac032fd2909426a00c88f8c57961b1277ded97f91119f/nvidia_cublas-13.1.1.3-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:b7a210458267ac818974c53038fbec2e969d5c99f305ab15c72522fa9f001dd5", size = 542848918, upload-time = "2026-04-08T18:46:22.985Z" },
@@ -1213,7 +1213,7 @@ name = "nvidia-cudnn-cu13"
 version = "9.24.0.43"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas", marker = "(extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-cublas", marker = "(extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ca/30/7c257e3d5cb4fecb147b93895c66e29c93f8e76d74b45bb418ff0587c4ec/nvidia_cudnn_cu13-9.24.0.43-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:a6812a554a1ff0413e9c52b84c26c050380649ab9615f9c16bded368ce9f421f", size = 650976863, upload-time = "2026-07-02T16:23:39.248Z" },
@@ -1226,7 +1226,7 @@ name = "nvidia-cufft"
 version = "12.0.0.61"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink", marker = "(extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-nvjitlink", marker = "(extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8b/ae/f417a75c0259e85c1d2f83ca4e960289a5f814ed0cea74d18c353d3e989d/nvidia_cufft-12.0.0.61-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:2708c852ef8cd89d1d2068bdbece0aa188813a0c934db3779b9b1faa8442e5f5", size = 214053554, upload-time = "2025-09-04T08:31:38.196Z" },
@@ -1239,7 +1239,7 @@ name = "nvidia-cufft-cu12"
 version = "11.3.3.83"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'emscripten' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'emscripten' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/60/bc/7771846d3a0272026c416fbb7e5f4c1f146d6d80704534d0b187dd6f4800/nvidia_cufft_cu12-11.3.3.83-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:848ef7224d6305cdb2a4df928759dca7b1201874787083b6e7550dd6765ce69a", size = 193109211, upload-time = "2025-03-07T01:44:56.873Z" },
@@ -1290,9 +1290,9 @@ name = "nvidia-cusolver"
 version = "12.0.4.66"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas", marker = "(extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "nvidia-cusparse", marker = "(extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "nvidia-nvjitlink", marker = "(extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-cublas", marker = "(extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "nvidia-cusparse", marker = "(extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "nvidia-nvjitlink", marker = "(extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c8/c3/b30c9e935fc01e3da443ec0116ed1b2a009bb867f5324d3f2d7e533e776b/nvidia_cusolver-12.0.4.66-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:02c2457eaa9e39de20f880f4bd8820e6a1cfb9f9a34f820eb12a155aa5bc92d2", size = 223467760, upload-time = "2025-09-04T08:33:04.222Z" },
@@ -1305,9 +1305,9 @@ name = "nvidia-cusolver-cu12"
 version = "11.7.3.90"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'emscripten' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "nvidia-cusparse-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'emscripten' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'emscripten' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-cublas-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'emscripten' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "nvidia-cusparse-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'emscripten' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'emscripten' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c8/32/f7cd6ce8a7690544d084ea21c26e910a97e077c9b7f07bf5de623ee19981/nvidia_cusolver_cu12-11.7.3.90-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:db9ed69dbef9715071232caa9b69c52ac7de3a95773c2db65bdba85916e4e5c0", size = 267229841, upload-time = "2025-03-07T01:46:54.356Z" },
@@ -1320,7 +1320,7 @@ name = "nvidia-cusparse"
 version = "12.6.3.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink", marker = "(extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-nvjitlink", marker = "(extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f8/94/5c26f33738ae35276672f12615a64bd008ed5be6d1ebcb23579285d960a9/nvidia_cusparse-12.6.3.3-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:80bcc4662f23f1054ee334a15c72b8940402975e0eab63178fc7e670aa59472c", size = 162155568, upload-time = "2025-09-04T08:33:42.864Z" },
@@ -1333,7 +1333,7 @@ name = "nvidia-cusparse-cu12"
 version = "12.5.8.93"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'emscripten' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'emscripten' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bc/f7/cd777c4109681367721b00a106f491e0d0d15cfa1fd59672ce580ce42a97/nvidia_cusparse_cu12-12.5.8.93-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:9b6c161cb130be1a07a27ea6923df8141f3c295852f4b260c65f18f3e0a091dc", size = 288117129, upload-time = "2025-03-07T01:47:40.407Z" },
@@ -1565,7 +1565,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "googleapis-common-protos" },
     { name = "opentelemetry-api" },
-    { name = "opentelemetry-exporter-http-transport", extra = ["requests"], marker = "extra == 'extra-11-krya-speech-speakers' or extra == 'extra-11-krya-speech-speakers-gpu'" },
+    { name = "opentelemetry-exporter-http-transport", extra = ["requests"], marker = "extra == 'extra-11-tyts-speech-speakers' or extra == 'extra-11-tyts-speech-speakers-gpu'" },
     { name = "opentelemetry-exporter-otlp-common" },
     { name = "opentelemetry-exporter-otlp-proto-common" },
     { name = "opentelemetry-proto" },
@@ -1768,9 +1768,9 @@ dependencies = [
     { name = "pytorch-metric-learning" },
     { name = "rich" },
     { name = "safetensors" },
-    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-11-krya-speech-speakers-gpu'" },
-    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-11-tyts-speech-speakers-gpu'" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
     { name = "torch-audiomentations" },
     { name = "torchaudio" },
     { name = "torchcodec" },
@@ -1924,7 +1924,7 @@ name = "pytest"
 version = "9.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
     { name = "iniconfig" },
     { name = "packaging" },
     { name = "pluggy" },
@@ -1975,13 +1975,13 @@ name = "pytorch-lightning"
 version = "2.6.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "fsspec", extra = ["http"], marker = "extra == 'extra-11-krya-speech-speakers' or extra == 'extra-11-krya-speech-speakers-gpu'" },
+    { name = "fsspec", extra = ["http"], marker = "extra == 'extra-11-tyts-speech-speakers' or extra == 'extra-11-tyts-speech-speakers-gpu'" },
     { name = "lightning-utilities" },
     { name = "packaging" },
     { name = "pyyaml" },
-    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-11-krya-speech-speakers-gpu'" },
-    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-11-tyts-speech-speakers-gpu'" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
     { name = "torchmetrics" },
     { name = "tqdm" },
     { name = "typing-extensions" },
@@ -1998,9 +1998,9 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
     { name = "scikit-learn" },
-    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-11-krya-speech-speakers-gpu'" },
-    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-11-tyts-speech-speakers-gpu'" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
     { name = "tqdm" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/9b/80/6e61b1a91debf4c1b47d441f9a9d7fe2aabcdd9575ed70b2811474eb95c3/pytorch-metric-learning-2.9.0.tar.gz", hash = "sha256:27a626caf5e2876a0fd666605a78cb67ef7597e25d7a68c18053dd503830701f", size = 84530, upload-time = "2025-08-17T17:11:19.501Z" }
@@ -2232,8 +2232,8 @@ name = "tiktoken"
 version = "0.14.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "regex", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-krya-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "requests", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-krya-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "regex", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-tyts-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "requests", marker = "sys_platform == 'darwin' or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-11-tyts-speech-speakers') or (sys_platform == 'emscripten' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (sys_platform == 'win32' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/66/62/167a842aa0429d45f5e797354fd4343a96f6043d67d0513c675c7b8d36e6/tiktoken-0.14.0.tar.gz", hash = "sha256:231dec90efcdccf1b565a1416107736f1e09b1a08fe736ef9d6363e626d03874", size = 38898, upload-time = "2026-08-17T19:49:49.514Z" }
 wheels = [
@@ -2283,20 +2283,20 @@ resolution-markers = [
     "sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "cuda-bindings", version = "12.9.10", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "cuda-toolkit", version = "12.8.1", source = { registry = "https://pypi.org/simple" }, extra = ["cublas", "cudart", "cufft", "cufile", "cupti", "curand", "cusolver", "cusparse", "nvjitlink", "nvrtc", "nvtx"], marker = "(sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "filelock", marker = "extra == 'extra-11-krya-speech-speakers-gpu'" },
-    { name = "fsspec", marker = "extra == 'extra-11-krya-speech-speakers-gpu'" },
-    { name = "jinja2", marker = "extra == 'extra-11-krya-speech-speakers-gpu'" },
-    { name = "networkx", marker = "extra == 'extra-11-krya-speech-speakers-gpu'" },
-    { name = "nvidia-cudnn-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "nvidia-cusparselt-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "nvidia-nccl-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "nvidia-nvshmem-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "setuptools", marker = "extra == 'extra-11-krya-speech-speakers-gpu'" },
-    { name = "sympy", marker = "extra == 'extra-11-krya-speech-speakers-gpu'" },
-    { name = "triton", version = "3.6.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "typing-extensions", marker = "extra == 'extra-11-krya-speech-speakers-gpu'" },
+    { name = "cuda-bindings", version = "12.9.10", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "cuda-toolkit", version = "12.8.1", source = { registry = "https://pypi.org/simple" }, extra = ["cublas", "cudart", "cufft", "cufile", "cupti", "curand", "cusolver", "cusparse", "nvjitlink", "nvrtc", "nvtx"], marker = "(sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "filelock", marker = "extra == 'extra-11-tyts-speech-speakers-gpu'" },
+    { name = "fsspec", marker = "extra == 'extra-11-tyts-speech-speakers-gpu'" },
+    { name = "jinja2", marker = "extra == 'extra-11-tyts-speech-speakers-gpu'" },
+    { name = "networkx", marker = "extra == 'extra-11-tyts-speech-speakers-gpu'" },
+    { name = "nvidia-cudnn-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "nvidia-cusparselt-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "nvidia-nccl-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "nvidia-nvshmem-cu12", marker = "(sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "setuptools", marker = "extra == 'extra-11-tyts-speech-speakers-gpu'" },
+    { name = "sympy", marker = "extra == 'extra-11-tyts-speech-speakers-gpu'" },
+    { name = "triton", version = "3.6.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "typing-extensions", marker = "extra == 'extra-11-tyts-speech-speakers-gpu'" },
 ]
 wheels = [
     { url = "https://download-r2.pytorch.org/whl/cu128/torch-2.11.0%2Bcu128-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:9c8f38efee365cb9d334de8a83ce52fc7e5fc9e5a7b0853285efa1b69e00b0f2", upload-time = "2026-04-27T17:41:30Z" },
@@ -2312,13 +2312,13 @@ resolution-markers = [
     "sys_platform == 'darwin'",
 ]
 dependencies = [
-    { name = "filelock", marker = "(sys_platform == 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "fsspec", marker = "(sys_platform == 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "jinja2", marker = "(sys_platform == 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "networkx", marker = "(sys_platform == 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "setuptools", marker = "(sys_platform == 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "sympy", marker = "(sys_platform == 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "typing-extensions", marker = "(sys_platform == 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "filelock", marker = "(sys_platform == 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "fsspec", marker = "(sys_platform == 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "jinja2", marker = "(sys_platform == 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "networkx", marker = "(sys_platform == 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "setuptools", marker = "(sys_platform == 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "sympy", marker = "(sys_platform == 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "typing-extensions", marker = "(sys_platform == 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 wheels = [
     { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.1-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:9cf3082d25560efb1eef921871595227c0cf305abb7761ca45b6b988ef6cdd45", upload-time = "2026-09-30T19:50:32Z" },
@@ -2329,20 +2329,20 @@ name = "torch"
 version = "2.14.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cuda-bindings", version = "13.5.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "cuda-toolkit", version = "13.0.3.0", source = { registry = "https://pypi.org/simple" }, extra = ["cublas", "cudart", "cufft", "cufile", "cupti", "curand", "cusolver", "cusparse", "nvjitlink", "nvrtc", "nvtx"], marker = "(sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "filelock", marker = "(extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "fsspec", marker = "(extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "jinja2", marker = "(extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "networkx", marker = "(extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "nvidia-cudnn-cu13", marker = "(sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "nvidia-cusparselt-cu13", marker = "(sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "nvidia-nccl-cu13", marker = "(sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "nvidia-nvshmem-cu13", marker = "(sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "setuptools", marker = "(extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "sympy", marker = "(extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "triton", version = "3.8.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "typing-extensions", marker = "(extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu') or (extra != 'extra-11-krya-speech-speakers' and extra != 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "cuda-bindings", version = "13.5.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "cuda-toolkit", version = "13.0.3.0", source = { registry = "https://pypi.org/simple" }, extra = ["cublas", "cudart", "cufft", "cufile", "cupti", "curand", "cusolver", "cusparse", "nvjitlink", "nvrtc", "nvtx"], marker = "(sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "filelock", marker = "(extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "fsspec", marker = "(extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "jinja2", marker = "(extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "networkx", marker = "(extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "nvidia-cudnn-cu13", marker = "(sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "nvidia-cusparselt-cu13", marker = "(sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "nvidia-nccl-cu13", marker = "(sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "nvidia-nvshmem-cu13", marker = "(sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "setuptools", marker = "(extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "sympy", marker = "(extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "triton", version = "3.8.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "typing-extensions", marker = "(extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu') or (extra != 'extra-11-tyts-speech-speakers' and extra != 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4b/3c/379349820e9a6e713826de3d0b88f07728541bdcabe2a3afd128871cdc4b/torch-2.14.1-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:420dbf314c180ee4b86e9bc00aee5746a7d6e5bacdd7df925af671ed393f0b2e", size = 127307099, upload-time = "2026-09-30T17:44:10.421Z" },
@@ -2361,13 +2361,13 @@ resolution-markers = [
     "sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "filelock", marker = "(sys_platform != 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "fsspec", marker = "(sys_platform != 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "jinja2", marker = "(sys_platform != 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "networkx", marker = "(sys_platform != 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "setuptools", marker = "(sys_platform != 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "sympy", marker = "(sys_platform != 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "typing-extensions", marker = "(sys_platform != 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "filelock", marker = "(sys_platform != 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "fsspec", marker = "(sys_platform != 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "jinja2", marker = "(sys_platform != 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "networkx", marker = "(sys_platform != 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "setuptools", marker = "(sys_platform != 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "sympy", marker = "(sys_platform != 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "typing-extensions", marker = "(sys_platform != 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 wheels = [
     { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.1%2Bcpu-cp312-cp312-linux_s390x.whl", hash = "sha256:6b06a7f6275c5fdecaf1dbf5546f0820b024a97785575bb99e3d9930d83cd86b", upload-time = "2026-09-30T19:47:30Z" },
@@ -2383,9 +2383,9 @@ version = "0.12.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "julius" },
-    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-11-krya-speech-speakers-gpu'" },
-    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-11-tyts-speech-speakers-gpu'" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
     { name = "torch-pitch-shift" },
     { name = "torchaudio" },
 ]
@@ -2401,9 +2401,9 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "packaging" },
     { name = "primepy" },
-    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-11-krya-speech-speakers-gpu'" },
-    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-11-tyts-speech-speakers-gpu'" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
     { name = "torchaudio" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/79/a6/722a832bca75d5079f6731e005b3d0c2eec7c6c6863d030620952d143d57/torch_pitch_shift-1.2.5.tar.gz", hash = "sha256:6e1c7531f08d0f407a4c55e5ff8385a41355c5c5d27ab7fa08632e51defbd0ed", size = 4725, upload-time = "2024-09-25T19:10:12.922Z" }
@@ -2441,9 +2441,9 @@ dependencies = [
     { name = "lightning-utilities" },
     { name = "numpy" },
     { name = "packaging" },
-    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-11-krya-speech-speakers-gpu'" },
-    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
-    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-11-krya-speech-speakers') or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-11-tyts-speech-speakers-gpu'" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-11-tyts-speech-speakers') or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/81/34/39b8b749333db56c0585d7a11fa62a283c087bb1dfc897d69fb8cedbefb1/torchmetrics-1.9.0.tar.gz", hash = "sha256:a488609948600df52d3db4fcdab02e62aab2a85ef34da67037dc3e65b8512faa", size = 581765, upload-time = "2026-03-09T17:41:22.443Z" }
 wheels = [
@@ -2455,7 +2455,7 @@ name = "tqdm"
 version = "4.70.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'extra-11-krya-speech-speakers' and extra == 'extra-11-krya-speech-speakers-gpu')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'extra-11-tyts-speech-speakers' and extra == 'extra-11-tyts-speech-speakers-gpu')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/0d/ea/b2a5bd54b28a324dae8211928b2d730b6547500342c7e6c6dea08bd0a485/tqdm-4.70.1.tar.gz", hash = "sha256:cefd0eca11b2a37a3aee776544d4f4ae913f02688135b5556b8788dfa474afc4", size = 171846, upload-time = "2026-09-11T07:25:16.601Z" }
 wheels = [

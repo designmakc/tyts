@@ -11,7 +11,7 @@ const made: string[] = []
 afterEach(() => made.splice(0).forEach(dir => fs.rmSync(dir, { recursive: true, force: true })))
 
 function tempDir(): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kryakl-storage-'))
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tyts-storage-'))
   made.push(dir)
   return dir
 }

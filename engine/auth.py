@@ -4,13 +4,13 @@ The engine listens on 127.0.0.1, which every program and every Windows account
 on the computer can reach, and any browser page too. So:
 
 - Kryakl (and a program of the person's that reads the key) sends the engine's
-  key in X-Krya-Token. The key is random, kept in speech-token beside the
+  key in X-Tyts-Token. The key is random, kept in speech-token beside the
   engine's settings (in the person's own %APPDATA%, which other accounts cannot
-  read) and handed to the engine Kryakl starts in KRYA_SPEECH_TOKEN.
+  read) and handed to the engine Kryakl starts in TYTS_SPEECH_TOKEN.
 - A request with an Origin (a web page, a browser extension) is refused everywhere.
 - Anything else gets /health's bare "ok" and nothing more.
 
-`/health` with X-Krya-Nonce and no key answers HMAC(key, nonce) and nothing
+`/health` with X-Tyts-Nonce and no key answers HMAC(key, nonce) and nothing
 else: Kryakl checks it before it sends the key, so another program (another
 account's) that took the port first never receives the key.
 """
@@ -31,8 +31,8 @@ NONCE_MAX = 128
 
 
 def load_token(path: Path = TOKEN_FILE) -> str:
-    """The engine's key: Kryakl's (KRYA_SPEECH_TOKEN), else the file's, else a new one written there."""
-    given = os.environ.get("KRYA_SPEECH_TOKEN", "").strip()
+    """The engine's key: Kryakl's (TYTS_SPEECH_TOKEN), else the file's, else a new one written there."""
+    given = os.environ.get("TYTS_SPEECH_TOKEN", "").strip()
     if given:
         return given
     try:

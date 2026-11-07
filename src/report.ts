@@ -20,7 +20,7 @@ export const REPORT_EMAIL = 'designmakc@gmail.com'
 export const ISSUES = 'https://github.com/designmakc/tyts/issues/new'
 
 /** The logs a report takes from Kryakl's folder, each with its `.old.log`. */
-export const LOGS = ['kryakl.log', 'speech.log', 'translate.log'] as const
+export const LOGS = ['tyts.log', 'speech.log', 'translate.log'] as const
 /** The end of each log: the lines before a problem, not the whole history. */
 const TAIL = 512_000
 /** The settings that are the person's own lists: counted, never copied. */
@@ -40,7 +40,7 @@ export function namesHere(): Names {
 export type ReportFacts = { version: string; build: string; electron: string; windows: string; arch: string; os?: string }
 
 export const factsLine = (f: ReportFacts): string =>
-  `Kryakl ${f.version}${f.build ? ` dev, built ${f.build}` : ''} · ${f.os ?? 'Windows'} ${f.windows} ${f.arch} · Electron ${f.electron}`
+  `Tyts ${f.version}${f.build ? ` dev, built ${f.build}` : ''} · ${f.os ?? 'Windows'} ${f.windows} ${f.arch} · Electron ${f.electron}`
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 /** A name as a whole word, never inside a longer one ("ann" stays in "announce"). */
@@ -50,7 +50,7 @@ const profile = (name: string) => new RegExp(`(?<=[\\\\/]Users(?:\\\\{1,2}|/))${
 
 /** A text safe to send: the names are `<you>` and `<computer>`, a Hugging Face key or a bearer token is cut. */
 export function cleanText(text: string, names: Names): string {
-  let out = text.replace(/\bhf_[A-Za-z0-9]{8,}/g, 'hf_…').replace(/\b(Bearer|X-Krya-Token:?)(\s+)[A-Za-z0-9._~+/=-]{8,}/gi, '$1$2…')
+  let out = text.replace(/\bhf_[A-Za-z0-9]{8,}/g, 'hf_…').replace(/\b(Bearer|X-Tyts-Token:?)(\s+)[A-Za-z0-9._~+/=-]{8,}/gi, '$1$2…')
   for (const name of new Set(names.you.filter(Boolean))) {
     out = out.replace(profile(name), '<you>')
     // A short name ("al") would hide words too; in a path it is gone already.
@@ -76,10 +76,10 @@ export function settingsSummary(settings: object): Record<string, unknown> {
   return out
 }
 
-/** "Kryakl report 2026-10-31 14-05.zip", in local time. */
+/** "Tyts report 2026-10-31 14-05.zip", in local time. */
 export function reportName(at: Date): string {
   const two = (n: number) => String(n).padStart(2, '0')
-  return `Kryakl report ${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())} ${two(at.getHours())}-${two(at.getMinutes())}.zip`
+  return `Tyts report ${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())} ${two(at.getHours())}-${two(at.getMinutes())}.zip`
 }
 
 export type ReportInput = {
@@ -100,7 +100,7 @@ export type ReportInput = {
 /** report.txt: what happened, Kryakl and Windows, the parts, the settings. */
 export function reportText(i: Omit<ReportInput, 'dir' | 'out'>): string {
   return [
-    `Kryakl problem report, ${i.at.toISOString()}`,
+    `Tyts problem report, ${i.at.toISOString()}`,
     '',
     'What happened',
     i.message.trim() || '(nothing written)',
@@ -146,7 +146,7 @@ function zip(dir: string, files: string[], out: string): Promise<void> {
 
 /** Writes the report's zip at `out`, made in a folder of the system's temp that goes after; its path. */
 export async function makeReport(i: ReportInput): Promise<string> {
-  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'kryakl-report-'))
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'tyts-report-'))
   try {
     const files: string[] = []
     const put = (name: string, text: string) => {
@@ -194,7 +194,7 @@ const headline = (message: string, most: number) => {
 
 /** The email: to Kryakl's author, the text and the facts in it, a line on the zip to attach (a link cannot carry it). */
 export function mailUrl(message: string, facts: ReportFacts, file: string): string {
-  const subject = encodeURIComponent(`Kryakl ${facts.version}: ${headline(message, 60) || t('ui.reportSubject')}`)
+  const subject = encodeURIComponent(`Tyts ${facts.version}: ${headline(message, 60) || t('ui.reportSubject')}`)
   const foot = `\r\n\r\n${factsLine(facts)}\r\n${t('ui.reportAttach', { file })}`
   const head = `mailto:${REPORT_EMAIL}?subject=${subject}&body=`
   const said = (message.trim() || t('ui.reportAsk')).replace(/\r?\n/g, '\r\n')
@@ -204,7 +204,7 @@ export function mailUrl(message: string, facts: ReportFacts, file: string): stri
 /** A new GitHub issue with the text and the facts in it; the zip is dragged onto the page. */
 export function issueUrl(message: string, facts: ReportFacts, file: string): string {
   const title = encodeURIComponent(headline(message, 80) || t('ui.reportTitle'))
-  const foot = `\n\n### Kryakl\n\n${factsLine(facts)}\n\n${t('ui.reportDrag', { file })}`
+  const foot = `\n\n### Tyts\n\n${factsLine(facts)}\n\n${t('ui.reportDrag', { file })}`
   const head = `${ISSUES}?title=${title}&body=`
   const said = `### ${t('ui.reportWhat')}\n\n${message.trim() || '…'}`
   return head + encodeURIComponent(fitEncoded(said, ISSUE_MOST - head.length - encodeURIComponent(foot).length) + foot)

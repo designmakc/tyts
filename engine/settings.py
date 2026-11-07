@@ -21,13 +21,13 @@ from pathlib import Path
 
 from vocab import split_items
 
-log = logging.getLogger("kryakl.settings")
+log = logging.getLogger("tyts.settings")
 
 # A test run gives its own folders; the real ones are Kryakl's. ALTYPE_SPEECH_HOME is the old name's.
-TEST_HOME = os.environ.get("KRYA_SPEECH_HOME") or os.environ.get("ALTYPE_SPEECH_HOME")
+TEST_HOME = os.environ.get("TYTS_SPEECH_HOME") or os.environ.get("ALTYPE_SPEECH_HOME")
 APP_DIR = Path(TEST_HOME or Path(os.environ.get("APPDATA", Path.home())) / "Tyts")
 # Kryakl says where the engine is installed: %LOCALAPPDATA%\Kryakl\speech, or an old name's when it could not move.
-SPEECH_DIR = Path(os.environ.get("KRYA_SPEECH_DIR") or Path(os.environ.get("LOCALAPPDATA", Path.home())) / "Tyts" / "speech")
+SPEECH_DIR = Path(os.environ.get("TYTS_SPEECH_DIR") or Path(os.environ.get("LOCALAPPDATA", Path.home())) / "Tyts" / "speech")
 MODELS_DIR = SPEECH_DIR / "models"
 SETTINGS_FILE = APP_DIR / "speech.json"
 

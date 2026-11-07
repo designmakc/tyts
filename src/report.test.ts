@@ -49,13 +49,13 @@ describe('links', () => {
   })
 
   it('makes an email that Windows hands over whole, however long the text', () => {
-    const url = mailUrl(`Перевод не работает\n${'очень длинный текст '.repeat(200)}`, facts, 'Kryakl report 2026-10-31 14-05.zip')
+    const url = mailUrl(`Перевод не работает\n${'очень длинный текст '.repeat(200)}`, facts, 'Tyts report 2026-10-31 14-05.zip')
     expect(url.length).toBeLessThanOrEqual(1800)
     expect(url.startsWith('mailto:designmakc@gmail.com?subject=')).toBe(true)
     const body = decodeURIComponent(url.slice(url.indexOf('&body=') + 6))
-    expect(body).toContain('Kryakl 0.11.2 · Windows 10.0.26300 x64')
-    expect(body).toContain('please attach "Kryakl report 2026-10-31 14-05.zip"')
-    expect(decodeURIComponent(url.slice(url.indexOf('subject=') + 8, url.indexOf('&body=')))).toBe('Kryakl 0.11.2: Перевод не работает')
+    expect(body).toContain('Tyts 0.11.2 · Windows 10.0.26300 x64')
+    expect(body).toContain('please attach "Tyts report 2026-10-31 14-05.zip"')
+    expect(decodeURIComponent(url.slice(url.indexOf('subject=') + 8, url.indexOf('&body=')))).toBe('Tyts 0.11.2: Перевод не работает')
   })
 
   it('makes a GitHub issue with a title from the first line', () => {
@@ -65,14 +65,14 @@ describe('links', () => {
   })
 
   it('names a report by the local time', () => {
-    expect(reportName(new Date(2026, 9, 31, 14, 5))).toBe('Kryakl report 2026-10-31 14-05.zip')
+    expect(reportName(new Date(2026, 9, 31, 14, 5))).toBe('Tyts report 2026-10-31 14-05.zip')
   })
 })
 
 describe('makeReport', () => {
   const temp: string[] = []
   const dir = () => {
-    const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kryakl-report-test-'))
+    const d = fs.mkdtempSync(path.join(os.tmpdir(), 'tyts-report-test-'))
     temp.push(d)
     return d
   }
@@ -83,8 +83,8 @@ describe('makeReport', () => {
   // The zip is tar's `-a` of bsdtar (Windows, a Mac); GNU tar on Linux writes no zip.
   it.skipIf(process.platform === 'linux')('takes the logs and the computer, cleaned, and never the speech settings or the lists', async () => {
     const home = dir()
-    fs.writeFileSync(path.join(home, 'kryakl.log'), 'start: Kryakl\ncopy: came in 30 ms from C:\\Users\\creoo\\Code.exe\n')
-    fs.writeFileSync(path.join(home, 'kryakl.old.log'), 'before\n')
+    fs.writeFileSync(path.join(home, 'tyts.log'), 'start: Kryakl\ncopy: came in 30 ms from C:\\Users\\creoo\\Code.exe\n')
+    fs.writeFileSync(path.join(home, 'tyts.old.log'), 'before\n')
     fs.writeFileSync(path.join(home, 'speech.log'), 'whoami hf_AbCdEf1234567890\n')
     fs.writeFileSync(path.join(home, 'device.json'), '{"cpu":"i9"}')
     fs.writeFileSync(path.join(home, 'speech.json'), '{"hfToken":"hf_secret1234567890"}')
@@ -93,8 +93,8 @@ describe('makeReport', () => {
     await makeReport({ dir: home, out, message: 'It broke', facts, status: ['Speech engine: ready'], settings: { keepWords: ['secret'] }, names, at: new Date() })
     const opened = dir()
     await unzip(out, opened)
-    expect(fs.readdirSync(opened).sort()).toEqual(['device.json', 'kryakl.log', 'kryakl.old.log', 'report.txt', 'speech.log'])
-    expect(fs.readFileSync(path.join(opened, 'kryakl.log'), 'utf8')).toContain('C:\\Users\\<you>\\Code.exe')
+    expect(fs.readdirSync(opened).sort()).toEqual(['device.json', 'tyts.log', 'tyts.old.log', 'report.txt', 'speech.log'])
+    expect(fs.readFileSync(path.join(opened, 'tyts.log'), 'utf8')).toContain('C:\\Users\\<you>\\Code.exe')
     expect(fs.readFileSync(path.join(opened, 'speech.log'), 'utf8')).toBe('whoami hf_…\n')
     const report = fs.readFileSync(path.join(opened, 'report.txt'), 'utf8')
     expect(report).toContain('It broke')

@@ -224,7 +224,7 @@ export type KbdOut =
   /** Another key, a click outside, or another window in front closed the menu; the key or click went on. */
   | { type: 'menuClosed' }
   | { type: 'error'; message: string }
-  /** A line for kryakl.log of how the thread is doing (counts only, never what was typed). */
+  /** A line for tyts.log of how the thread is doing (counts only, never what was typed). */
   | { type: 'note'; text: string }
 
 export type Caret = { x: number; y: number; h: number }

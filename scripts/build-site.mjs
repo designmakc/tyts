@@ -1,7 +1,7 @@
 // The landing's Ukrainian and Russian pages, made from the English one (site/index.html): every text of the page
 // replaced by its translation (scripts/site/<lang>.mjs, the longest first, so a short one never cuts into a longer
-// one), the head and the language links pointed at the page's own address, and window.KRYAKL set for the shared
-// script (site/kryakl.js): its words and the examples in the version's language.
+// one), the head and the language links pointed at the page's own address, and window.TYTS set for the shared
+// script (site/tyts.js): its words and the examples in the version's language.
 // node scripts/build-site.mjs → site/uk/index.html, site/ru/index.html. The Pages workflow runs it before upload.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -46,8 +46,8 @@ for (const version of VERSIONS.filter(v => v.dir)) {
     ['<meta property="og:locale" content="en_US">', `<meta property="og:locale" content="${locale}">`],
     [`<meta property="og:image" content="${BASE}og-en.png">`, `<meta property="og:image" content="${BASE}og-${version.code}.png">`],
     ['<meta property="og:site_name" content="Tyts">', `<meta property="og:site_name" content="${version.brand}">`],
-    ['<link rel="stylesheet" href="kryakl.css">', '<link rel="stylesheet" href="../kryakl.css">'],
-    ['<script src="kryakl.js"></script>', `<script>window.KRYAKL = ${JSON.stringify({ lang: version.code, text, demo }).replace(/</g, '\\u003c')};</script>\n<script src="../kryakl.js"></script>`],
+    ['<link rel="stylesheet" href="tyts.css">', '<link rel="stylesheet" href="../tyts.css">'],
+    ['<script src="tyts.js"></script>', `<script>window.TYTS = ${JSON.stringify({ lang: version.code, text, demo }).replace(/</g, '\\u003c')};</script>\n<script src="../tyts.js"></script>`],
   ]
   for (const [from, to] of head) {
     if (!page.includes(from)) throw new Error(`${version.code}: the English page has no ${from}`)

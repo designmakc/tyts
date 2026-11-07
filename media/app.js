@@ -143,7 +143,7 @@
     "lang.yours": "your language",
     // ------------------------------------------------------------ the tray's panel
     "tray.open": "Open",
-    "tray.openKryakl": "Open Tyts",
+    "tray.openTyts": "Open Tyts",
     "tray.built": "Built {build}",
     "tray.actions": "Actions",
     "tray.listenCopied": "Translate and read aloud",
@@ -1210,7 +1210,7 @@
     "kb.startsIn": "starts in {layout}",
     "kb.nothingLeftOut": "nothing left out",
     "kb.noLonger": "This program is no longer in the list.",
-    "kb.hereKryakl": "Here, Tyts",
+    "kb.hereTyts": "Here, Tyts",
     "kb.fixes": "Fixes words as you type",
     "kb.fixesNote": "off: words stay as typed; the fix key still works",
     "kb.switches": "Switches the layout by its keys",
@@ -1604,7 +1604,7 @@
     "lang.yours": "\u0432\u0430\u0448 \u044F\u0437\u044B\u043A",
     // ------------------------------------------------------------ the tray's panel
     "tray.open": "\u041E\u0442\u043A\u0440\u044B\u0442\u044C",
-    "tray.openKryakl": "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0422\u0438\u0446\u044C",
+    "tray.openTyts": "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0422\u0438\u0446\u044C",
     "tray.built": "\u0421\u043E\u0431\u0440\u0430\u043D\u043E {build}",
     "tray.actions": "\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u044F",
     "tray.listenCopied": "\u041F\u0435\u0440\u0435\u0432\u0435\u0441\u0442\u0438 \u0438 \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u0442\u044C \u0432\u0441\u043B\u0443\u0445",
@@ -2671,7 +2671,7 @@
     "kb.startsIn": "\u043D\u0430\u0447\u0430\u043B\u044C\u043D\u0430\u044F \u0440\u0430\u0441\u043A\u043B\u0430\u0434\u043A\u0430: {layout}",
     "kb.nothingLeftOut": "\u043D\u0438\u0447\u0435\u0433\u043E \u043D\u0435 \u043E\u0442\u043A\u043B\u044E\u0447\u0435\u043D\u043E",
     "kb.noLonger": "\u042D\u0442\u043E\u0439 \u043F\u0440\u043E\u0433\u0440\u0430\u043C\u043C\u044B \u0443\u0436\u0435 \u043D\u0435\u0442 \u0432 \u0441\u043F\u0438\u0441\u043A\u0435.",
-    "kb.hereKryakl": "\u0417\u0434\u0435\u0441\u044C \u0422\u0438\u0446\u044C",
+    "kb.hereTyts": "\u0417\u0434\u0435\u0441\u044C \u0422\u0438\u0446\u044C",
     "kb.fixes": "\u0418\u0441\u043F\u0440\u0430\u0432\u043B\u044F\u0435\u0442 \u0441\u043B\u043E\u0432\u0430 \u043F\u0440\u0438 \u043D\u0430\u0431\u043E\u0440\u0435",
     "kb.fixesNote": "\u0432\u044B\u043A\u043B\u044E\u0447\u0435\u043D\u043E: \u0441\u043B\u043E\u0432\u0430 \u043E\u0441\u0442\u0430\u044E\u0442\u0441\u044F \u043A\u0430\u043A \u043D\u0430\u0431\u0440\u0430\u043D\u044B; \u043A\u043B\u0430\u0432\u0438\u0448\u0430 \u0438\u0441\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u044F \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442",
     "kb.switches": "\u041F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0430\u0435\u0442 \u0440\u0430\u0441\u043A\u043B\u0430\u0434\u043A\u0443 \u0441\u0432\u043E\u0438\u043C\u0438 \u043A\u043B\u0430\u0432\u0438\u0448\u0430\u043C\u0438",
@@ -3064,7 +3064,7 @@
     "lang.yours": "\u0432\u0430\u0448\u0430 \u043C\u043E\u0432\u0430",
     // ------------------------------------------------------------ the tray's panel
     "tray.open": "\u0412\u0456\u0434\u043A\u0440\u0438\u0442\u0438",
-    "tray.openKryakl": "\u0412\u0456\u0434\u043A\u0440\u0438\u0442\u0438 \u0422\u0438\u0446\u044C",
+    "tray.openTyts": "\u0412\u0456\u0434\u043A\u0440\u0438\u0442\u0438 \u0422\u0438\u0446\u044C",
     "tray.built": "\u0417\u0456\u0431\u0440\u0430\u043D\u043E {build}",
     "tray.actions": "\u0414\u0456\u0457",
     "tray.listenCopied": "\u041F\u0435\u0440\u0435\u043A\u043B\u0430\u0441\u0442\u0438 \u0439 \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u0442\u0438 \u0432\u0433\u043E\u043B\u043E\u0441",
@@ -4131,7 +4131,7 @@
     "kb.startsIn": "\u043F\u043E\u0447\u0430\u0442\u043A\u043E\u0432\u0430 \u0440\u043E\u0437\u043A\u043B\u0430\u0434\u043A\u0430: {layout}",
     "kb.nothingLeftOut": "\u043D\u0456\u0447\u043E\u0433\u043E \u043D\u0435 \u0432\u0438\u043C\u043A\u043D\u0435\u043D\u043E",
     "kb.noLonger": "\u0426\u0456\u0454\u0457 \u043F\u0440\u043E\u0433\u0440\u0430\u043C\u0438 \u0432\u0436\u0435 \u043D\u0435\u043C\u0430\u0454 \u0432 \u0441\u043F\u0438\u0441\u043A\u0443.",
-    "kb.hereKryakl": "\u0422\u0443\u0442 \u0422\u0438\u0446\u044C",
+    "kb.hereTyts": "\u0422\u0443\u0442 \u0422\u0438\u0446\u044C",
     "kb.fixes": "\u0412\u0438\u043F\u0440\u0430\u0432\u043B\u044F\u0454 \u0441\u043B\u043E\u0432\u0430 \u043F\u0456\u0434 \u0447\u0430\u0441 \u043D\u0430\u0431\u043E\u0440\u0443",
     "kb.fixesNote": "\u0432\u0438\u043C\u043A\u043D\u0435\u043D\u043E: \u0441\u043B\u043E\u0432\u0430 \u043B\u0438\u0448\u0430\u044E\u0442\u044C\u0441\u044F \u044F\u043A \u043D\u0430\u0431\u0440\u0430\u043D\u0456; \u043A\u043B\u0430\u0432\u0456\u0448\u0430 \u0432\u0438\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043D\u044F \u043F\u0440\u0430\u0446\u044E\u0454",
     "kb.switches": "\u041F\u0435\u0440\u0435\u043C\u0438\u043A\u0430\u0454 \u0440\u043E\u0437\u043A\u043B\u0430\u0434\u043A\u0443 \u0441\u0432\u043E\u0457\u043C\u0438 \u043A\u043B\u0430\u0432\u0456\u0448\u0430\u043C\u0438",
@@ -10201,7 +10201,7 @@ ${t("dictate.said", { heard: e.heard })}` : e.text,
     const change = (next) => save({ apps: apps().map((a) => a.exe === rule.exe ? { ...a, ...next } : a) });
     const part = (p, iconName, label, note) => toggleCard(iconName, label, !rule.off.includes(p), (on) => change({ off: on ? rule.off.filter((x) => x !== p) : [...rule.off, p] }), note);
     return [
-      grp(t("kb.hereKryakl")),
+      grp(t("kb.hereTyts")),
       part("fix", "spell-check", t("kb.fixes"), t("kb.fixesNote")),
       part("switch", "keyboard", t("kb.switches"), t("kb.switchesNote")),
       part("badge", "type", t("kb.shows"), t("kb.partBadge")),
@@ -10518,7 +10518,7 @@ ${t("dictate.said", { heard: e.heard })}` : e.text,
         el("small", {}, t("storage.usesThere", { names })),
         s.old.why ? el("small", { class: "bad" }, t("storage.notMoved", { why: s.old.why })) : null
       ),
-      s.old.moving ? el("span", { class: "v" }, t("storage.moving")) : btn(t("storage.move"), () => post({ type: "moveToKryakl" }), "primary")
+      s.old.moving ? el("span", { class: "v" }, t("storage.moving")) : btn(t("storage.move"), () => post({ type: "moveToTyts" }), "primary")
     );
   }
   var languageName2 = (code) => languageName(code);

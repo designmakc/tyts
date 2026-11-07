@@ -553,7 +553,7 @@ export type ToHost =
   | { type: 'cleanUp' }
   | { type: 'useRecommended' }
   /** What is left in the old folders moved into Kryakl's: the engine and the model's server stopped first, Kryakl started again after. */
-  | { type: 'moveToKryakl' }
+  | { type: 'moveToTyts' }
   // The dictation badge.
   | { type: 'dictationReady' }
   /** A phrase to type: the whole recording, as webm (an engine without sessions). */

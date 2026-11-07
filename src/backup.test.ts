@@ -14,7 +14,7 @@ describe('backup', () => {
 
   it('reads back what it wrote, and says what it holds', () => {
     const file = JSON.parse(JSON.stringify(makeBackup('0.10.2', new Date('2026-10-30T12:00:00Z'), { theme: 'dark' }, parts)))
-    expect(file).toMatchObject({ kind: 'krya-backup', version: '0.10.2', exported: '2026-10-30T12:00:00.000Z' })
+    expect(file).toMatchObject({ kind: 'tyts-backup', version: '0.10.2', exported: '2026-10-30T12:00:00.000Z' })
     const read = readBackup(file)
     expect(read).toEqual({ settings: { theme: 'dark' }, ...parts })
     expect(backupSummary(read)).toBe('settings, 1 word, 1 mistake, 2 learned words, 1 dictated phrase, 1 talk')

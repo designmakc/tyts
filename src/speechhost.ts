@@ -82,7 +82,7 @@ export class SpeechHost {
       pycache: path.join(o.root, 'pycache'),
       // A test run's own home (its models are still the installed engine's); else where the engine is installed:
       // %LOCALAPPDATA%\Kryakl\speech, or an old name's folder when it could not move (oldfolder.ts).
-      env: o.testHome ? { KRYA_SPEECH_HOME: o.testHome } : { KRYA_SPEECH_DIR: o.root },
+      env: o.testHome ? { TYTS_SPEECH_HOME: o.testHome } : { TYTS_SPEECH_DIR: o.root },
       // Beside the engine's settings (its APP_DIR), where an engine run by hand finds it too.
       token: speechToken(path.join(o.testHome ?? o.userDir, 'speech-token')),
       // Its Python, run from the engine's own folder (the venv's launcher and the interpreter it starts); never uv.
@@ -116,7 +116,7 @@ export class SpeechHost {
       log('speech: the engine moved here; setting its Python launcher right')
       void this.pack.relocate().then(
         () => (log('speech: launcher set right'), this.start()),
-        error => (console.warn('Kryakl: could not set the speech engine right after the move', error), void this.service.start()),
+        error => (console.warn('Tyts: could not set the speech engine right after the move', error), void this.service.start()),
       )
       return
     }
@@ -342,7 +342,7 @@ export class SpeechHost {
       try {
         await this.fetchModel(model)
       } catch (error) {
-        console.warn(`Kryakl: the speech model ${model} did not download`, error)
+        console.warn(`Tyts: the speech model ${model} did not download`, error)
       }
     }
   }

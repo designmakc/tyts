@@ -82,7 +82,7 @@ import { pickLines } from './ocrpick'
 import { adoptLocalFolder, adoptOldFolders, freeFolder, hasToMove, healSpeech, leftIn, moveDownloads, OLD_LOCAL_FOLDERS, partDir, removeOldUpdaterCaches, type LeftPart, type Warn } from './oldfolder'
 import { paragraphsOf } from './ocrtext'
 import { menuGroups, type MenuAction } from './menu'
-import { KryaklMenu } from './menuwindow'
+import { TytsMenu } from './menuwindow'
 import { placeByTray, placeNear, resize, type Point } from './placement'
 import type { AppTab, AppView, BusyPart, CardKind, CardState, CheckResult, DictationMode, DictionaryStatus, GlossMissing, HostCall, HostVoice, Refused, StorageId, StoragePart, StorageView, TalkWindowView, TextResult, ToHost, ToView, TranslationState, TrayCommand, TrayView, ViewConfig } from './protocol'
 import { draftsIn, englishHtml, textOutHtml, translationHtml } from './render'
@@ -232,10 +232,10 @@ const DICTATION_KEYS: readonly (keyof Settings)[] = ['dictateKey', 'englishKey',
 // folder first, before a test run moves to its own. A second copy (another start, `npm start`, a test
 // run) hands its arguments to the first and quits; the first opens its window.
 const theOnlyOne = app.requestSingleInstanceLock()
-// A test run (KRYA_TEST_HOME; ALTYPE_TEST_HOME, the old name, still read) keeps to its own folders and port; the installed Kryakl is quit first.
-const TEST_HOME = process.env.KRYA_TEST_HOME || process.env.ALTYPE_TEST_HOME || undefined
+// A test run (TYTS_TEST_HOME; ALTYPE_TEST_HOME, the old name, still read) keeps to its own folders and port; the installed Kryakl is quit first.
+const TEST_HOME = process.env.TYTS_TEST_HOME || process.env.ALTYPE_TEST_HOME || undefined
 if (TEST_HOME) app.setPath('userData', TEST_HOME)
-const speechPort = TEST_HOME ? Number(process.env.KRYA_TEST_PORT || process.env.ALTYPE_TEST_PORT) || 8797 : SPEECH_PORT
+const speechPort = TEST_HOME ? Number(process.env.TYTS_TEST_PORT || process.env.ALTYPE_TEST_PORT) || 8797 : SPEECH_PORT
 
 const userDir = () => app.getPath('userData')
 const localAppData = () => process.env.LOCALAPPDATA ?? path.join(app.getPath('appData'), '..', 'Local')
@@ -306,7 +306,7 @@ let callQuitAsked = false
 let balloonClick: (() => void) | undefined
 let keyboard: KeyboardHelper
 /** The menu on one key, by the text cursor. */
-let oneKeyMenu: KryaklMenu | undefined
+let oneKeyMenu: TytsMenu | undefined
 let keyboardTrouble: string | undefined
 /** On a Mac without Accessibility the keyboard thread sees no key: the dictation keys held to talk go back to Electron's toggle. */
 let keysUnseen = false
@@ -481,7 +481,7 @@ function saveSettings(patch: Partial<Settings>): void {
     fs.mkdirSync(userDir(), { recursive: true })
     fs.writeFileSync(settingsFile(), JSON.stringify(settings, null, 2) + '\n', 'utf8')
   } catch (error) {
-    console.warn('Kryakl: could not save the settings', error)
+    console.warn('Tyts: could not save the settings', error)
   }
   if ('startWithWindows' in patch) applyLoginItem()
   // A key may be Electron's or the keyboard thread's (hotkey.ts isAccelerator): both learn of any change.
@@ -513,7 +513,7 @@ function applyLoginItem(): void {
 /** The uninstaller asks its one question in the interface's language (build/installer.nsh reads it here); a run from source or a test run leaves the registry alone. */
 function rememberUiLanguage(): void {
   if (!app.isPackaged || TEST_HOME) return
-  execFile(system32('reg.exe'), ['add', 'HKCU\\Software\\Kryakl', '/v', 'UiLanguage', '/d', settings.uiLanguage, '/f'], { windowsHide: true, timeout: 5000 }, () => undefined)
+  execFile(system32('reg.exe'), ['add', 'HKCU\\Software\\Tyts', '/v', 'UiLanguage', '/d', settings.uiLanguage, '/f'], { windowsHide: true, timeout: 5000 }, () => undefined)
 }
 
 function config(): ViewConfig {
@@ -715,7 +715,7 @@ function prepareTranslator(t: Translator): void {
       last = Date.now()
       postApp()
     })
-    .catch(error => console.warn('Kryakl: the translator did not download', error))
+    .catch(error => console.warn('Tyts: the translator did not download', error))
     .finally(() => postApp())
 }
 
@@ -769,7 +769,7 @@ function unsaveWord(word: string): void {
 async function exportWords(): Promise<void> {
   const { filePath } = await dialog.showSaveDialog(appWin ?? ({} as BrowserWindow), {
     title: t('main.saveWords'),
-    defaultPath: path.join(app.getPath('documents'), 'Kryakl words.txt'),
+    defaultPath: path.join(app.getPath('documents'), 'Tyts words.txt'),
     filters: [{ name: t('main.ankiText'), extensions: ['txt'] }],
   })
   if (filePath) fs.writeFileSync(filePath, ankiTsv(words.list()) + '\n', 'utf8')
@@ -780,7 +780,7 @@ async function exportBackup(): Promise<void> {
   const day = new Date().toISOString().slice(0, 10)
   const options: Electron.SaveDialogOptions = {
     title: t('main.saveBackup'),
-    defaultPath: path.join(app.getPath('documents'), `Kryakl backup ${day}.json`),
+    defaultPath: path.join(app.getPath('documents'), `Tyts backup ${day}.json`),
     filters: [{ name: t('main.backupFile'), extensions: ['json'] }],
   }
   const { filePath } = appWin ? await dialog.showSaveDialog(appWin, options) : await dialog.showSaveDialog(options)
@@ -797,7 +797,7 @@ async function exportBackup(): Promise<void> {
   fs.writeFileSync(filePath, JSON.stringify(backup, null, 2) + '\n', 'utf8')
 }
 
-/** A page's own errors into kryakl.log, so a report says what broke there. */
+/** A page's own errors into tyts.log, so a report says what broke there. */
 function logPageErrors(win: BrowserWindow, name: string): void {
   win.webContents.on('console-message', m => {
     if (m.level === 'error') log(`${name} page: ${m.message} (${m.sourceId}:${m.lineNumber})`)
@@ -1037,12 +1037,12 @@ function commonWords(): string[] {
 // ---------------------------------------------------------------- the app window
 
 /** esbuild.mjs: when this copy was built, and from which commit. */
-declare const KRYA_BUILD: { at: string; commit: string; changed: boolean }
+declare const TYTS_BUILD: { at: string; commit: string; changed: boolean }
 
 /** "30 Oct, 07:12 (ff17ba8, changed)": a run from source tells today's build from yesterday's. */
 function buildText(): string {
-  const at = new Date(KRYA_BUILD.at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-  return KRYA_BUILD.commit ? `${at} (${KRYA_BUILD.commit}${KRYA_BUILD.changed ? ', changed' : ''})` : at
+  const at = new Date(TYTS_BUILD.at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  return TYTS_BUILD.commit ? `${at} (${TYTS_BUILD.commit}${TYTS_BUILD.changed ? ', changed' : ''})` : at
 }
 
 // ---------------------------------------------------------------- storage
@@ -1110,7 +1110,7 @@ function measureStorage(): void {
       const parts = markAway(splitSpeech(measured), root, DOWNLOADED)
       storage = { measuring: false, root, drive: driveOf(root), freeMb: freeMb(root), parts, ...oldFolderView(parts) }
     })
-    .catch(error => console.warn('Kryakl: could not measure the storage', error))
+    .catch(error => console.warn('Tyts: could not measure the storage', error))
     .finally(() => {
       measuring = false
       if (storage?.measuring) storage = { ...storage, measuring: false }
@@ -1151,7 +1151,7 @@ const storageView = (s: StorageView): StorageView => ({ ...s, parts: withUse(s.p
 let refused: Refused[] = []
 
 function noteRefused(id: StorageId, item: string | undefined, error: unknown): void {
-  console.warn(`Kryakl: could not remove ${id}${item ? ` ${item}` : ''}`, error)
+  console.warn(`Tyts: could not remove ${id}${item ? ` ${item}` : ''}`, error)
   const why = engineMessage(error instanceof Error ? error.message : String(error))
   refused.push({ id, ...(item ? { item } : {}), why })
 }
@@ -1226,15 +1226,15 @@ function useRecommended(): void {
   if (Object.keys(advice.patch).length) saveSettings(advice.patch)
   if ('translationLevel' in advice.patch) prepareTranslator(activeTranslator())
   if (advice.model && settings.translationLevel === 'fast') prepareModel()
-  if (advice.natural) voiceStore.download().catch(error => console.warn('Kryakl: the natural voice did not download', error))
+  if (advice.natural) voiceStore.download().catch(error => console.warn('Tyts: the natural voice did not download', error))
   if (advice.parts.length)
     speech.install(advice.parts).then(
       () => (registerShortcuts(), applyKeyboard()),
-      error => console.warn('Kryakl: the speech engine did not install', error),
+      error => console.warn('Tyts: the speech engine did not install', error),
     )
 }
 /** Move to Kryakl is under way: the page shows it, and a second press waits. */
-let movingToKryakl = false
+let movingToTyts = false
 
 /** A download used from outside Kryakl's folder: the old one's place, and why the last move left it there. */
 function oldFolderView(parts: readonly StoragePart[]): Pick<StorageView, 'old'> {
@@ -1243,7 +1243,7 @@ function oldFolderView(parts: readonly StoragePart[]): Pick<StorageView, 'old'> 
   const dir = oldLocalDirs().find(d => away.path.toLowerCase().startsWith(d.toLowerCase() + path.sep)) ?? path.dirname(away.path)
   const reasons = leftOld.find(l => l.dir === dir)?.parts ?? []
   const why = [...new Set(reasons.filter(p => p.why !== 'Kryakl has its own').map(p => p.why))].join('; ')
-  return { old: { dir, moving: movingToKryakl, ...(why ? { why } : {}) } }
+  return { old: { dir, moving: movingToTyts, ...(why ? { why } : {}) } }
 }
 
 /**
@@ -1252,9 +1252,9 @@ function oldFolderView(parts: readonly StoragePart[]): Pick<StorageView, 'old'> 
  * old folder are stopped (moveLocalFolder). Each part keeps its place from Kryakl's start, so Kryakl starts again on
  * the Storage page once anything moved; when nothing could, the engine comes back and the page says why.
  */
-async function moveToKryakl(): Promise<void> {
-  if (movingToKryakl || TEST_HOME) return
-  movingToKryakl = true
+async function moveToTyts(): Promise<void> {
+  if (movingToTyts || TEST_HOME) return
+  movingToTyts = true
   if (storage) storage = { ...storage, ...oldFolderView(storage.parts) }
   postApp()
   speech.service.stop()
@@ -1271,7 +1271,7 @@ async function moveToKryakl(): Promise<void> {
     app.quit()
     return
   }
-  movingToKryakl = false
+  movingToTyts = false
   speech.start()
   measureStorage()
 }
@@ -1352,11 +1352,11 @@ function createAppWindow(): BrowserWindow {
   // The page's maximize button shows Maximize or Restore, whichever way the window got there (a double click on the bar too).
   win.on('maximize', () => postAppWindow())
   win.on('unmaximize', () => postAppWindow())
-  // Its errors go into kryakl.log; a run from source shows the rest of what it says in the terminal.
+  // Its errors go into tyts.log; a run from source shows the rest of what it says in the terminal.
   logPageErrors(win, 'app window')
   if (!app.isPackaged) {
-    win.webContents.on('console-message', m => m.level !== 'error' && console.warn(`Kryakl app window: ${m.message} (${m.sourceId}:${m.lineNumber})`))
-    win.webContents.on('did-fail-load', (_event, code, description) => console.warn(`Kryakl app window did not load: ${code} ${description}`))
+    win.webContents.on('console-message', m => m.level !== 'error' && console.warn(`Tyts app window: ${m.message} (${m.sourceId}:${m.lineNumber})`))
+    win.webContents.on('did-fail-load', (_event, code, description) => console.warn(`Tyts app window did not load: ${code} ${description}`))
   }
   // Closing hides: Kryakl lives in the tray.
   win.on('close', event => {
@@ -1561,21 +1561,21 @@ function onMessage(message: ToHost, page: Page): void {
       postApp()
       return
     case 'exportBackup':
-      exportBackup().catch(error => console.warn('Kryakl: could not save the backup', error))
+      exportBackup().catch(error => console.warn('Tyts: could not save the backup', error))
       return
     case 'importBackup':
-      importBackup().catch(error => console.warn('Kryakl: could not import the backup', error))
+      importBackup().catch(error => console.warn('Tyts: could not import the backup', error))
       return
     case 'resetSettings':
-      resetSettings().catch(error => console.warn('Kryakl: could not reset the settings', error))
+      resetSettings().catch(error => console.warn('Tyts: could not reset the settings', error))
       return
     case 'resetKeys':
-      resetKeys().catch(error => console.warn('Kryakl: could not reset the keys', error))
+      resetKeys().catch(error => console.warn('Tyts: could not reset the keys', error))
       return
     case 'installSpeech':
       speech.install(message.parts, message.models).then(
         () => (registerShortcuts(), applyKeyboard()),
-        error => console.warn('Kryakl: the speech engine did not install', error),
+        error => console.warn('Tyts: the speech engine did not install', error),
       )
       return
     case 'prepareTranslator':
@@ -1614,11 +1614,11 @@ function onMessage(message: ToHost, page: Page): void {
     case 'storage':
       measureStorage()
       return
-    case 'moveToKryakl':
-      void moveToKryakl().catch(error => {
-        movingToKryakl = false
+    case 'moveToTyts':
+      void moveToTyts().catch(error => {
+        movingToTyts = false
         leftOld = oldLocalDirs().map(dir => ({ dir, parts: [{ name: path.basename(dir), why: messageOf(error) }] }))
-        console.warn('Kryakl: could not move the old folder', error)
+        console.warn('Tyts: could not move the old folder', error)
         remeasure()
       })
       return
@@ -1668,7 +1668,7 @@ function onMessage(message: ToHost, page: Page): void {
       natural.at(message.id, message.index)
       return
     case 'downloadNatural':
-      voiceStore.download().catch(error => console.warn('Kryakl: the natural voice did not download', error))
+      voiceStore.download().catch(error => console.warn('Tyts: the natural voice did not download', error))
       return
     case 'dismissNatural':
       saveSettings({ naturalDismissed: true })
@@ -1694,7 +1694,7 @@ function onMessage(message: ToHost, page: Page): void {
       maximizeCard(message.on)
       return
     case 'close':
-      closeCard().catch(error => console.warn('Kryakl: could not give the keyboard back', error))
+      closeCard().catch(error => console.warn('Tyts: could not give the keyboard back', error))
       return
     case 'retry':
       if (last && shown?.id === last.id) void translateInto(last.id, last.text, last.kind, last.note)
@@ -1711,10 +1711,10 @@ function onMessage(message: ToHost, page: Page): void {
       void checkCard(message.id, message.text)
       return
     case 'copyText':
-      clipboard.writeText(message.text).catch(error => console.warn('Kryakl: could not copy', error))
+      clipboard.writeText(message.text).catch(error => console.warn('Tyts: could not copy', error))
       return
     case 'pasteText':
-      pasteTranslation(message.id, message.text).catch(error => console.warn('Kryakl: could not paste the translation', error))
+      pasteTranslation(message.id, message.text).catch(error => console.warn('Tyts: could not paste the translation', error))
       return
     case 'lookup':
       lookupWord(message.word, asker)
@@ -1747,10 +1747,10 @@ function onMessage(message: ToHost, page: Page): void {
       postApp()
       return
     case 'exportWords':
-      exportWords().catch(error => console.warn('Kryakl: could not save the words', error))
+      exportWords().catch(error => console.warn('Tyts: could not save the words', error))
       return
     case 'copyWords':
-      clipboard.writeText(wordsText(words.list())).catch(error => console.warn('Kryakl: could not copy the words', error))
+      clipboard.writeText(wordsText(words.list())).catch(error => console.warn('Tyts: could not copy the words', error))
       return
     case 'openLink':
       if (LINKS.has(message.url)) void shell.openExternal(message.url)
@@ -1771,7 +1771,7 @@ function onMessage(message: ToHost, page: Page): void {
         if (message.on && appWin && !appWin.isDestroyed()) keyboard.record(true, handleOf(appWin))
         else keyboard.record(false)
       } catch (error) {
-        console.warn('Kryakl: the keyboard thread could not read the keys for a key field', error)
+        console.warn('Tyts: the keyboard thread could not read the keys for a key field', error)
       }
       return
     case 'window':
@@ -1939,7 +1939,7 @@ function translationJob(codes: readonly string[], wait = false): TranslationJob 
       if (translator.state(code).status !== 'absent') continue
       translator
         .prepare(code, () => undefined)
-        .catch(error => console.warn('Kryakl: the draft translator did not download', error))
+        .catch(error => console.warn('Tyts: the draft translator did not download', error))
         .finally(() => postApp())
     }
     return { t, translate: t.translate, busy: () => undefined }
@@ -2167,7 +2167,7 @@ function focusedField(): unknown {
   try {
     return focusedElement()
   } catch (error) {
-    console.warn('Kryakl: could not ask which field has the keyboard', error)
+    console.warn('Tyts: could not ask which field has the keyboard', error)
     return undefined
   }
 }
@@ -2178,7 +2178,7 @@ function selectionIn(field: unknown): string {
   try {
     return selectedText(field).trim()
   } catch (error) {
-    console.warn('Kryakl: could not read the selection through UI Automation', error)
+    console.warn('Tyts: could not read the selection through UI Automation', error)
     return ''
   }
 }
@@ -2239,7 +2239,7 @@ async function pasteInto(window: bigint, field: unknown, text: string): Promise<
       // A web page in a window (VS Code's chat) takes the keyboard back a moment after.
       if (focus(field)) await new Promise(resolve => setTimeout(resolve, 80))
     } catch (error) {
-      console.warn('Kryakl: could not give the keyboard back to the field', error)
+      console.warn('Tyts: could not give the keyboard back to the field', error)
     }
     releaseField(field)
   }
@@ -2555,7 +2555,7 @@ async function checkCard(id: number, text: string): Promise<void> {
 function prepareModel(): void {
   checker
     .prepare(() => postApp())
-    .catch(error => console.warn('Kryakl: the model did not download', error))
+    .catch(error => console.warn('Tyts: the model did not download', error))
     .finally(() => (postApp(), remeasure()))
 }
 
@@ -2686,8 +2686,8 @@ function watchModel(): void {
     postApp()
   }
   stopForFullScreen()
-  recheckBusy().catch(error => console.warn('Kryakl: could not look at the graphics card', error))
-  measureCard().catch(error => console.warn('Kryakl: could not measure the graphics card', error))
+  recheckBusy().catch(error => console.warn('Tyts: could not look at the graphics card', error))
+  measureCard().catch(error => console.warn('Tyts: could not measure the graphics card', error))
 }
 
 /**
@@ -2805,7 +2805,7 @@ async function clipboardPng(): Promise<Buffer | undefined> {
 
 /** Reads the clipboard once the program that changed it is done. */
 function afterSettling(read: () => Promise<void>): void {
-  setTimeout(() => read().catch(error => console.warn('Kryakl: could not read the clipboard', error)), SETTLE_MS)
+  setTimeout(() => read().catch(error => console.warn('Tyts: could not read the clipboard', error)), SETTLE_MS)
 }
 
 function onClipboardChange(): void {
@@ -2886,7 +2886,7 @@ function doubleCopyChange(now: number, ctrl: boolean): void {
 
 function selection(purpose: Purpose, via?: string, nothing?: () => void): void {
   if (onMac) return void macSelection(purpose, via, nothing)
-  useSelection(purpose, via, nothing).catch(error => console.warn('Kryakl: could not copy the selection', error))
+  useSelection(purpose, via, nothing).catch(error => console.warn('Tyts: could not copy the selection', error))
 }
 
 /**
@@ -3630,7 +3630,7 @@ async function layoutIcon(short: string, caps: boolean, dark: boolean): Promise<
     layoutIcons.set(key, icon)
     return icon
   } catch (error) {
-    console.warn('Kryakl: could not draw the layout in the tray', error)
+    console.warn('Tyts: could not draw the layout in the tray', error)
     return undefined
   }
 }
@@ -3909,11 +3909,11 @@ function setUpSpeechEngine(): void {
     const fromApp = !!appWin && !appWin.isDestroyed() && details.webContentsId === appWin.webContents.id
       && new URL(details.url).port === String(speech.port)
     const key = fromApp ? speech.token : undefined
-    done({ requestHeaders: key ? { ...details.requestHeaders, 'X-Krya-Token': key } : details.requestHeaders })
+    done({ requestHeaders: key ? { ...details.requestHeaders, 'X-Tyts-Token': key } : details.requestHeaders })
   })
   speech.start()
   // Windows is asked about the cards and the battery once Kryakl is up: it takes a second or two.
-  setTimeout(() => void speech.probe().catch(error => console.warn('Kryakl: could not look at this computer', error)), 4000)
+  setTimeout(() => void speech.probe().catch(error => console.warn('Tyts: could not look at this computer', error)), 4000)
 }
 
 /** The formats a transcript is saved in (the engine's export.FORMATS). */
@@ -3988,7 +3988,7 @@ function start(): void {
     return
   }
   const adopted = adoptOldFolder()
-  // kryakl.log beside the settings: the warnings, and what the windows did.
+  // tyts.log beside the settings: the warnings, and what the windows did.
   logTo(userDir())
   const warn = console.warn.bind(console)
   console.warn = (...parts: unknown[]) => {
@@ -4075,7 +4075,7 @@ function start(): void {
       sendTrayView()
     },
     // A word fixed by hand twice is fixed by itself from then on, and kept as typed no more.
-    // kryakl.log says each step, never the word.
+    // tyts.log says each step, never the word.
     fixedByHand: word => {
       const kept = settings.keepWords.includes(word.word)
       const already = learned.alwaysFix.some(l => l.word === word.word && l.lang === word.lang)
@@ -4101,7 +4101,7 @@ function start(): void {
     },
     notLearned: why =>
       log(why === 'field' ? 'learn: a word fixed by hand, not learned: the field said it is a password, or would not say' : 'learn: a word fixed by hand, not learned: it made no word of a word'),
-    selection: (cycle, layout) => void convertSelection(cycle, layout).catch(error => console.warn('Kryakl: could not convert the selection', error)),
+    selection: (cycle, layout) => void convertSelection(cycle, layout).catch(error => console.warn('Tyts: could not convert the selection', error)),
     hotkey: action => {
       if (action === 'pause') return togglePause()
       // Paused, the thread keeps the pause key alone; a key on its way meanwhile does nothing.
@@ -4155,7 +4155,7 @@ function start(): void {
         keysUnseen = !keysUnseen
         registerShortcuts()
       }
-      console.warn(`Kryakl keyboard: ${message}`)
+      console.warn(`Tyts keyboard: ${message}`)
       postApp()
     },
   })
@@ -4185,7 +4185,7 @@ function start(): void {
   powerMonitor.on('suspend', () => {
     if (capture?.busy) void stopCall()
   })
-  oneKeyMenu = new KryaklMenu({
+  oneKeyMenu = new TytsMenu({
     page: path.join(app.getAppPath(), 'media', 'menu.html'),
     preload: path.join(__dirname, 'preload.js'),
     query: pageQuery,
@@ -4283,7 +4283,7 @@ if (!theOnlyOne) {
       try {
         step()
       } catch (error) {
-        console.warn(`Kryakl: could not put away the ${name}`, error)
+        console.warn(`Tyts: could not put away the ${name}`, error)
       }
     }
   })

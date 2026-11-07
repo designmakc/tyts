@@ -18,7 +18,7 @@ import numpy as np
 from audio import RATE
 from settings import MODELS_DIR
 
-log = logging.getLogger("kryakl.diarize")
+log = logging.getLogger("tyts.diarize")
 
 REPO = "pyannote/speaker-diarization-community-1"
 LOCAL = MODELS_DIR / "diarization"
@@ -74,7 +74,7 @@ class Setup:
                 self.state = "ready"
                 return
             self.state, self.message = "checking", ""
-        threading.Thread(target=self._run, args=(token,), name="kryakl-setup", daemon=True).start()
+        threading.Thread(target=self._run, args=(token,), name="tyts-setup", daemon=True).start()
 
     def _run(self, token: str) -> None:
         from huggingface_hub import HfApi

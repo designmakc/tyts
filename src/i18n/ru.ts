@@ -65,7 +65,7 @@ export const ru: Record<Key, Phrase> = {
 
   // ------------------------------------------------------------ the tray's panel
   'tray.open': 'Открыть',
-  'tray.openKryakl': 'Открыть Тиць',
+  'tray.openTyts': 'Открыть Тиць',
   'tray.built': 'Собрано {build}',
   'tray.actions': 'Действия',
   'tray.listenCopied': 'Перевести и прочитать вслух',
@@ -1137,7 +1137,7 @@ export const ru: Record<Key, Phrase> = {
   'kb.startsIn': 'начальная раскладка: {layout}',
   'kb.nothingLeftOut': 'ничего не отключено',
   'kb.noLonger': 'Этой программы уже нет в списке.',
-  'kb.hereKryakl': 'Здесь Тиць',
+  'kb.hereTyts': 'Здесь Тиць',
   'kb.fixes': 'Исправляет слова при наборе',
   'kb.fixesNote': 'выключено: слова остаются как набраны; клавиша исправления работает',
   'kb.switches': 'Переключает раскладку своими клавишами',

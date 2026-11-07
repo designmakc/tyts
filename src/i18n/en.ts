@@ -70,7 +70,7 @@ export const en = {
 
   // ------------------------------------------------------------ the tray's panel
   'tray.open': 'Open',
-  'tray.openKryakl': 'Open Tyts',
+  'tray.openTyts': 'Open Tyts',
   'tray.built': 'Built {build}',
   'tray.actions': 'Actions',
   'tray.listenCopied': 'Translate and read aloud',
@@ -1142,7 +1142,7 @@ export const en = {
   'kb.startsIn': 'starts in {layout}',
   'kb.nothingLeftOut': 'nothing left out',
   'kb.noLonger': 'This program is no longer in the list.',
-  'kb.hereKryakl': 'Here, Tyts',
+  'kb.hereTyts': 'Here, Tyts',
   'kb.fixes': 'Fixes words as you type',
   'kb.fixesNote': 'off: words stay as typed; the fix key still works',
   'kb.switches': 'Switches the layout by its keys',

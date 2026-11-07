@@ -251,7 +251,7 @@ func startTap() -> Bool {
   return true
 }
 
-// What macOS lets this process do, told in hello and ready (kryakl.log): keys reach a tap only with Input Monitoring (ListenEvent).
+// What macOS lets this process do, told in hello and ready (tyts.log): keys reach a tap only with Input Monitoring (ListenEvent).
 func access() -> [String: Any] { ["listen": CGPreflightListenEventAccess(), "post": CGPreflightPostEventAccess(), "ax": AXIsProcessTrusted()] }
 emit(["e": "hello", "dbl": Int(NSEvent.doubleClickInterval * 1000), "layouts": layouts(), "access": access()])
 

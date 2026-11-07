@@ -35,7 +35,7 @@ from diarize import Diarizer, NeedsPart, NeedsToken
 from settings import ALL_MODELS, CPU_DICTATION, Settings
 from store import Store
 
-log = logging.getLogger("kryakl.jobs")
+log = logging.getLogger("tyts.jobs")
 
 IDLE_UNLOAD = 600     # seconds without work before the processor's models are let go
 CARD_IDLE = 180       # the graphics card's sooner: it is the person's programs' (2026-10-31)
@@ -142,7 +142,7 @@ class Worker:
         self.fallback: str | None = None
         # Grows with every phrase and job started: the speed test sees it was disturbed.
         self.activity = 0
-        self._thread = threading.Thread(target=self._run, name="kryakl-worker", daemon=True)
+        self._thread = threading.Thread(target=self._run, name="tyts-worker", daemon=True)
 
     def start(self) -> None:
         store = self.get_store()

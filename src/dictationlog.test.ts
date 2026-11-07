@@ -8,7 +8,7 @@ import { DictationLog, LOG_DAYS, LOG_MOST } from './dictationlog'
 
 const dirs: string[] = []
 function tempFile(): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kryakl-dictation-'))
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tyts-dictation-'))
   dirs.push(dir)
   return path.join(dir, 'dictation.json')
 }

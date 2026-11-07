@@ -11,7 +11,7 @@ const dirs: string[] = []
 const stores: LearnStore[] = []
 
 function store(now = () => 100 * DAY_MS): { s: LearnStore; file: string } {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kryakl-learn-'))
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tyts-learn-'))
   dirs.push(dir)
   const file = path.join(dir, 'learning.json')
   const s = new LearnStore(file, now)

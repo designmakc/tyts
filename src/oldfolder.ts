@@ -28,7 +28,7 @@ export const OLD_PROGRAMS = ['krya.exe', 'altype.exe']
  */
 export const ITEMS: readonly (string | readonly [from: string, to: string])[] = [
   'settings.json', 'words.json', 'dictation.json', 'translations.json', 'learning.json', 'mistakes.json', 'talks.json', 'speech-token',
-  'device.json', 'speech.json', 'extension.json', 'speech.log', 'translate.log', ['krya.log', 'kryakl.log'], ['altype.log', 'kryakl.log'],
+  'device.json', 'speech.json', 'extension.json', 'speech.log', 'translate.log', ['krya.log', 'tyts.log'], ['altype.log', 'tyts.log'],
   '.updaterId', 'models', 'voice', 'dict',
 ]
 
@@ -48,7 +48,7 @@ export function adoptOldFolders(appData: string, userDir: string, warn: Warn = (
         fs.renameSync(from, to)
         moved.push(`${oldName}/${fromName}`)
       } catch (error) {
-        warn(`Kryakl: could not move ${from}`, error)
+        warn(`Tyts: could not move ${from}`, error)
       }
     }
   }
@@ -73,7 +73,7 @@ export function adoptLocalFolder(oldDir: string, newDir: string, warn: Warn = ()
       return ['*']
     } catch (error) {
       // One file in use stops the whole folder: the parts that can move still do.
-      warn(`Kryakl: could not move ${oldDir} at once`, error, oldDir)
+      warn(`Tyts: could not move ${oldDir} at once`, error, oldDir)
     }
   }
   const moved: string[] = []
@@ -87,7 +87,7 @@ export function adoptLocalFolder(oldDir: string, newDir: string, warn: Warn = ()
       moved.push(name)
       if (name === 'speech') repairSpeech(to, from, warn)
     } catch (error) {
-      warn(`Kryakl: could not move ${from}`, error, from)
+      warn(`Tyts: could not move ${from}`, error, from)
     }
   }
   try {
@@ -122,7 +122,7 @@ export function repairSpeech(dir: string, oldDir: string, warn: Warn = () => und
         fs.unlinkSync(link)
         fs.symlinkSync(moved, link, 'junction')
       } catch (error) {
-        warn(`Kryakl: could not point ${link} at the new folder`, error)
+        warn(`Tyts: could not point ${link} at the new folder`, error)
       }
     }
   }
@@ -133,7 +133,7 @@ export function repairSpeech(dir: string, oldDir: string, warn: Warn = () => und
     const moved = rebase(text)
     if (moved !== text) fs.writeFileSync(cfg, moved)
   } catch (error) {
-    warn(`Kryakl: could not point ${cfg} at the new folder`, error)
+    warn(`Tyts: could not point ${cfg} at the new folder`, error)
   }
 }
 
@@ -159,7 +159,7 @@ export function healSpeech(dir: string, warn: Warn = () => undefined): string[] 
       fs.symlinkSync(beside, link, 'junction')
       healed.push(name)
     } catch (error) {
-      warn(`Kryakl: could not point ${link} at ${pythons}`, error)
+      warn(`Tyts: could not point ${link} at ${pythons}`, error)
     }
   }
   return healed
@@ -192,7 +192,7 @@ export function moveDownloads(userDir: string, localDir: string, warn: Warn = ()
       fs.renameSync(from, to)
       moved.push(name)
     } catch (error) {
-      warn(`Kryakl: could not move ${from}`, error, from)
+      warn(`Tyts: could not move ${from}`, error, from)
     }
   }
   return moved
@@ -312,7 +312,7 @@ function stopHolders(dir: string, processes: readonly RunningProcess[], warn: Wa
     try {
       process.kill(p.pid)
     } catch (error) {
-      warn(`Kryakl: could not stop ${p.name} (${p.pid}), run from ${dir}`, error)
+      warn(`Tyts: could not stop ${p.name} (${p.pid}), run from ${dir}`, error)
     }
   }
   return holders
@@ -370,7 +370,7 @@ export function removeOldUpdaterCaches(localAppData: string, warn: Warn = () => 
       fs.rmSync(dir, { recursive: true, force: true })
       gone.push(name)
     } catch (error) {
-      warn(`Kryakl: could not remove ${dir}`, error)
+      warn(`Tyts: could not remove ${dir}`, error)
     }
   }
   return gone

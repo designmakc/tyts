@@ -41,7 +41,7 @@ export function frameWindow(win: BrowserWindow, opts: Frame): void {
     set(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, CORNERS[opts.corner])
     set(hwnd, DWMWA_BORDER_COLOR, opts.border === 'none' ? DWMWA_COLOR_NONE : colorRef(opts.border))
   } catch (error) {
-    console.warn('Kryakl: Windows did not take the window frame', error)
+    console.warn('Tyts: Windows did not take the window frame', error)
   }
 }
 

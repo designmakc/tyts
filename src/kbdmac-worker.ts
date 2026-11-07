@@ -153,7 +153,7 @@ type HelperEvent =
   | { e: 'field'; secret: boolean | null }
 
 type Access = { listen: boolean; post: boolean; ax: boolean }
-// What macOS lets the helper do, into kryakl.log once per change (no characters).
+// What macOS lets the helper do, into tyts.log once per change (no characters).
 let accessSaid = ''
 function sayAccess(when: string, a?: Access): void {
   if (!a) return
@@ -163,7 +163,7 @@ function sayAccess(when: string, a?: Access): void {
   send({ type: 'note', text })
 }
 
-// The first keys after the start, counted once for kryakl.log, so a Mac where fixing does nothing says why.
+// The first keys after the start, counted once for tyts.log, so a Mac where fixing does nothing says why.
 const seen = { keys: 0, foreign: 0, unknown: 0, asked: 0, secret: 0 }
 function look(event: { c: number; d: boolean; f: boolean; w?: boolean }, vk: number | undefined): void {
   if (seen.keys > 40 || !event.d) return

@@ -33,7 +33,7 @@ import numpy as np
 
 from audio import RATE
 
-log = logging.getLogger("kryakl.stream")
+log = logging.getLogger("tyts.stream")
 
 PAUSE = 0.6  # seconds of silence that end a piece
 PAD = 0.2  # seconds of silence kept after the speech of a piece
@@ -102,7 +102,7 @@ class Session:
         self.took = 0.0
         self.touched = time.monotonic()
         self._lock = threading.Condition()
-        self._thread = threading.Thread(target=self._run, name=f"kryakl-session-{self.id}", daemon=True)
+        self._thread = threading.Thread(target=self._run, name=f"tyts-session-{self.id}", daemon=True)
         self._thread.start()
 
     # ---------------------------------------------------------------- sound in

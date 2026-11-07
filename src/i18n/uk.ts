@@ -65,7 +65,7 @@ export const uk: Record<Key, Phrase> = {
 
   // ------------------------------------------------------------ the tray's panel
   'tray.open': 'Відкрити',
-  'tray.openKryakl': 'Відкрити Тиць',
+  'tray.openTyts': 'Відкрити Тиць',
   'tray.built': 'Зібрано {build}',
   'tray.actions': 'Дії',
   'tray.listenCopied': 'Перекласти й прочитати вголос',
@@ -1137,7 +1137,7 @@ export const uk: Record<Key, Phrase> = {
   'kb.startsIn': 'початкова розкладка: {layout}',
   'kb.nothingLeftOut': 'нічого не вимкнено',
   'kb.noLonger': 'Цієї програми вже немає в списку.',
-  'kb.hereKryakl': 'Тут Тиць',
+  'kb.hereTyts': 'Тут Тиць',
   'kb.fixes': 'Виправляє слова під час набору',
   'kb.fixesNote': 'вимкнено: слова лишаються як набрані; клавіша виправлення працює',
   'kb.switches': 'Перемикає розкладку своїми клавішами',

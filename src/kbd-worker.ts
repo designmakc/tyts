@@ -267,7 +267,7 @@ drainPort()
 const module = GetModuleHandleW(null)
 const keyboardHook = SetWindowsHookExW(WH_KEYBOARD_LL, keyboardProc, module, 0)
 const mouseHook = SetWindowsHookExW(WH_MOUSE_LL, mouseProc, module, 0)
-if (!keyboardHook || !mouseHook) send({ type: 'error', message: 'Windows did not let Kryakl watch the keyboard' })
+if (!keyboardHook || !mouseHook) send({ type: 'error', message: 'Windows did not let Tyts watch the keyboard' })
 // The main process learns where to wake this thread.
 send({ type: 'thread', tid })
 

@@ -9,7 +9,7 @@ import { TranslationLog } from './translationlog'
 
 const dirs: string[] = []
 function tempFile(): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kryakl-translations-'))
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tyts-translations-'))
   dirs.push(dir)
   return path.join(dir, 'translations.json')
 }

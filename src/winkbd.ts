@@ -175,8 +175,17 @@ export function capsLockOf(front: Foreground): boolean {
   }
 }
 
-/** Asks a window to type in another layout, as Windows' own switch does. */
+/**
+ * Asks a window to type in another layout, as Windows' own switch does: the
+ * window with the keyboard (a Chromium window answers for its own focused
+ * child, not always for its frame, 2026-11-07) and the frame itself.
+ */
 export function switchLayout(hwnd: bigint, hkl: bigint): void {
+  const pid = [0]
+  const tid = GetWindowThreadProcessId(hwnd, pid) as number
+  const info: Record<string, unknown> = { cbSize: koffi.sizeof(GUITHREADINFO) }
+  const focus = tid && GetGUIThreadInfo(tid, info) ? BigInt(info.hwndFocus as number | bigint) : 0n
+  if (focus && focus !== hwnd) PostMessageW(focus, WM_INPUTLANGCHANGEREQUEST, 0, hkl)
   PostMessageW(hwnd, WM_INPUTLANGCHANGEREQUEST, 0, hkl)
 }
 

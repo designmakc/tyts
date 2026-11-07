@@ -1063,6 +1063,7 @@ export class Typist {
    */
   private wordEnds(stroke: Stroke, char: string | undefined, front: Front): boolean {
     this.erasing = false
+    this.settleSwitch(front)
     const start = this.wordStart()
     const word = this.run.slice(start)
     if (word.length === 0) return false
@@ -1348,8 +1349,31 @@ export class Typist {
     const named = this.env.layoutOf(front.tid)
     const e = this.expected
     if (e && e.hwnd === front.hwnd && e.layout !== named && this.env.now() < e.until) return e.layout
+    if (e && e.hwnd === front.hwnd && e.layout !== named) this.switchFailed(e.layout, named)
     this.expected = undefined
     return named
+  }
+
+  /**
+   * A switch asked of the window in front that it has not made by now (a word's
+   * end, or the trust window out): the keys since were typed in the layout
+   * Windows names, and the next word is nobody's switch to trust (2026-11-07:
+   * Left Ctrl asked a Chromium window for English, it kept Russian, and
+   * "цштвщцы" went by as the trusted word after a switch).
+   */
+  private settleSwitch(front: Front): void {
+    const e = this.expected
+    if (!e || e.hwnd !== front.hwnd) return
+    this.expected = undefined
+    const named = this.env.layoutOf(front.tid)
+    if (named !== e.layout) this.switchFailed(e.layout, named)
+  }
+
+  private switchFailed(wanted: string, named: string): void {
+    for (const s of this.run.slice(this.boundary)) if (s.layout === wanted) s.layout = named
+    this.trustNext = false
+    const lang = (id: string) => this.env.layout(id)?.lang ?? id
+    this.env.send({ type: 'note', text: `switch: the window kept ${lang(named)}, asked for ${lang(wanted)}` })
   }
 
   // ---------------------------------------------------------------- learning

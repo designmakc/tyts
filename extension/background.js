@@ -4,9 +4,16 @@
 
 const OFFSCREEN = 'offscreen.html'
 
+// The engine takes 8765, or the next free of ten when Windows or another program holds it (src/speechservice.ts freePort).
 async function port() {
   const { port } = await chrome.storage.local.get('port')
-  return port || 8765
+  if (port) return port
+  for (let p = 8765; p < 8775; p++) {
+    try {
+      if ((await fetch(`http://127.0.0.1:${p}/health`, { signal: AbortSignal.timeout(500) })).ok) return p
+    } catch {}
+  }
+  return 8765
 }
 
 // Every call to /health says which version of the extension this is, so Kryakl can show "Installed in Chrome".

@@ -7,7 +7,7 @@ import * as path from 'node:path'
 
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
-import { provesKey, SpeechService, speechToken } from './speechservice'
+import { freePort, provesKey, SpeechService, speechToken } from './speechservice'
 
 const dirs: string[] = []
 afterEach(() => {
@@ -74,7 +74,7 @@ describe('the engine on the port', () => {
       change: () => undefined,
     })
     await service.start()
-    const seen = { state: service.state, trouble: service.trouble, health: service.health, token: service.token }
+    const seen = { state: service.state, trouble: service.trouble, health: service.health, token: service.token, port: service.port, asked: (server.address() as AddressInfo).port }
     await then?.(service)
     service.stop()
     await new Promise<void>(resolve => server.close(() => resolve()))
@@ -107,12 +107,14 @@ describe('the engine on the port', () => {
     expect(r.keyed).toEqual([])
   })
 
-  test('another program on the port is neither used nor stopped', async () => {
+  test('another program on the port is neither used nor stopped: Kryakl\'s engine starts on the next port', async () => {
     const r = await onPort(() => ({ ok: true }))
     expect(r.stopStale).not.toHaveBeenCalled()
-    expect(r.state).toBe('down')
-    expect(r.trouble).toMatch(/used by another program/)
+    expect(r.port).toBeGreaterThan(r.asked)
+    // Its own start was tried there: there is no Python here, so it says so.
+    expect(r.trouble).toBe('The speech engine is not installed')
     expect(r.health).toBeUndefined()
+    expect(r.keyed).toEqual([])
   })
 
   test.each([
@@ -131,4 +133,13 @@ describe('the engine on the port', () => {
     expect(r.token).toBeUndefined()
     expect(r.state).not.toBe('ready')
   })
+})
+
+test('freePort skips a port something listens on (Windows\' excluded ranges, another engine)', async () => {
+  const server = http.createServer()
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
+  const taken = (server.address() as AddressInfo).port
+  expect(await freePort(taken, 1)).toBeUndefined()
+  expect(await freePort(taken, 2)).not.toBe(taken)
+  await new Promise<void>(resolve => server.close(() => resolve()))
 })

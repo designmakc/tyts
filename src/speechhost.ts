@@ -329,7 +329,7 @@ export class SpeechHost {
       ...(this.service.health
         ? { health: this.service.health.diarizationMessage ? { ...this.service.health, diarizationMessage: engineMessage(this.service.health.diarizationMessage) } : this.service.health }
         : {}),
-      port: this.o.port,
+      port: this.service.port,
       extensionDir: this.o.extensionDir,
       extensionShipped: this.extensionShipped,
       download: { core: DOWNLOAD_MB.core, gpu: DOWNLOAD_MB.gpu, speakers: onCard ? DOWNLOAD_MB.speakersGpu : DOWNLOAD_MB.speakers },
@@ -439,6 +439,11 @@ export class SpeechHost {
   /** The engine's key, for the requests a page makes itself (a transcript's sound in an <audio>): main adds it, once the engine has proved itself. */
   get token(): string | undefined {
     return this.service.token
+  }
+
+  /** The port the engine is on now (it moves on when its own is taken). */
+  get port(): number {
+    return this.service.port
   }
 
   call<T = unknown>(method: string, route: string, body?: unknown): Promise<SpeechResult<T>> {

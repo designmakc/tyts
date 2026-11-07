@@ -9,12 +9,31 @@
 import { spawn, type ChildProcess } from 'node:child_process'
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
 import * as fs from 'node:fs'
+import * as net from 'node:net'
 import * as path from 'node:path'
 
 import { rotate } from './log'
 import type { Bench } from './speechplan'
 
 export const SPEECH_PORT = 8765
+/** How many ports from SPEECH_PORT on the engine may take (extension/background.js looks through the same ones). */
+export const SPEECH_PORTS = 10
+
+/**
+ * The first port from `from` on that 127.0.0.1 lets one listen on. Windows may hold 8765 for itself (Hyper-V's and
+ * WSL's excluded port ranges: uvicorn then exits with 3 at every start), or another program (Kryakl) may sit on it.
+ */
+export async function freePort(from: number, count = SPEECH_PORTS): Promise<number | undefined> {
+  for (let port = from; port < from + count; port++) {
+    const free = await new Promise<boolean>(resolve => {
+      const server = net.createServer()
+      server.once('error', () => resolve(false))
+      server.listen(port, '127.0.0.1', () => server.close(() => resolve(true)))
+    })
+    if (free) return port
+  }
+  return undefined
+}
 
 const RETRIES = [2, 5, 10, 30] // seconds before each new start; after the last it stays down
 
@@ -98,6 +117,8 @@ export type SpeechServiceOptions = {
 
 export class SpeechService {
   state: SpeechServiceState = 'off'
+  /** The port the engine is on: the one asked for, or the next free one when that one is taken (freePort). */
+  port: number
   health: SpeechHealth | undefined
   trouble: string | undefined
   private child: ChildProcess | undefined
@@ -110,11 +131,15 @@ export class SpeechService {
   private stopping: Promise<void> | undefined
   /** The engine on the port has proved it holds the key (`check`): only then is the key sent to it. */
   private proved = false
+  /** A port is being picked for the engine (launch): no second start meanwhile. */
+  private launching = false
 
-  constructor(private readonly o: SpeechServiceOptions) {}
+  constructor(private readonly o: SpeechServiceOptions) {
+    this.port = o.port
+  }
 
   get base(): string {
-    return `http://127.0.0.1:${this.o.port}`
+    return `http://127.0.0.1:${this.port}`
   }
 
   /** The key, once the engine on the port has proved it holds it; before, nothing on the port gets it. */
@@ -127,7 +152,7 @@ export class SpeechService {
     this.stopped = false
     this.failures = 0
     this.set('starting')
-    if (!(await this.check())) this.launch()
+    if (!(await this.check())) void this.launch()
     clearInterval(this.timer)
     this.timer = setInterval(() => void this.check(), 2000)
   }
@@ -136,7 +161,7 @@ export class SpeechService {
     this.failures = 0
     this.trouble = undefined
     if (this.child) this.child.kill()
-    else if (!this.stopped) this.launch()
+    else if (!this.stopped) void this.launch()
     else void this.start()
   }
 
@@ -150,19 +175,37 @@ export class SpeechService {
     this.set('off')
   }
 
-  private launch(): void {
+  private async launch(): Promise<void> {
+    if (this.launching) return
+    this.launching = true
+    try {
+      await this.spawnEngine()
+    } finally {
+      this.launching = false
+    }
+  }
+
+  private async spawnEngine(): Promise<void> {
     const python = this.o.python()
     if (!fs.existsSync(python)) {
       this.set('down', 'The speech engine is not installed')
       return
     }
     this.set('starting')
+    // Nothing of ours answers on the port: if it cannot be listened on, the engine goes to the next free one.
+    const port = await freePort(this.port, this.o.port + SPEECH_PORTS - this.port)
+    if (this.stopped || this.child) return
+    if (port === undefined) {
+      this.set('down', `Ports ${this.o.port}–${this.o.port + SPEECH_PORTS - 1} are all taken: see ${this.o.log}`)
+      return
+    }
+    this.port = port
     fs.mkdirSync(path.dirname(this.o.log), { recursive: true })
     // Past 2 MB a start begins it afresh, the last one kept as speech.old.log.
     rotate(this.o.log, 2_000_000)
     const log = fs.createWriteStream(this.o.log, { flags: 'a' })
-    log.write(`\n--- ${new Date().toISOString()} start\n`)
-    const child = spawn(python, ['app.py', '--port', String(this.o.port)], {
+    log.write(`\n--- ${new Date().toISOString()} start on port ${this.port}\n`)
+    const child = spawn(python, ['app.py', '--port', String(this.port)], {
       cwd: this.o.engineDir,
       env: { ...process.env, ...this.o.env, KRYA_SPEECH_TOKEN: this.o.token, PYTHONIOENCODING: 'utf-8', PYTHONUNBUFFERED: '1', PYTHONPYCACHEPREFIX: this.o.pycache },
       windowsHide: true,
@@ -183,7 +226,7 @@ export class SpeechService {
         return
       }
       this.set('starting')
-      setTimeout(() => !this.stopped && !this.child && this.launch(), wait * 1000)
+      setTimeout(() => !this.stopped && !this.child && void this.launch(), wait * 1000)
     })
     this.child = child
   }
@@ -199,16 +242,22 @@ export class SpeechService {
         this.proved = false
         this.health = undefined
         // An engine of an older Kryakl (it answers as one, but holds no key), left running: it goes, once, and Kryakl starts its own.
-        if (!this.staleStopped && !this.child && looksLikeEngine(look) && this.o.stopStale) {
+        if (!this.staleStopped && !this.child && !this.launching && looksLikeEngine(look) && this.o.stopStale) {
           this.staleStopped = true
           this.stopping = this.o.stopStale().catch(error => console.warn('Kryakl: could not stop the older speech engine', error))
           await this.stopping
           this.stopping = undefined
-          if (!this.stopped && !this.child) this.launch()
+          if (!this.stopped && !this.child) void this.launch()
           return true
         }
-        // Something else answers on the port without the key: not Kryakl's engine (another program, another account's).
-        this.set('down', `Port ${this.o.port} is used by another program: quit it, then press Restart`)
+        // Something else answers on the port without the key (another program, Kryakl's engine beside Tyts, another
+        // account's): ours goes to the next port, never sending the key there.
+        if (!this.child && !this.launching && !this.stopped && this.port + 1 < this.o.port + SPEECH_PORTS) {
+          this.port++
+          void this.launch()
+          return true
+        }
+        if (!this.child) this.set('down', `Port ${this.port} is used by another program: quit it, then press Restart`)
         return true
       }
       this.proved = true

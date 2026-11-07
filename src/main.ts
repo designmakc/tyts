@@ -3919,8 +3919,10 @@ function setUpSpeechEngine(): void {
   })
   // The app window plays a transcript's sound from the engine in an <audio>, which sends no header of its own:
   // main adds the engine's key to that window's requests to the engine, and to no other window's.
-  session.defaultSession.webRequest.onBeforeSendHeaders({ urls: [`http://127.0.0.1:${speechPort}/*`] }, (details, done) => {
+  // Any port: the engine moves to the next free one when its own is taken (speechservice.ts freePort).
+  session.defaultSession.webRequest.onBeforeSendHeaders({ urls: ['http://127.0.0.1:*/*'] }, (details, done) => {
     const fromApp = !!appWin && !appWin.isDestroyed() && details.webContentsId === appWin.webContents.id
+      && new URL(details.url).port === String(speech.port)
     const key = fromApp ? speech.token : undefined
     done({ requestHeaders: key ? { ...details.requestHeaders, 'X-Krya-Token': key } : details.requestHeaders })
   })

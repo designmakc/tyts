@@ -4,14 +4,30 @@
 
 const OFFSCREEN = 'offscreen.html'
 
+const PORTS = [8765, 8766, 8767, 8768, 8769, 8770, 8771, 8772, 8773, 8774]
+
+/** Kryakl's own engine on this port: its /health names itself; another engine or program on the port does not. */
+async function engineOn(p) {
+  try {
+    const r = await fetch(`http://127.0.0.1:${p}/health`, { headers: SELF(), signal: AbortSignal.timeout(500) })
+    return r.ok && (await r.json()).engine === 'tyts'
+  } catch {
+    return false
+  }
+}
+
 // The engine takes 8765, or the next free of ten when Windows or another program holds it (src/speechservice.ts freePort).
+// The port found is remembered for the browser's session and looked for again when it stops answering.
 async function port() {
   const { port } = await chrome.storage.local.get('port')
   if (port) return port
-  for (let p = 8765; p < 8775; p++) {
-    try {
-      if ((await fetch(`http://127.0.0.1:${p}/health`, { signal: AbortSignal.timeout(500) })).ok) return p
-    } catch {}
+  const { found } = await chrome.storage.session.get('found')
+  if (found && (await engineOn(found))) return found
+  for (const p of PORTS) {
+    if (await engineOn(p)) {
+      await chrome.storage.session.set({ found: p })
+      return p
+    }
   }
   return 8765
 }
@@ -20,12 +36,7 @@ async function port() {
 const SELF = () => ({ 'X-Krya-Extension': chrome.runtime.getManifest().version })
 
 async function engineReady() {
-  try {
-    const r = await fetch(`http://127.0.0.1:${await port()}/health`, { headers: SELF(), signal: AbortSignal.timeout(1500) })
-    return r.ok
-  } catch {
-    return false
-  }
+  return engineOn(await port())
 }
 
 /** Lets the engine know the extension is there; the engine may be off, which is fine. */

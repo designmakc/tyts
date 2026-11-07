@@ -958,6 +958,7 @@ export const ru: Record<Key, Phrase> = {
   'engine.notInstalled': 'Движок речи не установлен',
   'engine.keepsStopping': 'Движок речи то и дело останавливается ({code}): см. {log}',
   'engine.portTaken': 'Порт {port} занят другой программой: закройте её, затем перезапустите движок речи',
+  'engine.portsTaken': 'Порты {from}–{to} заняты другими программами: закройте одну из них, затем перезапустите движок речи',
   'engine.installFailed': 'Не удалось установить движок речи ({code}): {why}',
   'engine.unpackFailed': 'Не удалось распаковать менеджер Python: {why}',
   'engine.installRunning': 'Уже идёт установка',

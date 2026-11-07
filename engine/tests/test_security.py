@@ -121,7 +121,7 @@ def test_a_web_page_and_another_extension_are_refused_everywhere(client):
 
 
 def test_kryakl_s_extension_records_and_says_hello_but_reads_nothing(client):
-    assert client.get("/health", headers={**OURS, "x-krya-extension": "0.4.0"}).json() == {"ok": True, "version": engine.VERSION}
+    assert client.get("/health", headers={**OURS, "x-krya-extension": "0.4.0"}).json() == {"ok": True, "version": engine.VERSION, "engine": "tyts"}
     assert engine.extension["id"] == auth.EXTENSION_ID
     assert client.post("/recordings", headers=OURS, json={"source": "meet", "title": "x", "tracks": {"tab": {"startedAt": 0}}}).status_code == 200
     for method, route in (("GET", "/transcripts"), ("GET", f"/transcripts/{ID}/text"), ("PUT", "/settings"), ("GET", "/settings")):

@@ -197,8 +197,9 @@ def planned(feature: str) -> dict:
 @app.get("/health")
 def health(request: Request):
     if request.headers.get("origin"):
-        # Kryakl's extension needs to know only that the engine is up.
-        return {"ok": True, "version": VERSION}
+        # Kryakl's extension needs to know only that the engine is up, and that it is this engine: the extension looks
+        # through ten ports (the engine moves on when 8765 is taken) and sends a meeting only where `engine` says so.
+        return {"ok": True, "version": VERSION, "engine": "tyts"}
     nonce = request.headers.get("x-krya-nonce", "")
     # The proof that this engine holds the key (auth.py), as without it; Kryakl asks it without the key first (guard).
     return {**health_view(), **({"proof": auth.proof(TOKEN, nonce)} if auth.nonce_ok(nonce) else {})}

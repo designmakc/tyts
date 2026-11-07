@@ -23,8 +23,9 @@ export const SPEECH_PORTS = 10
  * The first port from `from` on that 127.0.0.1 lets one listen on. Windows may hold 8765 for itself (Hyper-V's and
  * WSL's excluded port ranges: uvicorn then exits with 3 at every start), or another program (Kryakl) may sit on it.
  */
-export async function freePort(from: number, count = SPEECH_PORTS): Promise<number | undefined> {
+export async function freePort(from: number, count = SPEECH_PORTS, skip: ReadonlySet<number> = new Set()): Promise<number | undefined> {
   for (let port = from; port < from + count; port++) {
+    if (skip.has(port)) continue
     const free = await new Promise<boolean>(resolve => {
       const server = net.createServer()
       server.once('error', () => resolve(false))
@@ -133,6 +134,8 @@ export class SpeechService {
   private proved = false
   /** A port is being picked for the engine (launch): no second start meanwhile. */
   private launching = false
+  /** Ports of SPEECH_PORT's ten where another program answered, or uvicorn could not bind (exit 3): not tried again until Restart. */
+  private taken = new Set<number>()
 
   constructor(private readonly o: SpeechServiceOptions) {
     this.port = o.port
@@ -160,6 +163,8 @@ export class SpeechService {
   restart(): void {
     this.failures = 0
     this.trouble = undefined
+    this.taken.clear()
+    this.port = this.o.port
     if (this.child) this.child.kill()
     else if (!this.stopped) void this.launch()
     else void this.start()
@@ -192,11 +197,11 @@ export class SpeechService {
       return
     }
     this.set('starting')
-    // Nothing of ours answers on the port: if it cannot be listened on, the engine goes to the next free one.
-    const port = await freePort(this.port, this.o.port + SPEECH_PORTS - this.port)
+    // Nothing of ours answers on the port: the first of the ten that can be listened on and that no other program took.
+    const port = await freePort(this.o.port, SPEECH_PORTS, this.taken)
     if (this.stopped || this.child) return
     if (port === undefined) {
-      this.set('down', `Ports ${this.o.port}–${this.o.port + SPEECH_PORTS - 1} are all taken: see ${this.o.log}`)
+      this.set('down', `Ports ${this.o.port}–${this.o.port + SPEECH_PORTS - 1} are all taken by other programs: quit one, then press Restart`)
       return
     }
     this.port = port
@@ -219,6 +224,13 @@ export class SpeechService {
       // Whatever takes the port next proves itself again before it gets the key.
       this.proved = false
       if (this.stopped) return
+      // uvicorn's startup failure: the port was taken between the look and the bind, or Windows keeps it from
+      // Python alone (an excluded port range), so the next start goes to another port at once.
+      if (code === 3 && this.taken.size + 1 < SPEECH_PORTS) {
+        this.taken.add(port)
+        void this.launch()
+        return
+      }
       const wait = RETRIES[this.failures]
       this.failures++
       if (wait === undefined) {
@@ -252,8 +264,8 @@ export class SpeechService {
         }
         // Something else answers on the port without the key (another program, Kryakl's engine beside Tyts, another
         // account's): ours goes to the next port, never sending the key there.
-        if (!this.child && !this.launching && !this.stopped && this.port + 1 < this.o.port + SPEECH_PORTS) {
-          this.port++
+        if (!this.child && !this.launching && !this.stopped && this.taken.size + 1 < SPEECH_PORTS) {
+          this.taken.add(this.port)
           void this.launch()
           return true
         }

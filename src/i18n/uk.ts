@@ -958,6 +958,7 @@ export const uk: Record<Key, Phrase> = {
   'engine.notInstalled': 'Рушій мовлення не встановлено',
   'engine.keepsStopping': 'Рушій мовлення раз у раз зупиняється ({code}): див. {log}',
   'engine.portTaken': 'Порт {port} зайняла інша програма: закрийте її, потім перезапустіть рушій мовлення',
+  'engine.portsTaken': 'Порти {from}–{to} зайняли інші програми: закрийте одну з них, потім перезапустіть рушій мовлення',
   'engine.installFailed': 'Не вдалося встановити рушій мовлення ({code}): {why}',
   'engine.unpackFailed': 'Не вдалося розпакувати менеджер Python: {why}',
   'engine.installRunning': 'Уже йде встановлення',

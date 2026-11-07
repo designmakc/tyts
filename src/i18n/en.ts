@@ -963,6 +963,7 @@ export const en = {
   'engine.notInstalled': 'The speech engine is not installed',
   'engine.keepsStopping': 'The speech engine keeps stopping ({code}): see {log}',
   'engine.portTaken': 'Port {port} is used by another program: quit it, then press Restart',
+  'engine.portsTaken': 'Ports {from}–{to} are all taken by other programs: quit one, then press Restart',
   'engine.installFailed': 'Installing the speech engine failed ({code}): {why}',
   'engine.unpackFailed': 'Could not unpack the Python manager: {why}',
   'engine.installRunning': 'An install is running',

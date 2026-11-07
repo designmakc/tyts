@@ -54,7 +54,7 @@
 
 <section class="hero wrap" aria-labelledby="hero-h">
   <div class="hero-top">
-    <p class="eyebrow"><svg viewBox="16 16 224 224" aria-hidden="true"><rect x="16" y="16" width="224" height="224" rx="56" fill="#FF5A36"/><circle cx="128" cy="128" r="25" fill="#fff"/><circle cx="128" cy="128" r="57" fill="none" stroke="#fff" stroke-width="11"/><circle cx="128" cy="128" r="93" fill="none" stroke="#fff" stroke-width="11" opacity=".55"/></svg><span><b>Tyts</b> <span class="ipa" title="How Tyts is said">/tɪtsʲ/</span> <span class="beta">beta</span> · local AI for Windows 10 and 11</span></p>
+    <p class="eyebrow"><svg viewBox="16 16 224 224" aria-hidden="true"><rect x="16" y="16" width="224" height="224" rx="56" fill="#FF5A36"/><circle cx="128" cy="128" r="25" fill="#fff"/><circle cx="128" cy="128" r="57" fill="none" stroke="#fff" stroke-width="11"/><circle cx="128" cy="128" r="93" fill="none" stroke="#fff" stroke-width="11" opacity=".55"/></svg><span><b>Tyts</b> <span class="ipa" title="How Tyts is said">/tɪtsʲ/</span> <span class="beta">beta</span> · local AI for Windows and Mac</span></p>
     <h1 class="display" id="hero-h">Tyts — and done<span class="dot" aria-hidden="true"></span></h1>
     <div class="hero-row">
       <div>
@@ -63,10 +63,11 @@
       </div>
       <div>
       <div class="ctas">
-        <a class="btn primary" href="https://github.com/designmakc/tyts/releases/latest"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/> <path d="m7 10 5 5 5-5"/></svg>Download for Windows</a>
+        <a class="btn primary" data-os="win" href="https://github.com/designmakc/tyts/releases/latest"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/> <path d="m7 10 5 5 5-5"/></svg>Download for Windows</a>
+        <a class="btn primary" href="https://github.com/designmakc/tyts/releases/latest" data-os="mac"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/> <path d="m7 10 5 5 5-5"/></svg>Download for Mac</a>
         <a class="btn ghost" href="https://github.com/designmakc/tyts"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/> <path d="M10 14 21 3"/> <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>Source on GitHub</a>
       </div>
-      <p class="beta-note">Beta: some things may still break. Found one? Report a problem from Tyts.</p>
+      <p class="beta-note">Mac: Apple silicon, macOS 13 or later. Beta: some things may still break. Found one? Report a problem from Tyts.</p>
       <ul class="proofs">
         <li><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20v2"/> <path d="M12 2v2"/> <path d="M17 20v2"/> <path d="M17 2v2"/> <path d="M2 12h2"/> <path d="M2 17h2"/> <path d="M2 7h2"/> <path d="M20 12h2"/> <path d="M20 17h2"/> <path d="M20 7h2"/> <path d="M7 20v2"/> <path d="M7 2v2"/> <rect x="4" y="4" width="16" height="16" rx="2"/> <rect x="8" y="8" width="8" height="8" rx="1"/></svg>Gemma 4, Whisper and Parakeet on your graphics card or processor</li>
         <li><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/> <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>No subscription, no pay per word, no account</li>
@@ -386,17 +387,17 @@
 <section class="section wrap after" id="install" aria-labelledby="in-h">
   <div class="sec-head">
     <h2 id="in-h">Three steps to the tray.</h2>
-    <p class="sec-lead">Free, open source, about a minute to set up. It installs over Krya, Altype and 2Talker and takes their words and settings along.</p>
+    <p class="sec-lead">Free, open source, about a minute to set up. It installs into its own folders and leaves Kryakl alone.</p>
   </div>
   <ol class="install">
-    <li class="istep"><kbd class="key">1</kbd><h3>Download the installer</h3><p>Get <b>Tyts-Setup.exe</b> from the latest release on GitHub.</p></li>
-    <li class="istep"><kbd class="key">2</kbd><h3>Run it anyway</h3><p>The installer isn't signed, but its code is open on GitHub. Windows warns once: <b>More info → Run anyway</b>.</p></li>
-    <li class="istep"><kbd class="key">3</kbd><h3>Find the duck in the tray</h3><p>Tyts starts with Windows. The first translation downloads your language pair once: about <b>58 MB</b> for Ukrainian ↔ English.</p></li>
+    <li class="istep"><kbd class="key">1</kbd><h3>Download the installer</h3><p>Get <b>Tyts-Setup.exe</b> for Windows or <b>Tyts-arm64.dmg</b> for Mac from the latest release on GitHub.</p></li>
+    <li class="istep"><kbd class="key">2</kbd><h3>Run it anyway</h3><p>The installer isn't signed, but its code is open on GitHub. Windows warns once: <b>More info → Run anyway</b>. On a Mac drag Tyts into Applications; the first time, <b>System Settings → Privacy &amp; Security → Open Anyway</b>, then allow <b>Accessibility</b> and <b>Input Monitoring</b>.</p></li>
+    <li class="istep"><kbd class="key">3</kbd><h3>Find Tyts in the tray</h3><p>Tyts starts with your computer. The first translation downloads your language pair once: about <b>58 MB</b> for Ukrainian ↔ English.</p></li>
   </ol>
   <div class="needs" id="needs">
     <h3>What your computer needs</h3>
     <ul class="facts cols three">
-      <li><b>Any PC with Windows 10 or 11, 64-bit.</b> Layout fixing, Fast translation, text from the screen and reading aloud in a Windows voice. The natural voice wants 4 processor cores.</li>
+      <li><b>Any PC with Windows 10 or 11, 64-bit, or a Mac with Apple silicon and macOS 13 or later.</b> Layout fixing, Fast translation, text from the screen and reading aloud in a Windows voice. The natural voice wants 4 processor cores.</li>
       <li><b>All of Tyts: a graphics card with 4 GB of its own memory</b> and about 12 GB of disk with every model. Accurate translation, Check my English, text editing and the talk with the duck run on it; speech on the card needs NVIDIA. Dictation and transcripts run on the processor too; telling speakers apart on the card wants 6 GB.</li>
       <li><b>Most accurate: a graphics card with 9 GB of its own memory</b> and 1.8 GB more of disk, about 14 GB in all.</li>
     </ul>
@@ -410,10 +411,11 @@
       <h2 id="end-h">Talk to the duck.</h2>
       <p>Give reading aloud a key, Ctrl+C twice if you like, and select any text. Or press your Talk key and say hello. The rest is a key away.</p>
       <div class="ctas">
-        <a class="btn primary" href="https://github.com/designmakc/tyts/releases/latest"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/> <path d="m7 10 5 5 5-5"/></svg>Download for Windows</a>
+        <a class="btn primary" data-os="win" href="https://github.com/designmakc/tyts/releases/latest"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/> <path d="m7 10 5 5 5-5"/></svg>Download for Windows</a>
+        <a class="btn primary" href="https://github.com/designmakc/tyts/releases/latest" data-os="mac"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/> <path d="m7 10 5 5 5-5"/></svg>Download for Mac</a>
         <a class="btn ghost" href="https://github.com/designmakc/tyts"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/> <path d="M10 14 21 3"/> <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>Source on GitHub</a>
       </div>
-      <p class="beta-note">Beta: some things may still break. Found one? Report a problem from Tyts.</p>
+      <p class="beta-note">Mac: Apple silicon, macOS 13 or later. Beta: some things may still break. Found one? Report a problem from Tyts.</p>
     </div>
   </div>
 </section>
@@ -433,5 +435,6 @@
 </footer>
 
 <script src="kryakl.js"></script>
+<script>if(/Mac/.test(navigator.platform))document.querySelectorAll('[data-os="win"]').forEach(a=>a.classList.replace('primary','ghost'));else document.querySelectorAll('[data-os="mac"]').forEach(a=>a.classList.replace('primary','ghost'))</script>
 </body>
 </html>

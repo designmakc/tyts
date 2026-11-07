@@ -11,9 +11,20 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import { freePort, provesKey, SPEECH_PORTS, SpeechService, speechToken } from './speechservice'
 
 const dirs: string[] = []
-afterEach(() => {
-  // A stand-in engine killed by stop() is still going when the folder goes: Windows says EBUSY until it has, so a few tries.
-  for (const dir of dirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 })
+afterEach(async () => {
+  // A stand-in engine killed by stop() holds its folder (its cwd, the service's speech.log stream, closed in the child's
+  // exit handler) a moment longer, and Windows then says EBUSY: tried again with the event loop let run between.
+  for (const dir of dirs.splice(0)) {
+    for (let i = 0; ; i++) {
+      try {
+        fs.rmSync(dir, { recursive: true, force: true })
+        break
+      } catch (error) {
+        if (i >= 50) throw error
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+    }
+  }
 })
 
 describe('the speech engine\'s key', () => {

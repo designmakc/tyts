@@ -593,6 +593,8 @@ export type HostCall =
   | { call: 'copy'; text: string }
   /** The programs with a window open now, by .exe name, for the Programs page: answers string[]. */
   | { call: 'runningApps' }
+  /** A question to the recorded calls: the engine's passages, answered by the local model (ask.ts); answers Answer. */
+  | { call: 'askCalls'; question: string }
 
 /** What every page has as `window.tutorHost` (preload.ts). */
 export type TutorHost = {

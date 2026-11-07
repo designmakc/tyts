@@ -91,6 +91,8 @@ def defaults() -> dict:
         "dataDir": str(default_data_dir()),
         "kbDir": "",
         "kbInbox": "Inbox",
+        # The calls folder (calls.py): recordings in it are transcribed, calls recorded here are saved into it.
+        "callsDir": "",
         # What runs where, made by Kryakl from this computer's measurements (src/speechplan.ts):
         # {threads, cpu: {dictation: {model, beam}, transcripts: {model}}, cuda: {... compute}}.
         "plan": {},

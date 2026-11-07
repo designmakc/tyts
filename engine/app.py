@@ -60,6 +60,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 import asr
 import audio
 import auth
+import calls
 import diarize
 import export
 import notes
@@ -77,7 +78,7 @@ PORT = 8765
 SOURCES = ("file", "mic", "meet", "note", "system")
 # "system" is the whole computer's sound in a call (Kryakl's own recorder); "meet" was the Chrome extension's, kept for the transcripts it made.
 TRACKS = ("main", "mic", "tab", "system")
-MEDIA = {".mp4", ".mkv", ".webm", ".mov", ".avi", ".m4v", ".mp3", ".m4a", ".wav", ".ogg", ".oga", ".opus", ".flac", ".aac", ".wma"}
+MEDIA = calls.MEDIA
 
 log = logging.getLogger("kryakl")
 settings = Settings()
@@ -441,6 +442,8 @@ def put_settings(changes: dict = Body(...)):
     settings.update(changes)
     if "plan" in changes:
         worker.drop_unplanned(_dictating.locked)
+    if "callsDir" in changes:
+        worker.scan_calls()
     if isinstance(changes.get("hfToken"), str) and changes["hfToken"].strip():
         setup.start(settings["hfToken"])
     return public_settings()
@@ -566,7 +569,18 @@ def put_summary(id: str, body: dict = Body(...)):
         if isinstance(summary.get("edited"), str):
             t["summary"]["edited"] = summary["edited"]
     store.save(id, t)
+    if row.get("file"):
+        try:
+            calls.write_md(t, row["file"])
+        except OSError as error:
+            log.warning("calls folder: could not write the Markdown: %s", error)
     return {"ok": True}
+
+
+@app.get("/ask")
+def ask(q: str = ""):
+    """The pieces of the transcripts that answer a question best, for Kryakl's local model to answer from."""
+    return calls.passages(state.get_store(), q)
 
 
 @app.post("/transcripts/{id}/speakers")
@@ -682,7 +696,8 @@ def from_file(body: dict = Body(...)):
         "speakers": body.get("speakers") or None,
     }
     store = state.get_store()
-    id = store.create(body.get("title") or path.stem, "file", "queued", job)
+    # Named as its file, so the calls folder does not import it again.
+    id = store.create(body.get("title") or path.stem, "file", "queued", job, file=os.path.abspath(path))
     worker.submit(id)
     return {"id": id}
 

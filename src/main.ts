@@ -47,6 +47,7 @@ import { CallCapture } from './capture'
 import { createChecker, type Checker } from './checker'
 import { keyShots, shotAt, shownShots, speakerHints, type Shot } from './shots'
 import { createSummarizer, type ScreenText, type SummaryTemplate } from './summary'
+import { createAsker, type Passage } from './ask'
 import { autoSummaryWanted, summaryInput, type SummarySource } from './summaryflow'
 import { createEditor, type Editor } from './dictedit'
 import { DoubleCopy } from './clipboard'
@@ -2367,6 +2368,7 @@ async function translateTextCard(id: number, text: string, from: string, to: str
 let llmFiles: LlmFiles
 let checker: Checker
 let summarizer: ReturnType<typeof createSummarizer>
+let asker: ReturnType<typeof createAsker>
 let editor: Editor
 let mistakes: MistakeStore
 
@@ -3964,6 +3966,17 @@ async function hostCall(request: HostCall): Promise<unknown> {
       return null
     case 'runningApps':
       return windowedApps().filter(exe => exe !== path.win32.basename(process.execPath).toLowerCase())
+    case 'askCalls': {
+      const question = request.question.trim().slice(0, 500)
+      if (!speech || !question) return { text: '', sources: [] }
+      if (llmFiles.state(settings.model).status !== 'ready') throw new Error('needModel')
+      const found = await speech.call<Passage[]>('GET', `/ask?q=${encodeURIComponent(question)}`)
+      if (!found.ok) throw new Error(found.error)
+      if (!found.data.length) return { text: '', sources: [] }
+      const answer = await asker.ask(question, found.data)
+      log(`ask: answered from ${found.data.length} passages`)
+      return answer
+    }
   }
 }
 
@@ -4023,6 +4036,7 @@ function start(): void {
   setInterval(watchModel, FULL_SCREEN_LOOK_MS)
   checker = createChecker({ files: llmFiles, model: () => settings.model, onTimed: modelTimed })
   summarizer = createSummarizer({ files: llmFiles, model: () => settings.model })
+  asker = createAsker({ files: llmFiles, model: () => settings.model })
   editor = createEditor({ files: llmFiles, model: () => settings.model })
   mistakes = new MistakeStore(path.join(userDir(), 'mistakes.json'))
   // Talk: the same model checks each line and the duck answers it (talk.ts, duck.ts).

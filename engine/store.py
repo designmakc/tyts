@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import json
+import os
 import secrets
 import shutil
 import sqlite3
@@ -15,7 +16,7 @@ import threading
 from datetime import datetime
 from pathlib import Path
 
-COLUMNS = ("id", "title", "source", "created", "duration", "status", "stage", "progress", "error", "language", "speakers_status", "job", "touched", "summarized", "app")
+COLUMNS = ("id", "title", "source", "created", "duration", "status", "stage", "progress", "error", "language", "speakers_status", "job", "touched", "summarized", "app", "file")
 LIST_COLUMNS = ("id", "title", "source", "created", "duration", "status", "stage", "progress", "error", "language", "speakers_status", "summarized", "app")
 
 
@@ -52,6 +53,10 @@ class Store:
                 self._db.execute("alter table transcripts add column summarized integer default 0")
             if "app" not in have:
                 self._db.execute("alter table transcripts add column app text")
+            # The calls folder (calls.py): the file a transcript came from or was saved as, and files not to import again.
+            if "file" not in have:
+                self._db.execute("alter table transcripts add column file text")
+            self._db.execute("create table if not exists ignored(path text primary key)")
 
     def folder(self, id: str) -> Path:
         # One folder right inside the library: no separators, no "..", no drive ("D:" alone is drive D on Windows).
@@ -59,15 +64,32 @@ class Store:
             raise KeyError(id)
         return self.root / id
 
-    def create(self, title: str, source: str, status: str, job: dict | None = None) -> str:
+    def create(self, title: str, source: str, status: str, job: dict | None = None, created: datetime | None = None, file: str | None = None) -> str:
+        """A row; `created` for a recording made before (a file of the calls folder, dated by the file), `file` the file it came from."""
         id = new_id()
         self.folder(id).mkdir(parents=True)
+        when = created.isoformat(timespec="seconds") if created else now_iso()
         with self._lock, self._db:
             self._db.execute(
-                "insert into transcripts(id, title, source, created, status, job, touched, app) values(?,?,?,?,?,?,?,?)",
-                (id, title, source, now_iso(), status, json.dumps(job or {}, ensure_ascii=False), now_iso(), (job or {}).get("app")),
+                "insert into transcripts(id, title, source, created, status, job, touched, app, file) values(?,?,?,?,?,?,?,?,?)",
+                (id, title, source, when, status, json.dumps(job or {}, ensure_ascii=False), now_iso(), (job or {}).get("app"), file),
             )
         return id
+
+    def known_files(self) -> set[str]:
+        """Every file a transcript came from or was saved as, and those deleted, in the file system's case."""
+        with self._lock:
+            rows = self._db.execute("select file from transcripts where file is not null union select path from ignored").fetchall()
+        return {os.path.normcase(r[0]) for r in rows}
+
+    def search_ids(self, match: str, limit: int) -> list[str]:
+        """The transcripts an FTS5 query matches, the best first; an unreadable query finds nothing."""
+        with self._lock:
+            try:
+                rows = self._db.execute("select id from search where search match ? order by bm25(search) limit ?", (match, limit)).fetchall()
+            except sqlite3.OperationalError:
+                return []
+        return [r[0] for r in rows]
 
     def update(self, id: str, **fields) -> None:
         if "job" in fields:
@@ -135,6 +157,8 @@ class Store:
 
     def delete(self, id: str) -> None:
         with self._lock, self._db:
+            # A file of the calls folder whose transcript goes is not imported again.
+            self._db.execute("insert or ignore into ignored(path) select file from transcripts where id=? and file is not null", (id,))
             self._db.execute("delete from transcripts where id=?", (id,))
             self._db.execute("delete from search where id=?", (id,))
         shutil.rmtree(self.folder(id), ignore_errors=True)

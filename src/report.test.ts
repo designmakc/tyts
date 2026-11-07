@@ -93,7 +93,7 @@ describe('makeReport', () => {
     await makeReport({ dir: home, out, message: 'It broke', facts, status: ['Speech engine: ready'], settings: { keepWords: ['secret'] }, names, at: new Date() })
     const opened = dir()
     await unzip(out, opened)
-    expect(fs.readdirSync(opened).sort()).toEqual(['device.json', 'tyts.log', 'tyts.old.log', 'report.txt', 'speech.log'])
+    expect(fs.readdirSync(opened).sort()).toEqual(['device.json', 'report.txt', 'speech.log', 'tyts.log', 'tyts.old.log'])
     expect(fs.readFileSync(path.join(opened, 'tyts.log'), 'utf8')).toContain('C:\\Users\\<you>\\Code.exe')
     expect(fs.readFileSync(path.join(opened, 'speech.log'), 'utf8')).toBe('whoami hf_…\n')
     const report = fs.readFileSync(path.join(opened, 'report.txt'), 'utf8')

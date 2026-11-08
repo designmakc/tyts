@@ -23,7 +23,7 @@ One key can also open Tyts's menu by the cursor, where a letter picks an action.
 
 **Mac (Apple silicon):** download `Tyts-<version>-arm64.dmg`, drag Tyts to Applications, then right-click it → **Open** the first time. Allow Accessibility (for the keyboard), the microphone and Screen Recording (for calls) when macOS asks.
 
-Tyts does not update itself: download the new version from the releases and install it over the old one; your settings, words and downloads stay. It is a separate program from Kryakl, in its own folders.
+When a new version is out, Tyts asks at start whether to update. On Windows **Update** downloads it, installs it over the old one and starts Tyts again; on a Mac it downloads the new version and opens it, and you drag Tyts to Applications. Your settings, words and downloads stay. It is a separate program from Kryakl, in its own folders.
 
 Models download only when you pick what needs them, once each. All of Tyts wants a decent computer: a graphics card with 4 GB of its own memory for Accurate translation, Practice and summaries, about 12 GB of disk. Layout fixing, Fast translation and a Windows voice work on any computer.
 

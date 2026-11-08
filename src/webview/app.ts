@@ -2425,7 +2425,7 @@ function recordingsPage(v: AppView): HTMLElement[] {
     ...(running(v) ? [grp(t('transcribe.new')), ...newRows(v)] : []),
     grp(t('transcribe.setup')),
     speakersCard(v),
-    dataDir ? card('folder', t('transcribe.keptIn'), [pathNote(dataDir)], linkBtn(t('tray.open'), () => post({ type: 'openPath', path: dataDir }))) : null,
+    dataDir ? card('folder', t('transcribe.keptIn'), [pathNote(dataDir), t('tr.folderNote')], linkBtn(t('tray.open'), () => post({ type: 'openPath', path: dataDir }))) : null,
     enginePlate([{ title: t('dictate.speechModel'), value: speechValue(v, 'transcripts'), open: () => go('models', 'forTranscribe') }]),
   ].filter((n): n is HTMLElement => n !== null)
 }

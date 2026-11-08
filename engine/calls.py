@@ -1,9 +1,11 @@
-"""The calls folder: the person's recordings of calls, old and new, in one folder of theirs.
+r"""The transcripts folder as the person's notebook: Tyts's own recordings and anyone else's, in one place.
 
-Media already in it (another program's recordings) is transcribed once, dated by the file; a call
-Tyts records is saved there too, its sound copied beside a Markdown of the text and the summary,
-so the folder reads as a notebook (Obsidian opens it as it is). Nothing of the person's is ever
-moved or deleted; a file whose transcript they delete is not imported again.
+The library (settings `dataDir`, Documents\Tyts\Transcripts) is the folder: media put in it (another
+program's recordings) is transcribed once, dated by the file; a call Tyts records is saved there too,
+its sound copied beside a Markdown of the text and the summary, so the folder reads as a notebook
+(Obsidian opens it as it is). The transcripts' own folders (<id>/transcript.json, audio.ogg) are the
+library's and never imported. Nothing of the person's is ever moved or deleted; a file whose transcript
+they delete is not imported again.
 """
 
 from __future__ import annotations
@@ -26,22 +28,25 @@ MEDIA = {".mp4", ".mkv", ".webm", ".mov", ".avi", ".m4v", ".mp3", ".m4a", ".wav"
 SETTLED = 60  # seconds since the file last changed: one still being written waits
 SCAN_EVERY = 300
 WORD = re.compile(r"\w+")
+TRANSCRIPT_FOLDER = re.compile(r"\d{4}-\d\d-\d\d_\d{6}-[0-9a-f]{4}")  # store.new_id
 
 
-def scan(store: Store, folder: str, submit, now: float | None = None) -> int:
-    """Queues every media file of the folder not transcribed before; how many."""
-    if not folder or not Path(folder).is_dir():
+def scan(store: Store, submit, now: float | None = None) -> int:
+    """Queues every media file of the library folder not transcribed before; how many."""
+    base = store.root
+    if not base.is_dir():
         return 0
-    base = Path(folder)
     now = time.time() if now is None else now
-    library = os.path.normcase(os.path.abspath(store.root))
     known = store.known_files()
     queued = 0
     for path in sorted(base.rglob("*")):
-        if not path.is_file() or path.suffix.lower() not in MEDIA or any(p.startswith(".") for p in path.relative_to(base).parts):
+        parts = path.relative_to(base).parts
+        if not path.is_file() or path.suffix.lower() not in MEDIA or any(p.startswith(".") for p in parts):
             continue
+        if TRANSCRIPT_FOLDER.fullmatch(parts[0]):
+            continue  # a transcript's own folder: its audio.ogg is the library's
         full = os.path.abspath(path)
-        if os.path.normcase(full) in known or os.path.normcase(full).startswith(library + os.sep):
+        if os.path.normcase(full) in known:
             continue
         try:
             stat = path.stat()
@@ -53,20 +58,18 @@ def scan(store: Store, folder: str, submit, now: float | None = None) -> int:
         submit(store.create(path.stem, "file", "queued", job, created=datetime.fromtimestamp(stat.st_mtime), file=full))
         queued += 1
     if queued:
-        log.info("calls folder: %d new file(s) queued", queued)
+        log.info("transcripts folder: %d new file(s) queued", queued)
     return queued
 
 
-def save_call(store: Store, id: str, t: dict, folder: str) -> str | None:
-    """A call's sound copied into the folder as `<date> <title>.ogg`; its path, None without a folder."""
-    if not folder or not Path(folder).is_dir():
-        return None
+def save_call(store: Store, id: str, t: dict) -> str:
+    """A call's sound copied into the library folder as `<date> <title>.ogg`, beside the transcripts' folders; its path."""
     created = datetime.fromisoformat(t["created"])
     stem = notes.file_name(f"{created:%Y-%m-%d %H%M} {t.get('title', '')}")
-    target = Path(folder) / f"{stem}.ogg"
+    target = store.root / f"{stem}.ogg"
     n = 2
     while target.exists():
-        target = Path(folder) / f"{stem} ({n}).ogg"
+        target = store.root / f"{stem} ({n}).ogg"
         n += 1
     shutil.copyfile(store.folder(id) / t.get("audio", "audio.ogg"), target)
     return str(target)

@@ -442,7 +442,7 @@ def put_settings(changes: dict = Body(...)):
     settings.update(changes)
     if "plan" in changes:
         worker.drop_unplanned(_dictating.locked)
-    if "callsDir" in changes:
+    if "dataDir" in changes:
         worker.scan_calls()
     if isinstance(changes.get("hfToken"), str) and changes["hfToken"].strip():
         setup.start(settings["hfToken"])
@@ -573,7 +573,7 @@ def put_summary(id: str, body: dict = Body(...)):
         try:
             calls.write_md(t, row["file"])
         except OSError as error:
-            log.warning("calls folder: could not write the Markdown: %s", error)
+            log.warning("transcripts folder: could not write the Markdown: %s", error)
     return {"ok": True}
 
 
@@ -696,7 +696,7 @@ def from_file(body: dict = Body(...)):
         "speakers": body.get("speakers") or None,
     }
     store = state.get_store()
-    # Named as its file, so the calls folder does not import it again.
+    # Named as its file, so the transcripts folder's scan does not import it again.
     id = store.create(body.get("title") or path.stem, "file", "queued", job, file=os.path.abspath(path))
     worker.submit(id)
     return {"id": id}

@@ -1,3 +1,7 @@
+## Tyts 0.4.0
+
+**Tyts updates itself (new).** When a new version is out, Tyts asks a few seconds after it starts: **Update** or **Later** (it asks again at the next start). On Windows, Update downloads the new installer, installs it over this version and starts Tyts again. On a Mac, it downloads the new version to Downloads and opens it: drag Tyts to Applications and replace the old one. Tyts takes the file only if it matches the checksum GitHub states for it. Your settings, words and downloads stay. This version still has to be installed by hand once; the next ones come by themselves.
+
 ## Tyts 0.3.0
 
 **Your calls folder (new).** On the Calls page, pick the folder where your call recordings live, even ones another program made. Tyts transcribes every recording already in it, one at a time in the background, dated by the file, and never moves or copies your files. The calls Tyts records are saved into the same folder. Each recording gets a Markdown file beside it with the text and the summary, so Obsidian or any notes app opens the folder as a knowledge base. New files that appear there are picked up within a few minutes; a recording you delete from Tyts is not imported again.

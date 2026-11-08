@@ -34,9 +34,9 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-import { execFile, execFileSync } from 'node:child_process'
+import { execFile, execFileSync, spawn } from 'node:child_process'
 
-import { app, BrowserWindow, clipboard, desktopCapturer, dialog, globalShortcut, ipcMain, nativeImage, nativeTheme, powerMonitor, screen, session, shell, systemPreferences, Tray, type Rectangle } from 'electron'
+import { app, BrowserWindow, clipboard, desktopCapturer, dialog, globalShortcut, ipcMain, nativeImage, nativeTheme, Notification, powerMonitor, screen, session, shell, systemPreferences, Tray, type Rectangle } from 'electron'
 
 import { backupSummary, makeBackup, readBackup, type BackupRead } from './backup'
 import { callAllowed, messageAllowed, openable, pageOf, patchAllowed, type Page } from './bridge'
@@ -56,7 +56,8 @@ import { Dictation } from './dictation'
 import { createDuck, type Duck } from './duck'
 import { DictationLog } from './dictationlog'
 import { DOWNLOADABLE, DictionaryStore } from './dictstore'
-import { openStream } from './download'
+import { fetchPinned, openStream } from './download'
+import { findUpdate } from './update'
 import { frameWindow, WIN11 } from './dwm'
 import { createTranslator, NATIVES } from './engine'
 import { LEVEL_VRAM_MB, translationAdvice } from './hardware'
@@ -876,6 +877,41 @@ async function importBackup(): Promise<void> {
   postApp()
 }
 
+/**
+ * A new version on GitHub (update.ts): asked at start, Update downloads and installs it, Later asks at the next start.
+ * Windows: the installer runs silently over this one and starts Tyts again. Mac: the dmg opens, the person drags Tyts to Applications.
+ */
+async function offerUpdate(): Promise<void> {
+  if (!app.isPackaged) return
+  const update = await findUpdate(app.getVersion(), onMac).catch(error => void log(`update: could not check: ${messageOf(error)}`))
+  if (!update) return
+  log(`update: ${update.version} is out`)
+  const { response } = await dialog.showMessageBox({
+    type: 'info',
+    title: t('app.name'),
+    message: t('main.updateAsk', { version: update.version }),
+    detail: t(onMac ? 'main.updateDetailMac' : 'main.updateDetail'),
+    buttons: [t('main.update'), t('main.updateLater')],
+    defaultId: 0,
+    cancelId: 1,
+  })
+  if (response !== 0) return
+  new Notification({ title: t('app.name'), body: t('main.updateDownloading', { version: update.version }) }).show()
+  const file = path.join(app.getPath(onMac ? 'downloads' : 'temp'), update.name)
+  try {
+    await fetchPinned(update.file, file, update.name, () => undefined)
+  } catch (error) {
+    log(`update: the download failed: ${messageOf(error)}`)
+    void dialog.showMessageBox({ type: 'warning', title: t('app.name'), message: t('main.updateFailed'), detail: messageOf(error) })
+    return
+  }
+  log(`update: ${update.name} downloaded, installing`)
+  if (onMac) await shell.openPath(file)
+  // --updated: the installer keeps the data and asks nothing (build/installer.nsh); --force-run starts Tyts after it.
+  else spawn(file, ['/S', '--updated', '--force-run'], { detached: true, stdio: 'ignore' }).unref()
+  app.quit()
+}
+
 /** All settings back to how they came, after a question; the person's language, the setup done and what Kryakl learned stay. */
 async function resetSettings(): Promise<void> {
   const options: Electron.MessageBoxOptions = {
@@ -1195,6 +1231,8 @@ async function removeStored(id: StorageId, item?: string): Promise<void> {
     case 'speech':
       await speech.remove()
       registerShortcuts()
+  // A few seconds after start, so the tray and the windows come first.
+  setTimeout(() => void offerUpdate(), 5_000)
       applyKeyboard()
       return
     case 'gpu':

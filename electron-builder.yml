@@ -53,8 +53,8 @@ nsis:
   artifactName: Tyts-Setup-${version}.${ext}
   # Uninstall asks whether the data goes too (build/installer.nsh); an update keeps it.
   include: build/installer.nsh
-# No publish settings: the release workflow puts the installer in a GitHub release itself, and Kryakl does
-# not update itself (people download new versions from the releases). The installer is not signed
+# No publish settings: the release workflow puts the installer in a GitHub release itself; Tyts finds a
+# new version there on its own (src/update.ts), no update files needed. The installer is not signed
 # (a free app): Windows warns at install.
 # Mac (npm run dist:mac → release/Tyts-<version>-arm64.dmg): ad-hoc signed only, so the first
 # start is right-click › Open. The Windows keyboard, clipboard and OCR parts are off there.

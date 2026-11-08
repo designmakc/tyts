@@ -561,3 +561,16 @@ button.rec.set { border: 0; padding: 0; min-width: 0; height: auto; background: 
   *, *::before, *::after { animation: none !important; transition: none !important; }
   html { scroll-behavior: auto; }
 }
+
+/* Calls: a screenshot in the transcript, the summary's task linked to it */
+.ts-shotline { grid-template-columns: 46px minmax(0, 1fr) !important; align-items: start !important; }
+.ts-shot { position: relative; aspect-ratio: 16 / 9; max-width: 260px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); overflow: hidden; }
+.ts-shot i { position: absolute; display: block; background: var(--line); border-radius: 2px; }
+.ts-shot .bar { inset: 0 0 auto 0; height: 14%; border-radius: 0; }
+.ts-shot .side { left: 0; top: 14%; bottom: 0; width: 22%; border-radius: 0; opacity: .6; }
+.ts-shot .row { left: 30%; right: 8%; top: 32%; height: 8%; }
+.ts-shot .row.short { top: 50%; right: 34%; }
+.ts-shot .ring { right: 6%; top: 1%; width: 22%; height: 12%; background: none; border: 2px solid var(--accent); border-radius: 6px; }
+.ts-sum { padding: 11px 14px 13px; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.45; }
+.ts-sum b { display: block; font-size: 12.5px; color: var(--muted); font-weight: 600; margin-bottom: 4px; }
+.ts-sum .shotref { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }

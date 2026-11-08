@@ -20,6 +20,7 @@ What other apps may use, and keep using:
   DELETE /dictate/sessions/<id>       thrown away
   POST /dictate/prepare               loads the dictation model, so the next phrase is quick
   POST /transcripts {path}            a file on this computer -> a transcript in the library
+  POST /library/move {to}             the library moved into the folder named, what is there kept
   POST /recordings ...                a recording that arrives in chunks (a call, the microphone, a note)
   GET  /health                        what is installed (parts), loaded and busy; without
                                       the key only {ok}, or with X-Tyts-Nonce only {proof}
@@ -69,7 +70,7 @@ import vocab
 
 from bench import Calibrator
 from jobs import SHOT_NAME, Worker, finish_recording
-from settings import ALL_MODELS, APP_DIR, Settings, adopt_altscribe, move_transcripts
+from settings import ALL_MODELS, APP_DIR, Settings, adopt_altscribe, move_library, move_transcripts
 from store import Store, now_iso
 from stream import Session, Sessions
 
@@ -94,6 +95,12 @@ class State:
             self.store = Store(Path(wanted))
             self.store_dir = wanted
         return self.store
+
+    def close(self) -> None:
+        """The index let go of, so the library's folder can move (move_library); opened again at the next use."""
+        if self.store is not None:
+            self.store.close()
+            self.store = None
 
 
 state = State()
@@ -442,11 +449,27 @@ def put_settings(changes: dict = Body(...)):
     settings.update(changes)
     if "plan" in changes:
         worker.drop_unplanned(_dictating.locked)
-    if "callsDir" in changes:
+    if "dataDir" in changes:
         worker.scan_calls()
     if isinstance(changes.get("hfToken"), str) and changes["hfToken"].strip():
         setup.start(settings["hfToken"])
     return public_settings()
+
+
+@app.post("/library/move")
+def library_move(body: dict = Body(...)):
+    """The transcripts folder moved where the person chose: everything in it goes along, what is there stays."""
+    to = body.get("to")
+    if not isinstance(to, str) or not to.strip():
+        raise HTTPException(400, "Name the folder to move the transcripts to")
+    if worker.current:
+        raise HTTPException(409, "Not now: a transcript is being made")
+    try:
+        move_library(settings, Path(to.strip()), state.close)
+    except ValueError as error:
+        raise HTTPException(409, str(error))
+    worker.scan_calls()
+    return {"dataDir": settings["dataDir"]}
 
 
 @app.post("/diarization/setup")
@@ -573,7 +596,7 @@ def put_summary(id: str, body: dict = Body(...)):
         try:
             calls.write_md(t, row["file"])
         except OSError as error:
-            log.warning("calls folder: could not write the Markdown: %s", error)
+            log.warning("transcripts folder: could not write the Markdown: %s", error)
     return {"ok": True}
 
 
@@ -696,7 +719,7 @@ def from_file(body: dict = Body(...)):
         "speakers": body.get("speakers") or None,
     }
     store = state.get_store()
-    # Named as its file, so the calls folder does not import it again.
+    # Named as its file, so the transcripts folder's scan does not import it again.
     id = store.create(body.get("title") or path.stem, "file", "queued", job, file=os.path.abspath(path))
     worker.submit(id)
     return {"id": id}

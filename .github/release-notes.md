@@ -1,3 +1,11 @@
+## Tyts 0.4.1
+
+**One transcripts folder, no separate calls folder.** 0.3.0 added a "calls folder" of its own, which was not what was meant. Now the standard transcripts folder (`Documents\Tyts\Transcripts`, shown on the Calls page and over the list) is the notebook: the calls Tyts records are saved into it as `<date time> <title>.ogg` with a Markdown of the text and the summary beside each, and any recording you put into that folder, from another program too, is transcribed in the background, dated by the file, never moved or copied. Recordings appearing there are picked up within a few minutes.
+
+**Choose where the transcripts live (new).** **Change** on the folder's line picks a folder and moves the whole library into it: the transcripts, the saved calls and their Markdown. What is in the chosen folder already stays and is read as part of the notebook. Tyts refuses the move while a transcript is being made, when one folder lies inside the other, or when a name in the way would be overwritten; a move that fails half way is put back.
+
+A `callsDir` chosen in 0.3.0 or 0.4.0 is ignored from now on: recordings in that folder are not imported any more. Put them into the transcripts folder, or move the library there with Change.
+
 ## Tyts 0.4.0
 
 **Tyts updates itself (new).** When a new version is out, Tyts asks a few seconds after it starts: **Update** or **Later** (it asks again at the next start). On Windows, Update downloads the new installer, installs it over this version and starts Tyts again. On a Mac, it downloads the new version to Downloads and opens it: drag Tyts to Applications and replace the old one. Tyts takes the file only if it matches the checksum GitHub states for it. Your settings, words and downloads stay. This version still has to be installed by hand once; the next ones come by themselves.

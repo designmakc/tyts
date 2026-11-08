@@ -41,7 +41,7 @@ import { TOPICS } from '../topics'
 import type { SummaryTemplate } from '../summary'
 import { isBeta, versionText } from '../version'
 import { withMarks } from './marks'
-import { backToList, enterTranscripts, leaveTranscripts, newRows, openTranscript, setTranscriptHooks, transcriptOpen, transcriptsBody } from './transcripts'
+import { backToList, enterTranscripts, leaveTranscripts, libraryFolderCard, newRows, openTranscript, setTranscriptHooks, transcriptOpen, transcriptsBody } from './transcripts'
 
 declare global {
   interface Window {
@@ -2407,7 +2407,6 @@ function speakersCard(v: AppView, open = () => openSub('speakers'), quiet = fals
 /** Recordings and meetings: the transcripts and the names on top, a new one, what it needs; the speech model at the foot. */
 function recordingsPage(v: AppView): HTMLElement[] {
   const offer = engineRows(v, 'Transcribe')
-  const dataDir = v.speech.health?.dataDir
   return [
     tiles([
       { icon: 'file-audio', title: TITLES.transcripts, open: () => go('transcripts'), id: 'transcripts' },
@@ -2425,7 +2424,7 @@ function recordingsPage(v: AppView): HTMLElement[] {
     ...(running(v) ? [grp(t('transcribe.new')), ...newRows(v)] : []),
     grp(t('transcribe.setup')),
     speakersCard(v),
-    dataDir ? card('folder', t('transcribe.keptIn'), [pathNote(dataDir), t('tr.folderNote')], linkBtn(t('tray.open'), () => post({ type: 'openPath', path: dataDir }))) : null,
+    libraryFolderCard(v),
     enginePlate([{ title: t('dictate.speechModel'), value: speechValue(v, 'transcripts'), open: () => go('models', 'forTranscribe') }]),
   ].filter((n): n is HTMLElement => n !== null)
 }

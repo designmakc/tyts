@@ -182,6 +182,12 @@ def _repoint(new: Path, prefixes: set[str]) -> int:
         return 0
     changed = 0
     with closing(sqlite3.connect(str(db))) as con, con:
+        # The notebook's files (calls.py): the recording a transcript came from or was saved as, and the ignored ones.
+        for table, column, key in (("transcripts", "file", "id"), ("ignored", "path", "path")):
+            for k, path in con.execute(f"select {key}, {column} from {table} where {column} is not null").fetchall():
+                moved = _moved(path, prefixes, new)
+                if moved is not None:
+                    con.execute(f"update {table} set {column}=? where {key}=?", (moved, k))
         for id, raw in con.execute("select id, job from transcripts").fetchall():
             job = json.loads(raw or "{}")
             inputs = job.get("inputs") if isinstance(job, dict) else None
@@ -242,6 +248,47 @@ def move_transcripts(settings: "Settings", old: Path | None = None, new: Path | 
         pass
     log.info("moved the transcripts from %s to %s", old, new)
     return True
+
+
+def move_library(settings: "Settings", new: Path, close) -> None:
+    """The library moved into a folder the person picked (POST /library/move): every entry of the old folder
+    goes into the new one (made when missing; what is in it already stays and is read as the notebook),
+    the index last; `close` lets go of the open index first. Raises ValueError with the reason when it cannot:
+    a transcript still being made, the new folder inside the old or the other way round, a name in the way.
+    A move that fails half way is put back."""
+    old = Path(settings["dataDir"])
+    new = Path(os.path.abspath(new))
+    if new.exists() and not new.is_dir():
+        raise ValueError(f"{new} is not a folder")
+    if old.is_dir() and _same(old, new):
+        return
+    for a, b in ((old, new), (new, old)):
+        if os.path.normcase(os.path.abspath(b)).startswith(os.path.normcase(os.path.abspath(a)).rstrip(os.sep) + os.sep):
+            raise ValueError("One folder is inside the other")
+    why = _unfinished(old) if old.is_dir() else ""
+    if why:
+        raise ValueError(f"Not now: {why}")
+    entries = sorted(old.iterdir(), key=lambda p: p.name == "index.db") if old.is_dir() else []
+    taken = [e.name for e in entries if (new / e.name).exists()]
+    if taken:
+        raise ValueError(f"{new} already holds {', '.join(taken[:3])}")
+    close()
+    new.mkdir(parents=True, exist_ok=True)
+    moved: list[Path] = []
+    try:
+        for entry in entries:
+            shutil.move(str(entry), str(new / entry.name))
+            moved.append(entry)
+    except OSError as error:
+        for entry in moved:
+            shutil.move(str(new / entry.name), str(entry))
+        raise ValueError(f"Could not move {entry.name}: {error}") from error
+    settings.update({"dataDir": str(new)})
+    try:
+        _repoint(new, _prefixes(old))
+    except (sqlite3.Error, ValueError, OSError) as error:
+        log.warning("moved the transcripts, but their files still name %s: %s", old, error)
+    log.info("moved the transcripts from %s to %s", old, new)
 
 
 def clean_plan(plan: dict) -> dict:

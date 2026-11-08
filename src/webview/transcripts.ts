@@ -300,6 +300,25 @@ export function transcriptsBody(v: AppView): HTMLElement[] {
 
 const pathNote = (path: string) => el('small', { class: 'path', title: path }, el('bdi', {}, path))
 
+/** The library folder is the notebook (engine/calls.py): media put into it is transcribed, calls recorded here are saved into it.
+ *  Change moves the whole library where the person picks (POST /library/move); what is in that folder already stays and is read. */
+export function libraryFolderCard(v: AppView): HTMLElement | null {
+  const dataDir = v.speech.health?.dataDir
+  if (!dataDir) return null
+  const change = async () => {
+    const folder = (await window.tutorHost.call({ call: 'pickFolder', title: t('transcribe.keptIn'), current: dataDir })) as string | null
+    if (!folder || folder === dataDir) return
+    try {
+      await api('POST', '/library/move', { to: folder })
+      toast(t('tr.movedLib', { folder }))
+      void loadRows()
+    } catch (error) {
+      toast(problem(error), undefined, true)
+    }
+  }
+  return card('folder', t('transcribe.keptIn'), [pathNote(dataDir), t('tr.folderNote')], linkBtn(t('tr.open'), () => post({ type: 'openPath', path: dataDir })), linkBtn(t('dictate.change'), () => void change()))
+}
+
 async function askCalls(question: string): Promise<void> {
   tx.question = question
   tx.answer = undefined
@@ -356,7 +375,6 @@ function askRows(): HTMLElement[] {
 
 function libraryPage(v: AppView): HTMLElement[] {
   const kb = v.speech.health?.kbDir
-  const dataDir = v.speech.health?.dataDir
   return [
     el(
       'div',
@@ -379,8 +397,7 @@ function libraryPage(v: AppView): HTMLElement[] {
       btn([icon('add'), t('tr.new')], () => hooks.setup(), '', t('tr.newTitle')),
     ),
     ...askRows(),
-    // The library folder is the notebook (engine/calls.py): media put into it is transcribed, calls recorded here are saved into it.
-    dataDir ? card('folder', t('transcribe.keptIn'), [pathNote(dataDir), t('tr.folderNote')], linkBtn(t('tr.open'), () => post({ type: 'openPath', path: dataDir }))) : null,
+    libraryFolderCard(v),
     kb === '' ? aside('book-open', t('tr.needKb'), ' ', linkBtn(t('tr.choose'), () => void pickKb())) : null,
     speakersMissing(v, () => hooks.setup()),
     list(v),

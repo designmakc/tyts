@@ -62,3 +62,28 @@ def test_a_question_finds_the_passages_by_word_prefixes(client, fake_sound):
     found = client.get("/ask", headers=KEY, params={"q": "what about the budgets"}).json()
     assert len(found) == 1 and found[0]["id"] == id and "budget" in found[0]["text"] and found[0]["at"] == 0  # the line before the hit comes along
     assert client.get("/ask", headers=KEY, params={"q": "elephants"}).json() == []
+
+
+def test_the_library_moves_where_the_person_chose_with_its_files_and_the_notebook_stays(client, fake_sound, tmp_path):
+    id = record(client)
+    store = engine.state.get_store()
+    worker()._transcribe(id, store.row(id))
+    old = store.root
+    new = tmp_path / "Notes" / "Calls"
+    new.mkdir(parents=True)
+    (new / "old meeting.mp3").write_bytes(b"x")
+    assert client.post("/library/move", headers=KEY, json={"to": str(old / "inside")}).status_code == 409
+    assert client.post("/library/move", headers=KEY, json={"to": str(new)}).json()["dataDir"] == str(new)
+    store = engine.state.get_store()
+    assert store.root == new and [r["id"] for r in store.list()] == [id]
+    file = store.row(id)["file"]
+    assert os.path.dirname(file) == str(new) and os.path.exists(file) and os.path.exists(file[:-4] + ".md")
+    assert (new / "old meeting.mp3").exists() and not any(old.iterdir())
+    assert os.path.normcase(file) in store.known_files()
+    assert client.get("/transcripts", headers=KEY).json()[0]["id"] == id
+    # The same name in the way: nothing moves.
+    other = tmp_path / "Other"
+    other.mkdir()
+    (other / "index.db").write_bytes(b"x")
+    assert client.post("/library/move", headers=KEY, json={"to": str(other)}).status_code == 409
+    assert engine.state.get_store().root == new

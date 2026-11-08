@@ -685,6 +685,7 @@ export const en = {
   'tr.inKb': 'In the knowledge base: {file}',
   'tr.chooseFolder': 'Choose a folder',
   'tr.folderNote': 'a recording you put in it is transcribed, each with a Markdown of its text beside it; the calls recorded here are saved there too',
+  'tr.movedLib': 'Transcripts moved to {folder}',
   'tr.ask': 'Ask the recordings: what did we decide about…',
   'tr.askBtn': 'Ask',
   'tr.asking': 'Looking through the recordings…',

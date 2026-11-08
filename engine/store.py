@@ -58,6 +58,10 @@ class Store:
                 self._db.execute("alter table transcripts add column file text")
             self._db.execute("create table if not exists ignored(path text primary key)")
 
+    def close(self) -> None:
+        with self._lock:
+            self._db.close()
+
     def folder(self, id: str) -> Path:
         # One folder right inside the library: no separators, no "..", no drive ("D:" alone is drive D on Windows).
         if not id or "/" in id or "\\" in id or ".." in id or ":" in id or id.strip(" .") != id:

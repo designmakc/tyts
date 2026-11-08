@@ -53,10 +53,14 @@ class Store:
                 self._db.execute("alter table transcripts add column summarized integer default 0")
             if "app" not in have:
                 self._db.execute("alter table transcripts add column app text")
-            # The calls folder (calls.py): the file a transcript came from or was saved as, and files not to import again.
+            # The transcripts folder as a notebook (calls.py): the file a transcript came from or was saved as, and files not to import again.
             if "file" not in have:
                 self._db.execute("alter table transcripts add column file text")
             self._db.execute("create table if not exists ignored(path text primary key)")
+
+    def close(self) -> None:
+        with self._lock:
+            self._db.close()
 
     def folder(self, id: str) -> Path:
         # One folder right inside the library: no separators, no "..", no drive ("D:" alone is drive D on Windows).
@@ -65,7 +69,7 @@ class Store:
         return self.root / id
 
     def create(self, title: str, source: str, status: str, job: dict | None = None, created: datetime | None = None, file: str | None = None) -> str:
-        """A row; `created` for a recording made before (a file of the calls folder, dated by the file), `file` the file it came from."""
+        """A row; `created` for a recording made before (a file put into the transcripts folder, dated by the file), `file` the file it came from."""
         id = new_id()
         self.folder(id).mkdir(parents=True)
         when = created.isoformat(timespec="seconds") if created else now_iso()
@@ -157,7 +161,7 @@ class Store:
 
     def delete(self, id: str) -> None:
         with self._lock, self._db:
-            # A file of the calls folder whose transcript goes is not imported again.
+            # A file of the transcripts folder whose transcript goes is not imported again.
             self._db.execute("insert or ignore into ignored(path) select file from transcripts where id=? and file is not null", (id,))
             self._db.execute("delete from transcripts where id=?", (id,))
             self._db.execute("delete from search where id=?", (id,))

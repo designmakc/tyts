@@ -20,7 +20,6 @@ import { ChunkRecorder, micTrouble } from './recorder'
 import {
   api,
   clock,
-  engineSettings,
   fault,
   fileName,
   installed,
@@ -32,7 +31,6 @@ import {
   problem,
   redrawPage,
   running,
-  saveEngine,
   showFile,
   SpeechError,
   size as speechSize,
@@ -302,15 +300,6 @@ export function transcriptsBody(v: AppView): HTMLElement[] {
 
 const pathNote = (path: string) => el('small', { class: 'path', title: path }, el('bdi', {}, path))
 
-/** The calls folder (engine/calls.py): chosen here, the engine imports what is in it and saves the calls recorded here into it. */
-async function pickCalls(): Promise<void> {
-  const folder = (await window.tutorHost.call({ call: 'pickFolder', title: t('tr.callsFolder'), current: engineSettings(hooks.view()!)?.callsDir ?? '' })) as string | null
-  if (folder && (await saveEngine({ callsDir: folder }))) {
-    toast(t('tr.callsSet', { folder }))
-    void loadRows()
-  }
-}
-
 async function askCalls(question: string): Promise<void> {
   tx.question = question
   tx.answer = undefined
@@ -367,7 +356,7 @@ function askRows(): HTMLElement[] {
 
 function libraryPage(v: AppView): HTMLElement[] {
   const kb = v.speech.health?.kbDir
-  const callsDir = engineSettings(v)?.callsDir
+  const dataDir = v.speech.health?.dataDir
   return [
     el(
       'div',
@@ -390,7 +379,8 @@ function libraryPage(v: AppView): HTMLElement[] {
       btn([icon('add'), t('tr.new')], () => hooks.setup(), '', t('tr.newTitle')),
     ),
     ...askRows(),
-    card('folder', t('tr.callsFolder'), [callsDir ? pathNote(callsDir) : t('tr.callsFolderNote')], linkBtn(callsDir ? t('dictate.change') : t('dictate.choose'), () => void pickCalls())),
+    // The library folder is the notebook (engine/calls.py): media put into it is transcribed, calls recorded here are saved into it.
+    dataDir ? card('folder', t('transcribe.keptIn'), [pathNote(dataDir), t('tr.folderNote')], linkBtn(t('tr.open'), () => post({ type: 'openPath', path: dataDir }))) : null,
     kb === '' ? aside('book-open', t('tr.needKb'), ' ', linkBtn(t('tr.choose'), () => void pickKb())) : null,
     speakersMissing(v, () => hooks.setup()),
     list(v),

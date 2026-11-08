@@ -292,12 +292,12 @@ class Worker:
             store.update(id, status="failed", stage="", error=message)
 
     def scan_calls(self) -> int:
-        """New files of the calls folder queued (at a change of the folder, and every few minutes)."""
+        """Media put into the transcripts folder queued (at a change of the folder, and every few minutes)."""
         self.last_scan = time.monotonic()
         try:
-            return calls.scan(self.get_store(), self.settings["callsDir"], self.submit)
+            return calls.scan(self.get_store(), self.submit)
         except OSError as error:
-            log.warning("calls folder: %s", error)
+            log.warning("transcripts folder: %s", error)
             return 0
 
     def _housekeeping(self) -> None:
@@ -469,19 +469,19 @@ class Worker:
                 transcript["note"] = str(notes.write_note(transcript, settings["kbDir"], settings["kbInbox"]))
             except notes.NoKnowledgeBase:
                 transcript["noteError"] = "No knowledge base folder is chosen: the note stays in Transcripts"
-        # A call goes into the calls folder beside a Markdown of its text (calls.py); an imported file gets the Markdown beside it.
+        # A call goes into the transcripts folder beside a Markdown of its text (calls.py); an imported file gets the Markdown beside it.
         file = row.get("file")
         if kind == "system" and not file:
             try:
-                file = calls.save_call(store, id, transcript, settings["callsDir"])
+                file = calls.save_call(store, id, transcript)
             except OSError as error:
-                log.warning("calls folder: could not save the call: %s", error)
+                log.warning("transcripts folder: could not save the call: %s", error)
         if file:
             store.update(id, file=file)
             try:
                 calls.write_md(transcript, file)
             except OSError as error:
-                log.warning("calls folder: could not write the Markdown: %s", error)
+                log.warning("transcripts folder: could not write the Markdown: %s", error)
         store.save(id, transcript)
         # The sources go only now: a job that fails on the way can run again from them.
         for item in inputs:

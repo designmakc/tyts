@@ -31,6 +31,7 @@ const APP_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>([
   'clearDictation',
   'clearTranslations',
   'forgetPhrase',
+  'fixPhrase',
   'forgetTranslation',
   'clearMistakes',
   'forgetMistake',

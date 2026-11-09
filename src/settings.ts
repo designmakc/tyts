@@ -2,6 +2,7 @@
 // (%APPDATA%\Kryakl). The learned language is English: the natural voice and
 // the word dictionaries are English ones.
 
+import { correctionList, type Correction } from './corrections'
 import { COPY_TWICE } from './hotkey'
 import { AWAKE_HOURS, type AwakeHours } from './awake'
 import { isUiLanguage, type UiLanguage } from './i18n'
@@ -218,6 +219,8 @@ export type Settings = {
    * ("Kryakl (крякл, кракл)"); vocabulary.ts reads them.
    */
   vocabulary: string[]
+  /** What dictation learned from the person's fixes of a phrase (corrections.ts): put right before a phrase is typed. */
+  corrections: Correction[]
   /**
    * Which translator every card and key uses: Fast (Firefox's models), or the
    * local model (`model`, llmtranslator.ts), downloaded when picked. A card
@@ -339,6 +342,7 @@ export const DEFAULTS: Settings = {
   dictationPanel: true,
   dictateHold: false,
   vocabulary: [],
+  corrections: [],
   translationLevel: 'fast',
   model: 'accurate',
   speechPrefer: 'accuracy',
@@ -558,6 +562,7 @@ export function normalize(raw: unknown, native = DEFAULTS.native): Settings {
     dictationPanel: flag(r.dictationPanel, DEFAULTS.dictationPanel),
     dictateHold: flag(r.dictateHold, DEFAULTS.dictateHold),
     vocabulary: vocabularyLines(r.vocabulary),
+    corrections: correctionList(r.corrections),
     ...levelAndModel(r.translationLevel, r.model),
     speechPrefer: r.speechPrefer === 'speed' ? 'speed' : 'accuracy',
     dictationModel: key(r.dictationModel, DEFAULTS.dictationModel),

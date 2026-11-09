@@ -88,3 +88,13 @@ test('a backup’s phrases are added once, newest first', () => {
   expect(log.merge([mine, earlier, { at: 'never', mode: 'type', text: 'x' }])).toBe(1)
   expect(log.list().map(e => e.text)).toEqual(['Привет', 'Hello'])
 })
+
+test('a phrase fixed by the person keeps what was heard, and survives a restart', () => {
+  const file = tempFile()
+  const log = new DictationLog(file, () => START)
+  const e = log.add({ mode: 'type', text: 'открой тицц' })
+  log.update(e.at, ' открой Tyts ')
+  expect(new DictationLog(file, () => START).list()).toEqual([{ ...e, text: 'открой Tyts', heard: 'открой тицц' }])
+  log.update(e.at, 'открой тицц')
+  expect(log.list()).toEqual([e])
+})

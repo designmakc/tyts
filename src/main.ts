@@ -509,7 +509,7 @@ function saveSettings(patch: Partial<Settings>): void {
   if ('theme' in patch) applyTheme()
   if (settings.uiLanguage !== wasLanguage) applyUiLanguage()
   // The speech models are chosen from these (speechplan.ts), and the words to spell go with the plan: sent to the engine again.
-  if (speech && (['native', 'speechPrefer', 'dictationModel', 'transcriptsModel', 'speechTestAgreed', 'vocabulary'] as const).some(k => k in patch)) speech.replan()
+  if (speech && (['native', 'speechPrefer', 'dictationModel', 'transcriptsModel', 'speechTestAgreed', 'vocabulary', 'corrections'] as const).some(k => k in patch)) speech.replan()
   if ('talkOnTop' in patch) talkWin?.setAlwaysOnTop(settings.talkOnTop)
   if ('callAuto' in patch) void callAutoChanged()
   if ('edgePanel' in patch) applyEdge()
@@ -1688,6 +1688,10 @@ function onMessage(message: ToHost, page: Page): void {
       return
     case 'forgetPhrase':
       dictationLog.remove(message.at)
+      postApp()
+      return
+    case 'fixPhrase':
+      dictationLog.update(message.at, message.text)
       postApp()
       return
     case 'forgetTranslation':
@@ -4245,6 +4249,7 @@ function setUpSpeechEngine(): void {
     },
     edit: editPhrase,
     editing: () => settings.dictateEdit,
+    corrections: () => settings.corrections,
     warm: () => {
       if (settings.dictateEdit && llmFiles.state(settings.model).status === 'ready') warmWhole(settings.model)
     },

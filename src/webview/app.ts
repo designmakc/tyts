@@ -28,6 +28,7 @@ import type { AppPart } from '../typist'
 import { formatDate, languageName as langName, levelName, setUiLanguage, t, uiLanguage, type Key } from '../i18n'
 import { parseEntry } from '../vocabulary'
 import { changesOf, wordDiff } from '../worddiff'
+import { addCorrection, findCorrection, type Found } from '../corrections'
 import { logo, tile } from './brand'
 import { el, icon, setIcon } from './dom'
 import { glyph } from './glyphs'
@@ -2347,10 +2348,52 @@ function vocabularyPage(v: AppView): HTMLElement[] {
   ]
 }
 
-/** The phrases typed lately (dictationlog.ts), one line each: a tap copies it, a cross forgets it; Kryakl forgets them after 30 days by itself. */
+/** The phrase being corrected on the Phrases page, and what came of the fix: a pair to remember, or why there is none. */
+let fixing: { at: string; was: string; found?: Found } | undefined
+
+/** The fix of one phrase: a field with its text, then "Remember «heard» → «right»?" when the change is small (corrections.ts). */
+function fixCard(v: AppView): HTMLElement[] {
+  if (!fixing) return []
+  const f = fixing
+  const done = () => {
+    fixing = undefined
+    renderBody()
+  }
+  if (f.found?.ok) {
+    const c = f.found.correction
+    return [
+      grp(t('dictate.rememberAsk')),
+      row(t('dictate.rememberPair', { heard: c.heard, right: c.right }), [t('dictate.rememberNote')],
+        btn(t('dictate.remember'), () => {
+          save({ corrections: addCorrection(view?.settings.corrections ?? v.settings.corrections, c) })
+          done()
+        }, 'primary'),
+        btn(t('dictate.notNow'), done)),
+    ]
+  }
+  if (f.found) return [aside('info', t(f.found.why === 'short' ? 'dictate.fixShort' : f.found.why === 'big' ? 'dictate.fixBig' : 'dictate.fixSaved'), ' ', linkBtn(t('dictate.notNow'), done))]
+  const field = el('textarea', { class: 'field report about', rows: 3, 'aria-label': t('dictate.fixTitle'), 'data-live': 'fixPhrase' })
+  field.value = f.was
+  const keep = () => {
+    const text = field.value.replace(/\s+/g, ' ').trim()
+    if (!text || text === f.was) return done()
+    post({ type: 'fixPhrase', at: f.at, text })
+    f.found = findCorrection(f.was, text)
+    renderBody()
+  }
+  return [
+    grp(t('dictate.fixTitle')),
+    el('div', { class: 'row add' }, field, el('small', {}, t('dictate.fixNote')), el('div', { class: 'fields' }, btn(t('dictate.fixSave'), keep, 'primary'), btn(t('common.cancel'), done))),
+  ]
+}
+
+/** The phrases typed lately (dictationlog.ts), one line each: a tap copies it, the pencil corrects it, a cross forgets it; Kryakl forgets them after 30 days by itself. */
 function recentPage(v: AppView): HTMLElement[] {
   const recent = v.dictation.recent
+  if (fixing && !recent.some(e => e.at === fixing!.at)) fixing = undefined
+  const learned = v.settings.corrections
   return [
+    ...fixCard(v),
     grp(t('dictate.phrases'), recent.length || undefined, recent.length ? linkBtn(t('mistakes.clear'), () => post({ type: 'clearDictation' })) : null),
     recent.length
       ? lineList(
@@ -2359,11 +2402,29 @@ function recentPage(v: AppView): HTMLElement[] {
             more: whenSaid(e.at, Date.now()),
             title: e.heard ? `${e.text}\n\n${t('dictate.said', { heard: e.heard })}` : e.text,
             open: () => copyText(e.text),
+            edit: () => {
+              fixing = { at: e.at, was: e.text }
+              renderBody()
+              pBody.scrollTop = 0
+            },
+            editLabel: t('dictate.fix'),
             remove: () => post({ type: 'forgetPhrase', at: e.at }),
           })),
           'time',
         )
       : aside('info', t('dictate.recentEmpty')),
+    ...(learned.length
+      ? [
+          grp(t('dictate.learned'), learned.length, linkBtn(t('dictate.forgetAll'), () => save({ corrections: [] }))),
+          wordChips(
+            learned
+              .map(c => ({ text: c.heard, more: c.right, remove: () => save({ corrections: (view?.settings.corrections ?? learned).filter(x => x.heard !== c.heard) }) }))
+              .reverse(),
+            '→',
+          ),
+          aside('info', t('dictate.learnedNote')),
+        ]
+      : []),
   ]
 }
 

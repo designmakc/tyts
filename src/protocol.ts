@@ -562,6 +562,7 @@ export type ToHost =
   | { type: 'clearTranslations' }
   /** One phrase or one translation forgotten, by when it was kept. */
   | { type: 'forgetPhrase'; at: string }
+  | { type: 'fixPhrase'; at: string; text: string }
   | { type: 'forgetTranslation'; at: string }
   /** What Kryakl learned from the person's typing: one word out of a list, or everything. */
   | { type: 'unlearn'; list: 'alwaysFix' | 'myWords'; word: string }

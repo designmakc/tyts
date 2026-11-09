@@ -74,6 +74,17 @@ export class DictationLog {
     if (this.entries.length !== n) this.save()
   }
 
+  /** One phrase as the person fixed it (the list's pencil); what was heard stays as it was. */
+  update(at: string, text: string): void {
+    const e = this.entries.find(x => x.at === at)
+    const now = text.trim()
+    if (!e || !now || e.text === now) return
+    if (e.heard === undefined) e.heard = e.text
+    e.text = now
+    if (e.heard === e.text) delete e.heard
+    this.save()
+  }
+
   clear(): void {
     if (this.entries.length === 0) return
     this.entries = []

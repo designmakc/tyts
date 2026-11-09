@@ -170,6 +170,8 @@ export type Settings = {
   shotKey: string
   /** While a call records, a screenshot every 4 s when the screen changed, beside the sound. Off by default. */
   callShots: boolean
+  /** While a call records, a rough draft of its words on the panel (engine live.py, the dictation model on the processor). Off by default. */
+  callLive: boolean
   /** The reminder that the others' consent is needed was shown once, before the first call recording. */
   callConsentSeen: boolean
   /** A known call program holding the microphone 10 s (callwatch.ts): nothing, a question, or a recording at once. Off by default. */
@@ -321,6 +323,7 @@ export const DEFAULTS: Settings = {
   meetingKey: '',
   shotKey: '',
   callShots: false,
+  callLive: false,
   callConsentSeen: false,
   callAuto: 'off',
   callPanelOffset: { dx: 0, dy: 0 },
@@ -541,6 +544,7 @@ export function normalize(raw: unknown, native = DEFAULTS.native): Settings {
     meetingKey: key(r.meetingKey, DEFAULTS.meetingKey),
     shotKey: key(r.shotKey, DEFAULTS.shotKey),
     callShots: flag(r.callShots, DEFAULTS.callShots),
+    callLive: flag(r.callLive, DEFAULTS.callLive),
     callConsentSeen: flag(r.callConsentSeen, DEFAULTS.callConsentSeen),
     callAuto: CALL_AUTO.includes(r.callAuto as CallAuto) ? (r.callAuto as CallAuto) : DEFAULTS.callAuto,
     callPanelOffset: badgeOffset(r.callPanelOffset),

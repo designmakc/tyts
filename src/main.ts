@@ -3566,7 +3566,7 @@ export async function startCall(auto?: { app: string; title: string | null }): P
   // Without the microphone the others are still recorded (the panel says so).
   if (onMac) await systemPreferences.askForMediaAccess('microphone').catch(() => false)
   const known = auto?.app ?? callApp(await runningProcessNames())
-  capture.start(auto?.title ?? callTitle(known, new Date()), known ?? undefined, !!auto, settings.callShots)
+  capture.start(auto?.title ?? callTitle(known, new Date()), known ?? undefined, !!auto, settings.callShots, settings.callLive)
 }
 
 // ---------------------------------------------------------------- a call that starts by itself

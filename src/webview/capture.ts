@@ -8,11 +8,15 @@
 // Screenshots: the picture getDisplayMedia gives is kept while a call records;
 // with `callShots` a frame every 4 s is sent when it changed (shots.ts), and the
 // camera button or the shot key sends one always, marked manual.
+// With `callLive` the engine reads a rough draft of the words as the chunks come
+// (engine/live.py); the speech-bubble button opens it, the window taller, and it
+// is asked for every 2 s while open. The final transcript comes after the call.
 
 import { t } from '../i18n'
 import { onMac } from '../hotkey'
 import type { CallState, SpeechResult, ToHost, ToView, TutorHost } from '../protocol'
 import { TrackSender } from '../capturesend'
+import { liveAnswer, liveRows, type LiveRow, type LiveState } from '../calllive'
 import { changed, frameHash, SHOT_SIDE } from '../shots'
 import { el } from './dom'
 import { lucide } from './lucide'
@@ -62,6 +66,13 @@ let lastShot: Uint8Array | undefined
 let shotsSent: Promise<unknown> = Promise.resolve()
 const SHOT_EVERY = 4000
 const SHOT_WIDTH = 1280
+/** The draft of the words: asked for at the start, what the engine said of it, open on the panel, its rows. */
+let live = false
+let liveState: LiveState = 'off'
+let open = false
+let rows: LiveRow[] = []
+let polling: number | undefined
+const POLL_EVERY = 2000
 let meter: { context: AudioContext; analyser: AnalyserNode; samples: Float32Array<ArrayBuffer> } | undefined
 
 const speech = <T>(method: string, route: string, body?: unknown) => host.call({ call: 'speech', method, route, body }) as Promise<SpeechResult<T>>
@@ -134,6 +145,7 @@ function draw(): void {
     ...(state === 'recording' || state === 'paused'
       ? [
           ...(state === 'recording' && video ? [button('camera', t('call.shot'), () => void shot(true))] : []),
+          ...(live ? [button('message-square-text', t(open ? 'call.liveHide' : 'call.liveShow'), toggleDraft, open ? 'on' : '')] : []),
           state === 'paused' ? button('play', t('call.resume'), resume) : button('pause', t('call.pause'), pause),
           button('square', t('call.stopShort'), () => void stop(), 'stop'),
         ]
@@ -149,8 +161,58 @@ function draw(): void {
         : auto && state !== 'stopping'
           ? el('div', { class: 'note' }, t('call.autoStarted'), link(t('call.dontRecord'), () => void discard()), copyPhrase())
           : el('div', { class: 'note' }, busy ? '' : t('call.allSound'), busy ? null : copyPhrase())
-  root.className = `panel ${state}`
-  root.replaceChildren(head, note)
+  root.className = `panel ${state}${open ? ' open' : ''}`
+  root.replaceChildren(head, ...(open ? [draft()] : []), note)
+  const list = root.querySelector('.rows')
+  if (list) list.scrollTop = list.scrollHeight
+}
+
+/** The draft's rows, or why there are none; always marked as a draft. */
+function draft(): HTMLElement {
+  const why: Partial<Record<LiveState, string>> = { missing: t('call.liveMissing'), card: t('call.liveCard'), failed: t('call.liveFailed'), off: t('call.liveFailed') }
+  const said = why[liveState]
+  const body = said
+    ? [el('div', { class: 'empty' }, said)]
+    : rows.length
+      ? rows.map(r =>
+          el('div', { class: `row ${r.who}` }, el('span', { class: 'who' }, t(r.who === 'me' ? 'call.liveMe' : 'call.liveOthers')), el('span', { class: 'at' }, clock(r.at)), el('span', { class: 'said' }, r.gap ? t('call.liveGap') : r.text)),
+        )
+      : [el('div', { class: 'empty' }, t('call.liveWaiting'))]
+  return el(
+    'div',
+    { class: 'draft' },
+    el('div', { class: 'mark' }, liveState === 'paused' ? t('call.livePaused') : t('call.liveDraft')),
+    el('div', { class: 'rows' }, ...body),
+  )
+}
+
+async function poll(): Promise<void> {
+  if (!open || !id) return
+  const answer = await speech<unknown>('GET', `/recordings/${id}/live`)
+  if (!open) return
+  if (answer.ok) {
+    const got = liveAnswer(answer.data)
+    // 'off' after a start that said otherwise: the engine was restarted, the draft is gone.
+    liveState = got.state
+    rows = liveRows(got.lines)
+  }
+  draw()
+}
+
+function toggleDraft(): void {
+  setDraft(!open)
+}
+
+function setDraft(next: boolean): void {
+  if (next === open) return
+  open = next
+  post({ type: 'captureExpand', open })
+  window.clearInterval(polling)
+  if (open) {
+    polling = window.setInterval(() => void poll(), POLL_EVERY)
+    void poll()
+  }
+  draw()
 }
 
 /** The computer's sound: main answers with the screen's loopback sound; the picture is kept for the screenshots, a frame a second. */
@@ -197,9 +259,12 @@ async function shot(manual: boolean): Promise<void> {
   }
 }
 
-async function start(title: string, app?: string, byItself = false, shots = false): Promise<void> {
+async function start(title: string, app?: string, byItself = false, shots = false, words = false): Promise<void> {
   if (state !== 'idle') return
   periodic = shots
+  live = words
+  liveState = 'off'
+  rows = []
   lastShot = undefined
   asking = null
   auto = byItself
@@ -227,10 +292,11 @@ async function start(title: string, app?: string, byItself = false, shots = fals
     micMissing = true
   }
   startedAt = Date.now()
-  const opened = await speech<{ id: string }>('POST', '/recordings', {
+  const opened = await speech<{ id: string; live?: string }>('POST', '/recordings', {
     source: 'system',
     title,
     ...(app ? { app } : {}),
+    ...(live ? { live: true } : {}),
     tracks: { system: { startedAt }, ...(mic ? { mic: { startedAt } } : {}) },
   })
   if (!opened.ok) {
@@ -241,6 +307,7 @@ async function start(title: string, app?: string, byItself = false, shots = fals
     return set('idle')
   }
   id = opened.data.id
+  liveState = liveAnswer({ state: opened.data.live }).state
   const call = (method: string, route: string, body?: unknown) => speech(method, route, body)
   tracks = [
     ...(mic ? [{ name: 'mic' as const, stream: mic }] : []),
@@ -325,6 +392,8 @@ async function stop(drop = false): Promise<void> {
   before = seconds()
   since = 0
   set('stopping')
+  setDraft(false)
+  live = false
   window.clearInterval(ticking)
   window.clearInterval(listening)
   window.clearInterval(shooting)
@@ -359,7 +428,7 @@ const discard = () => stop(true)
 window.addEventListener('message', event => {
   const message = event.data as ToView
   if (event.source !== window || message?.type !== 'capture') return
-  if (message.command === 'start') void start(message.title ?? '', message.app, !!message.auto, !!message.shots)
+  if (message.command === 'start') void start(message.title ?? '', message.app, !!message.auto, !!message.shots, !!message.live)
   else if (message.command === 'shot') void shot(true)
   else if (message.command === 'stop') void stop()
   else if (message.command === 'discard') void discard()

@@ -436,7 +436,7 @@ export type ToView =
   | { type: 'dictationEditing' }
   | { type: 'dictationError'; message: string }
   /** The call recording's panel (capture.ts): record, under `title` (`app`: the call program running, for the engine; `shots`: a screenshot every 4 s when the screen changed), stop and save, pause or go on, take a screenshot now. */
-  | { type: 'capture'; command: 'start' | 'stop' | 'pause' | 'resume' | 'discard' | 'ask' | 'unask' | 'shot'; title?: string; app?: string; auto?: boolean; shots?: boolean }
+  | { type: 'capture'; command: 'start' | 'stop' | 'pause' | 'resume' | 'discard' | 'ask' | 'unask' | 'shot'; title?: string; app?: string; auto?: boolean; shots?: boolean; live?: boolean }
   /** The tray's panel was just shown: focus its first command. */
   | { type: 'trayShown' }
   | { type: 'edge'; view: EdgeView }
@@ -617,6 +617,8 @@ export type ToHost =
   | { type: 'captureAnswer'; record: boolean }
   /** "Copy a phrase for the chat": main puts its own sentence (call.phrase) on the clipboard; the page names no text. */
   | { type: 'captureCopyPhrase' }
+  /** The panel opened its draft of the words (taller) or closed it. */
+  | { type: 'captureExpand'; open: boolean }
   /** From the app window's Recordings page: a call recording started, or stopped and saved. */
   | { type: 'toggleCall' }
   /** Makes (or makes again) a transcript's summary; main saves it in the engine. */

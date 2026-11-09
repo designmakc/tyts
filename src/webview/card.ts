@@ -373,10 +373,12 @@ const KINDS: Record<CardKind, [Key, Key?]> = {
   translate: ['kind.translate'],
   text: ['kind.translate', 'kind.screen'],
   check: ['kind.check'],
+  explain: ['kind.explain'],
+  rewrite: ['kind.rewrite'],
 }
 
 /** The kinds with the text as it is in a field, and its other side under it: the translator's, and Check my English. */
-const translator = (c: CardView | undefined) => c?.kind === 'translate' || c?.kind === 'text' || c?.kind === 'check'
+const translator = (c: CardView | undefined) => c?.kind === 'translate' || c?.kind === 'text' || c?.kind === 'check' || c?.kind === 'explain' || c?.kind === 'rewrite'
 
 /** Check my English: the field is the person's English, checked instead of translated. */
 const checking = () => state.card?.kind === 'check'
@@ -532,6 +534,13 @@ function renderState(): void {
       return
     case 'failed':
       stateView.replaceChildren(...failed(s.message))
+      return
+    case 'explain':
+      // The selection quoted, then the answer: selectable, so a rewrite with nowhere to go can be copied.
+      stateView.replaceChildren(
+        el('p', { class: 'empty-text' }, s.text),
+        s.answer ? el('p', { class: s.failed ? 'empty-title' : 'explain-answer' }, s.answer) : status(t('card.explaining')),
+      )
       return
   }
 }

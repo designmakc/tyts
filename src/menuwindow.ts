@@ -29,6 +29,8 @@ export type MenuOptions = {
   border: () => string
   /** The groups to show now. */
   groups: () => MenuItem[][]
+  /** An item's own list (Rewrite…'s), shown in place of the groups when it is picked. */
+  sub: (action: MenuAction) => MenuItem[][] | undefined
   /** The text cursor of the window in front, in physical pixels, when it has a system one. */
   caret: () => { x: number; y: number; h: number } | undefined
   /** The keyboard thread takes the menu's keys, or no longer; `rect`: where it is, in physical pixels. */
@@ -123,6 +125,17 @@ export class TytsMenu {
   private pick(index: number): void {
     const item = this.items[index]
     if (!item || !this.open || this.firing) return
+    const sub = this.o.sub(item.id)
+    if (sub) {
+      // Its list in place of the groups, the keys still the menu's: its letters now; the height it reports places it again.
+      this.groups = sub
+      this.items = sub.flat()
+      this.lit = 0
+      const win = this.win
+      this.o.keys(true, this.codes(), win && !win.isDestroyed() ? screen.dipToScreenRect(win, win.getBounds()) : undefined)
+      this.send()
+      return
+    }
     this.o.keys(false)
     this.lit = index
     this.fired = index

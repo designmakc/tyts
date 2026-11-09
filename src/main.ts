@@ -83,7 +83,8 @@ import { recognize, recognizeMac } from './ocr'
 import { pickLines } from './ocrpick'
 import { adoptLocalFolder, adoptOldFolders, freeFolder, hasToMove, healSpeech, leftIn, moveDownloads, OLD_LOCAL_FOLDERS, partDir, removeOldUpdaterCaches, type LeftPart, type Warn } from './oldfolder'
 import { paragraphsOf } from './ocrtext'
-import { menuGroups, type MenuAction } from './menu'
+import { menuGroups, rewriteGroups, type MenuAction } from './menu'
+import { createRewriter, REWRITE_MOST_CHARS, type Rewriter, type RewriteStyle } from './rewrite'
 import { TytsMenu } from './menuwindow'
 import { placeByTray, placeNear, resize, type Point } from './placement'
 import type { AppTab, AppView, BusyPart, EdgeView, CardKind, CardState, CheckResult, DictationMode, DictionaryStatus, GlossMissing, HostCall, HostVoice, Refused, StorageId, StoragePart, StorageView, TalkWindowView, TextResult, ToHost, ToView, TranslationState, TrayCommand, TrayView, ViewConfig } from './protocol'
@@ -1037,7 +1038,7 @@ function post(message: ToView): void {
 }
 
 /** What a text is picked for: the card that reads its English aloud, the translator, its translation pasted over it, or its English checked. */
-type Purpose = 'listen' | 'translate' | 'inPlace' | 'check'
+type Purpose = 'listen' | 'translate' | 'inPlace' | 'check' | 'rewrite'
 
 let languageWordsRead: LanguageWords | undefined
 /** The words that tell a text's language, read once. */
@@ -2537,6 +2538,7 @@ let checker: Checker
 let summarizer: ReturnType<typeof createSummarizer>
 let asker: ReturnType<typeof createAsker>
 let editor: Editor
+let rewriter: Rewriter
 let mistakes: MistakeStore
 
 /** The latest check asked of a check card: an older one, still running, is not shown. */
@@ -2768,6 +2770,7 @@ function showText(text: string, purpose: Purpose, at: Point, window?: bigint, vi
   if (purpose === 'translate') return translateWindow(text, at, window, via, field)
   if (purpose === 'check') return checkWindow(text, at, window, via, field)
   releaseField(field)
+  if (purpose === 'rewrite') return void rewriteSelection(text, rewriteStyle, at, window, via)
   if (purpose === 'inPlace' && window) void translateInPlace(text, at, window, via)
   else translateText(text, 'selection', at, via)
 }
@@ -2864,10 +2867,11 @@ function watchModel(): void {
  * (the level's model, Check's always) and once its files are here.
  */
 function warmModel(purpose: Purpose): void {
-  const model = purpose === 'check' ? settings.model : settings.translationLevel
+  const own = purpose === 'check' || purpose === 'rewrite'
+  const model = own ? settings.model : settings.translationLevel
   if (model === 'fast' || llmFiles.state(model).status !== 'ready') return
-  // Check my English always uses the model.
-  if (purpose === 'check') return llmFiles.server.warm(llmFiles.target(model))
+  // Check my English and Rewrite always use the model.
+  if (own) return llmFiles.server.warm(llmFiles.target(model))
   warmWhole(model)
 }
 
@@ -2907,6 +2911,57 @@ async function editPhrase(text: string, stop: AbortSignal): Promise<{ text: stri
     log(`edit: ${style}, gave up after ${((Date.now() - began) / 1000).toFixed(1)} s: ${error instanceof Error ? error.name : 'failed'}`)
     return { text, note: t('dict.editSlow') }
   }
+}
+
+/** What the menu's Rewrite… item was asked to do with the selection being copied. */
+let rewriteStyle: RewriteStyle = 'shorten'
+
+/** How long a selection waits for its rewrite, the model's load included: then it stays as it was. A selection may be a paragraph, so longer than a phrase's. */
+const REWRITE_WAIT_MS = { card: 15_000, processor: 45_000 }
+
+/** How long the badge says what a rewrite did, or why it did not. */
+const REWRITE_SAY_MS = 3500
+
+/**
+ * Rewrite… (rewrite.ts): the selection shortened, made more polite, formal or
+ * natural English and pasted over it, or explained in the card. The selection
+ * is never lost: no model, a busy model, a slow or odd answer leave it as it
+ * was and the badge says why; no window to paste into (a Mac, or the person
+ * went elsewhere meanwhile) shows the rewrite in the card. Never a word of the
+ * text in the log.
+ */
+async function rewriteSelection(text: string, style: RewriteStyle, at: Point, window: bigint | undefined, via?: string): Promise<void> {
+  const say = (key: Parameters<typeof t>[0]) => keyboard.say(t(key), REWRITE_SAY_MS)
+  const model = settings.model
+  if (llmFiles.state(model).status !== 'ready') return say('rewrite.noModel')
+  if (text.length > REWRITE_MOST_CHARS) return say('rewrite.tooLong')
+  const busy = busyFor(model) ?? ((await cardFull(model).catch(() => undefined)) ? 'card' : undefined)
+  if (busy) return say(busy === 'card' ? 'rewrite.card' : 'rewrite.processor')
+  const explain = style === 'explain'
+  const id = explain ? openCard('explain', { status: 'explain', text, answer: '' }, at, via) : undefined
+  if (!explain) keyboard.say('…', REWRITE_WAIT_MS.processor)
+  const wait = REWRITE_WAIT_MS[translationAdvice(speech?.profile)[model].where === 'card' ? 'card' : 'processor']
+  const began = Date.now()
+  const secs = () => ((Date.now() - began) / 1000).toFixed(1)
+  let out: { text: string; doubt: string }
+  try {
+    out = await rewriter.rewrite(text, style, settings.uiLanguage, AbortSignal.timeout(wait))
+  } catch (error) {
+    log(`rewrite: ${style}, gave up after ${secs()} s: ${error instanceof Error ? error.name : 'failed'}`)
+    if (id !== undefined) return setState(id, { status: 'explain', text, answer: t('rewrite.explainSlow'), failed: true })
+    return say('rewrite.slow')
+  }
+  log(`rewrite: ${style}, ${secs()} s${out.doubt ? `, left as it was (${out.doubt})` : ''}`)
+  if (id !== undefined) return setState(id, out.doubt ? { status: 'explain', text, answer: t('rewrite.explainDoubt'), failed: true } : { status: 'explain', text, answer: out.text })
+  if (out.doubt) return say(out.doubt === 'same' ? 'rewrite.same' : 'rewrite.doubt')
+  if (!window || foreground().hwnd !== window) {
+    keyboard.say('')
+    openCard('rewrite', { status: 'explain', text, answer: out.text }, at, via)
+    return
+  }
+  await keysLetGo()
+  await pasteInto(window, undefined, out.text)
+  say('rewrite.done')
 }
 
 /**
@@ -3123,6 +3178,12 @@ function runMenu(action: MenuAction): void {
       return dictation.press('english', via)
     case 'fix':
       return keyboard.fixNow()
+    case 'rewrite':
+      // Its own list, opened by the menu itself (menuwindow.ts sub).
+      return
+    default:
+      rewriteStyle = action
+      return selection('rewrite', via, () => keyboard.say(t('menu.nothingToRewrite'), NOTHING_SAY_MS))
   }
 }
 
@@ -4321,6 +4382,7 @@ function start(): void {
   summarizer = createSummarizer({ files: llmFiles, model: () => settings.model })
   asker = createAsker({ files: llmFiles, model: () => settings.model })
   editor = createEditor({ files: llmFiles, model: () => settings.model })
+  rewriter = createRewriter({ files: llmFiles, model: () => settings.model })
   mistakes = new MistakeStore(path.join(userDir(), 'mistakes.json'))
   // Talk: the same model checks each line and the duck answers it (talk.ts, duck.ts).
   duck = createDuck({ files: llmFiles, model: () => settings.model, onTimed: modelTimed })
@@ -4478,6 +4540,7 @@ function start(): void {
     background: cardColor,
     border: borderColor,
     groups: () => menuGroups(settings.uiLanguage, !!speech?.installed),
+    sub: action => (action === 'rewrite' ? rewriteGroups(settings.uiLanguage) : undefined),
     caret: () => {
       const front = foreground()
       return front.tid ? caretOf(front.tid) : undefined

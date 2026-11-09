@@ -32,7 +32,7 @@ export type { Choice, DeviceProfile, DictationEntry, DiffPart, Feature, FeatureP
  * DeepL: `translate` (selected), `text` (read from the screen). To check the
  * person's own English, its mistakes marked and set right: `check`.
  */
-export type CardKind = 'selection' | 'screenshot' | 'translate' | 'text' | 'check'
+export type CardKind = 'selection' | 'screenshot' | 'translate' | 'text' | 'check' | 'explain' | 'rewrite'
 
 /** The translation under a text shown as it is (a `translate` or `text` card), asked for with `translateText`. */
 export type TextResult =
@@ -96,6 +96,8 @@ export type CardState =
   | { status: 'text'; text: string; from: string; to: string; languages: string[]; mine?: string[]; result: TextResult; canPaste?: boolean }
   /** Check my English: the person's text as it is (editable) and what the checker (`model`, its level's name: Accurate) says of it; `canPaste` as a text's. */
   | { status: 'check'; text: string; result: CheckResult; model: string; canPaste?: boolean }
+  /** Rewrite… (rewrite.ts): the selection, and Explain's answer or a rewrite with no window to paste into; `answer` empty while the model works, `failed` when it says why there is none. */
+  | { status: 'explain'; text: string; answer: string; failed?: boolean }
   /** The snipped piece of the screen holds no text. */
   | { status: 'empty' }
   /** Windows has no text recognition installed for any language the card could use. */

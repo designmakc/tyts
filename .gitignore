@@ -18,3 +18,5 @@ vendor/ocr-mac
 vendor/clip-mac
 vendor/kbd-mac
 vendor/mic-mac
+vendor/speakers-mac
+build/speakers-mac/.build/

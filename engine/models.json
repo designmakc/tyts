@@ -1,11 +1,14 @@
 {
-  "about": "The speech models Kryakl can use, read by the engine (asr.py) and by Kryakl (src/speechplan.ts). rank: how accurate, higher is better. phrase: seconds to recognize a 7 s phrase as Dictate does; rtf: seconds per second of a long recording as Transcribe does (words with their times). Both are first guesses, measured on an i9-9900K (cpu, int8) and an RTX 2080 SUPER (cuda, float16) on 2026-10-28, until this computer is tested. Whisper pads every phrase to a 30 s window, so a phrase costs one window whatever its length; turbo's decoder is light, so on long recordings it is nearly as quick as small. ramMb: memory on the processor; vramMb: on the card, per compute type. Parakeet (NVIDIA's TDT 0.6B v3 through onnx-asr, int8, on the processor) costs what the sound lasts, not a window: a 7 s phrase in 0.3 s on the i9, Russian as good as turbo on the card in a test on a LibriVox reading; it dictates in its 25 languages. devices and features: where and for what a model is used. metal: Whisper turbo on a Mac's graphics (Apple silicon) through mlx-whisper, its MLX copy (mlx: repo and size, its weights.safetensors 1.61 GB); measured on an M1 with 8 GB on 2026-11-06, fp16: rtf 0.25 on a 118 s call warm (38 s its first run; the 4-bit copy no quicker and fewer words), a 6-7 s phrase 4-6 s (the language read in a 30 s window of its own, about 2 s, then greedy decoding; slower on a phrase it hears badly, as it falls back to higher temperatures), so Parakeet on the processor dictates sooner there.",
+  "about": "The speech models Kryakl can use, read by the engine (asr.py) and by Kryakl (src/speechplan.ts). rank: how accurate, higher is better. phrase: seconds to recognize a 7 s phrase as Dictate does; rtf: seconds per second of a long recording as Transcribe does (words with their times). Both are first guesses, measured on an i9-9900K (cpu, int8) and an RTX 2080 SUPER (cuda, float16) on 2026-10-28, until this computer is tested. Whisper pads every phrase to a 30 s window, so a phrase costs one window whatever its length; turbo's decoder is light, so on long recordings it is nearly as quick as small. ramMb: memory on the processor; vramMb: on the card, per compute type. Parakeet (NVIDIA's TDT 0.6B v3 through onnx-asr, int8, on the processor) costs what the sound lasts, not a window: a 7 s phrase in 0.3 s on the i9, Russian as good as turbo on the card in a test on a LibriVox reading; it dictates in its 25 languages. devices and features: where and for what a model is used. metal: Whisper turbo on a Mac's graphics (Apple silicon) through mlx-whisper, its MLX copy (mlx: repo and size, its weights.safetensors 1.61 GB); measured on an M1 with 8 GB on 2026-11-06, fp16: rtf 0.25 on a 118 s call warm (38 s its first run; the 4-bit copy no quicker and fewer words), a 6-7 s phrase 4-6 s (the language read in a 30 s window of its own, about 2 s, then greedy decoding; slower on a phrase it hears badly, as it falls back to higher temperatures), so Parakeet on the processor dictates sooner there. Parakeet transcribes calls on a Mac only (src/speechplan.ts): on an M1 with 8 GB on 2026-11-09, 10 minutes of a call in 39 s with its silences skipped, where turbo on Metal took a quarter of the sound's length. speakers: seconds per second of a call to tell its speakers apart, pyannote on the processor (cpu) or the card (cuda); mac: FluidAudio on a Mac's Neural Engine through vendor/speakers-mac, measured on an M1 with 8 GB on 2026-11-09, 10 minutes of a call in 7.5 s (pyannote there took 6-14 minutes).",
   "speakers": {
     "cpu": {
       "rtf": 0.8
     },
     "cuda": {
       "rtf": 0.03
+    },
+    "mac": {
+      "rtf": 0.0125
     }
   },
   "models": [
@@ -213,7 +216,8 @@
         "cpu"
       ],
       "features": [
-        "dictation"
+        "dictation",
+        "transcripts"
       ],
       "cpu": {
         "phrase": 0.3,

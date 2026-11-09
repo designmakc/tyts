@@ -264,7 +264,8 @@ function needStep(v: AppView, h: SetupHooks, c: Choice, r: ReturnType<typeof rec
       r.transcribe,
     ),
     c.transcribe ? advised(toggleCard('users', t('setup.speakers'), c.speakers, flip('speakers'), `${r.speakers.why} · ${sizeText(s.speakers.sizes[speakersWhere(c, v)].download)}`), r.speakers) : null,
-    c.transcribe && c.speakers ? speakersOnCard(v, h, c) : null,
+    // A Mac has no place to choose: its speakers run on its own chip.
+    c.transcribe && c.speakers && !s.speakers.ane ? speakersOnCard(v, h, c) : null,
     grp(t('app.name')),
     advised(toggleCard('power', t('setup.startWithWindows'), c.startWithWindows, flip('startWithWindows'), r.startWithWindows.why), r.startWithWindows),
     grp(t('setup.allOfIt')),

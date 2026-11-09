@@ -72,6 +72,43 @@ def decode(path: Path | str, progress: Progress | None = None) -> np.ndarray:
     return np.concatenate(parts).astype(np.float32, copy=False)
 
 
+def decode_from(path: Path | str, first: int, longest: int) -> tuple[np.ndarray, list[int]]:
+    """A recording still growing, decoded from its packet `first` on (the ones before are read, not decoded) until
+    `longest` samples: the samples, and where each packet decoded begins in them. The count is decode()'s
+    (frames as they come, no gaps filled), so a time here is a time in the whole file decoded later."""
+    resampler = av.AudioResampler(format="flt", layout="mono", rate=RATE)
+    parts: list[np.ndarray] = []
+    starts: list[int] = []
+    at = 0.0
+    with av.open(str(path)) as container:
+        stream = container.streams.audio[0]
+        # A decoder started anew drops Opus's pre-skip (OpusHead's, 312 at 48 kHz) as it did once at the file's
+        # start: put back as silence after a later packet, so its sound stays where the whole file's has it.
+        head = stream.codec_context.extradata or b""
+        pad = round(int.from_bytes(head[10:12], "little") * RATE / 48000) if first and head.startswith(b"OpusHead") else 0
+        parts.append(np.zeros(pad, dtype=np.float32))
+        for n, packet in enumerate(container.demux(stream)):
+            if n < first:
+                continue
+            if at >= longest:
+                break
+            starts.append(round(at))
+            at += pad
+            pad = 0
+            try:
+                frames = packet.decode()
+            except av.error.InvalidDataError:
+                continue
+            for frame in frames:
+                at += frame.samples * RATE / frame.sample_rate
+                frame.pts = None
+                for out in resampler.resample(frame):
+                    parts.append(out.to_ndarray().reshape(-1))
+        for out in resampler.resample(None):
+            parts.append(out.to_ndarray().reshape(-1))
+    return np.concatenate(parts).astype(np.float32, copy=False), starts
+
+
 def mix(tracks: list[tuple[np.ndarray, float]]) -> np.ndarray:
     """Tracks with their start offsets in seconds, summed into one, clipped to [-1, 1]."""
     length = max((int(offset * RATE) + len(samples) for samples, offset in tracks), default=0)

@@ -2385,6 +2385,13 @@ function speakersCard(v: AppView, open = () => openSub('speakers'), quiet = fals
     const sz = s.speakers.sizes[s.speakers.on]
     return navCard('users', title, note, t('transcribe.notInstalled', { size: speechSize(sz.download) }), open, 'speakers')
   }
+  if (s.speakers.ane) {
+    // A Mac: the models are here; the engine says whether its helper is too. No key, no place to choose.
+    if (!running(v)) return navCard('users', title, note, t('transcribe.onMac'), open, 'speakers')
+    const ok = s.health?.diarization === 'ready'
+    const value = ok ? t('transcribe.ready') : t('transcribe.helperMissing')
+    return navCard('users', title, note, quiet && ok ? t('transcribe.onMac') : value, open, 'speakers', !quiet && ok)
+  }
   const onCard = (s.pack.speakersOn ?? 'cpu') === 'cuda'
   const onDevice = t(onCard ? 'transcribe.onCard' : 'transcribe.onCpu')
   if (!running(v)) return navCard('users', title, note, onDevice, open, 'speakers')
@@ -2851,14 +2858,15 @@ const STORED: Record<StorageId, { title: string; note: string }> = {
   speechModel: { title: t('dictate.speechModel'), note: t('storage.speechModelNote') },
   speech: { title: t('storage.speech'), note: t('storage.speechNote') },
   gpu: { title: t('storage.gpu'), note: t('storage.gpuNote') },
-  speakers: { title: t('transcribe.speakers'), note: t('storage.speakersNote') },
+  speakers: { title: t('transcribe.speakers'), note: t(onMac ? 'storage.speakersNoteMac' : 'storage.speakersNote') },
+  speakersOld: { title: t('storage.speakersOld'), note: t('storage.speakersOldNote') },
   yours: { title: t('storage.yours'), note: t('storage.yoursNote') },
   transcripts: { title: t('tray.transcripts'), note: t('storage.transcriptsNote') },
 }
 
 /** The models and voices, and the programs that run them: everything Kryakl downloads, in its one folder. */
 const MODEL_PARTS: readonly StorageId[] = ['fast', 'dict', 'voice', 'accurate', 'most', 'unused', 'speechModel']
-const PROGRAM_PARTS: readonly StorageId[] = ['llama', 'speech', 'gpu', 'speakers']
+const PROGRAM_PARTS: readonly StorageId[] = ['llama', 'speech', 'gpu', 'speakers', 'speakersOld']
 const DOWNLOADED: readonly StorageId[] = [...MODEL_PARTS, ...PROGRAM_PARTS]
 const downloadsMb = (s: StorageView) => s.parts.filter(p => DOWNLOADED.includes(p.id)).reduce((mb, p) => mb + p.bytes / 1e6, 0)
 
@@ -2924,6 +2932,7 @@ function removable(v: AppView, p: StoragePart): boolean {
     case 'speech':
     case 'gpu':
     case 'speakers':
+    case 'speakersOld':
       return !pack && installed(v)
     default:
       return false

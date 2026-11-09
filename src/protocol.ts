@@ -188,6 +188,8 @@ export type SpeechView = {
     on: 'cuda' | 'cpu'
     sizes: Record<'cuda' | 'cpu', { download: number; installed: number }>
     model: boolean
+    /** A Mac: its own chip tells the voices apart (FluidAudio's models, ~21 MB); no key, no place to choose. */
+    ane?: true
   }
   /** The model dictation downloads at its first use (0 MB: it is here), on the processor or on the card, and its time for a phrase. */
   firstModel: { cpu: { model: string; mb: number; phrase: number }; cuda: { model: string; mb: number; phrase: number } }
@@ -313,7 +315,7 @@ export type AppView = {
  * two language models and an older Kryakl's, llama.cpp's builds, each speech model, the speech engine's program and its
  * graphics card's and speakers' parts, the person's own things.
  */
-export type StorageId = 'fast' | 'dict' | 'voice' | 'accurate' | 'most' | 'unused' | 'llama' | 'speechModel' | 'speech' | 'gpu' | 'speakers' | 'yours' | 'transcripts'
+export type StorageId = 'fast' | 'dict' | 'voice' | 'accurate' | 'most' | 'unused' | 'llama' | 'speechModel' | 'speech' | 'gpu' | 'speakers' | 'speakersOld' | 'yours' | 'transcripts'
 /**
  * Its place, its bytes, and how many of them are files linked from elsewhere too (a developer's uv cache), which a removal does not free.
  * `item`: the language's code (fast, dict), the speech model's name, the build (llama: vulkan, cuda). `users`: the actions it serves now;

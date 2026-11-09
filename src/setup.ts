@@ -62,8 +62,10 @@ export function recommend(v: AppView): Recommendation {
       chosen.fits && !rough
         ? { on: true, why: t(plan.offers.gpu ? 'setup.why.transcribeCard' : 'setup.why.transcribe', { model: chosen.label, time: hourCpu }) }
         : { on: false, why: t(rough ? 'setup.why.transcribeRough' : 'setup.why.transcribeSlow', { model: chosen.label, time: hourCpu }) },
-    speakers:
-      plan.offers.speakersGpu && plan.speakers.cuda !== undefined
+    // A Mac tells the voices apart on its own chip, quickly and with a small download (2026-11-09).
+    speakers: v.speech.speakers.ane
+      ? { on: true, why: t('setup.why.speakersMac', { time: minutes(plan.speakers.cpu) }) }
+      : plan.offers.speakersGpu && plan.speakers.cuda !== undefined
         ? { on: true, why: t('setup.why.speakers', { time: minutes(plan.speakers.cuda) }) }
         : { on: false, why: t('setup.why.speakersSlow', { time: minutes(plan.speakers.cpu) }) },
     startWithWindows: { on: true, why: t('setup.why.startWithWindows') },

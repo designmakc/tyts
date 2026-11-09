@@ -511,6 +511,7 @@
     "setup.why.transcribeSlow": "possible, but slow here: {model} writes an hour in \u2248{time}",
     "setup.why.speakers": "the voices told apart on the graphics card: an hour in \u2248{time}",
     "setup.why.speakersSlow": "possible, but slow here: on the processor an hour\u2019s voices take \u2248{time}",
+    "setup.why.speakersMac": "the voices told apart on this Mac\u2019s own chip: an hour in \u2248{time}",
     "setup.why.startWithWindows": "the keys work from the first minute",
     "setup.item.translator": "The translator for {pair}",
     "setup.item.translatorNote": "Firefox Translations, once \xB7 then offline",
@@ -560,6 +561,7 @@
     "speech.backSoon": "the speech engine is back in a moment",
     "speech.stepTool": "the Python manager; you can close this window, the download goes on",
     "speech.stepPackages": "the packages; you can close this window, the download goes on",
+    "speech.stepModels": "the models; you can close this window, the download goes on",
     "speech.dlSpeakers": "Downloading the speakers part",
     "speech.dlEngine": "Downloading the speech engine",
     "speech.download": "Download",
@@ -660,13 +662,16 @@
     "speech.chosen": "chosen",
     "speech.use": "Use",
     "speech.speakersInfo": "The words are recognized already. Telling the voices apart is another model; it runs on PyTorch, which is what downloads here.",
+    "speech.speakersInfoMac": "The words are recognized already. Telling the voices apart is a small model of its own; it runs on this Mac\u2019s own chip, quickly and offline.",
     "speech.runsOn": "Runs on",
     "speech.voicesHere": "the voices\u2019 model is here already: no Hugging Face key needed",
     "speech.voicesKey": "then a free Hugging Face key, once, for the voices\u2019 model",
     "speech.downloadGrp": "Download",
     "speech.whoOnCard": "Who spoke when, on the graphics card",
     "speech.whoOnCpu": "Who spoke when, on the processor",
+    "speech.whoMac": "Who spoke when, on this Mac",
     "speech.dlOnce": "\u2248{size} download, once \xB7 {model}",
+    "speech.dlOnceMac": "\u2248{size} download, once \xB7 no key needed",
     "speech.nowCard": "On the graphics card now",
     "speech.nowCpu": "On the processor now",
     "speech.switchCard": "switching to the graphics card: \u2248{size} download; the other PyTorch goes",
@@ -674,6 +679,8 @@
     "speech.switch": "Switch",
     "speech.installedCard": "Installed \xB7 on the graphics card",
     "speech.installedCpu": "Installed \xB7 on the processor",
+    "speech.installedMac": "Installed \xB7 on this Mac",
+    "speech.helperMissing": "the program that tells the voices apart is missing from Tyts\u2019s folder: install Tyts again",
     "speech.hfKey": "Hugging Face key",
     "speech.save": "Save",
     "speech.replaceKey": "Replace key",
@@ -1159,6 +1166,8 @@
     "transcribe.notInstalled": "not installed \xB7 \u2248{size}",
     "transcribe.onCard": "on the graphics card",
     "transcribe.onCpu": "on the processor",
+    "transcribe.onMac": "on this Mac",
+    "transcribe.helperMissing": "install Tyts again",
     "transcribe.ready": "ready",
     "transcribe.keySaved": "key saved",
     "transcribe.checking": "checking\u2026",
@@ -1301,6 +1310,9 @@
     "storage.gpu": "Graphics card support",
     "storage.gpuNote": "speech on the NVIDIA card, several times quicker (CUDA)",
     "storage.speakersNote": "tells the voices of a recording apart (PyTorch, pyannote)",
+    "storage.speakersNoteMac": "tells the voices of a recording apart, on this Mac\u2019s own chip",
+    "storage.speakersOld": "Who spoke when, the old way",
+    "storage.speakersOldNote": "left from an older Tyts; this Mac tells the voices apart without it now (pyannote)",
     "storage.yours": "Your settings and lists",
     "storage.yoursNote": "words, mistakes, what Tyts learned, logs",
     "storage.transcriptsNote": "yours: the text and a small copy of the sound",
@@ -1979,6 +1991,7 @@
     "setup.why.transcribeSlow": "\u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E, \u043D\u043E \u0437\u0434\u0435\u0441\u044C \u043C\u0435\u0434\u043B\u0435\u043D\u043D\u043E: {model} \u0437\u0430\u043F\u0438\u0441\u044B\u0432\u0430\u0435\u0442 \u0447\u0430\u0441 \u0437\u0430 \u2248{time}",
     "setup.why.speakers": "\u0433\u043E\u043B\u043E\u0441\u0430 \u0440\u0430\u0437\u043B\u0438\u0447\u0430\u044E\u0442\u0441\u044F \u043D\u0430 \u0432\u0438\u0434\u0435\u043E\u043A\u0430\u0440\u0442\u0435: \u0447\u0430\u0441 \u0437\u0430 \u2248{time}",
     "setup.why.speakersSlow": "\u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E, \u043D\u043E \u0437\u0434\u0435\u0441\u044C \u043C\u0435\u0434\u043B\u0435\u043D\u043D\u043E: \u043D\u0430 \u043F\u0440\u043E\u0446\u0435\u0441\u0441\u043E\u0440\u0435 \u0433\u043E\u043B\u043E\u0441\u0430 \u0447\u0430\u0441\u0430 \u0437\u0430\u043F\u0438\u0441\u0438 \u0437\u0430\u043D\u0438\u043C\u0430\u044E\u0442 \u2248{time}",
+    "setup.why.speakersMac": "\u0433\u043E\u043B\u043E\u0441\u0430 \u0440\u0430\u0437\u043B\u0438\u0447\u0430\u0435\u0442 \u0441\u043E\u0431\u0441\u0442\u0432\u0435\u043D\u043D\u044B\u0439 \u0447\u0438\u043F \u044D\u0442\u043E\u0433\u043E Mac: \u0447\u0430\u0441 \u0437\u0430\u043F\u0438\u0441\u0438 \u0437\u0430 \u2248{time}",
     "setup.why.startWithWindows": "\u043A\u043B\u0430\u0432\u0438\u0448\u0438 \u0440\u0430\u0431\u043E\u0442\u0430\u044E\u0442 \u0441 \u043F\u0435\u0440\u0432\u043E\u0439 \u043C\u0438\u043D\u0443\u0442\u044B",
     "setup.item.translator": "\u041F\u0435\u0440\u0435\u0432\u043E\u0434\u0447\u0438\u043A {pair}",
     "setup.item.translatorNote": "Firefox Translations, \u043E\u0434\u0438\u043D \u0440\u0430\u0437 \xB7 \u0434\u0430\u043B\u044C\u0448\u0435 \u0431\u0435\u0437 \u0438\u043D\u0442\u0435\u0440\u043D\u0435\u0442\u0430",
@@ -2028,6 +2041,7 @@
     "speech.backSoon": "\u0434\u0432\u0438\u0436\u043E\u043A \u0440\u0435\u0447\u0438 \u0441\u0435\u0439\u0447\u0430\u0441 \u0432\u0435\u0440\u043D\u0451\u0442\u0441\u044F",
     "speech.stepTool": "\u043C\u0435\u043D\u0435\u0434\u0436\u0435\u0440 Python; \u043E\u043A\u043D\u043E \u043C\u043E\u0436\u043D\u043E \u0437\u0430\u043A\u0440\u044B\u0442\u044C, \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u043F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u0441\u044F",
     "speech.stepPackages": "\u043F\u0430\u043A\u0435\u0442\u044B; \u043E\u043A\u043D\u043E \u043C\u043E\u0436\u043D\u043E \u0437\u0430\u043A\u0440\u044B\u0442\u044C, \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u043F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u0441\u044F",
+    "speech.stepModels": "\u043C\u043E\u0434\u0435\u043B\u0438; \u043E\u043A\u043D\u043E \u043C\u043E\u0436\u043D\u043E \u0437\u0430\u043A\u0440\u044B\u0442\u044C, \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u043F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u0441\u044F",
     "speech.dlSpeakers": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u0447\u0430\u0441\u0442\u0438 \u0434\u043B\u044F \u0441\u043F\u0438\u043A\u0435\u0440\u043E\u0432",
     "speech.dlEngine": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u0434\u0432\u0438\u0436\u043A\u0430 \u0440\u0435\u0447\u0438",
     "speech.download": "\u0421\u043A\u0430\u0447\u0430\u0442\u044C",
@@ -2128,13 +2142,16 @@
     "speech.chosen": "\u0432\u044B\u0431\u0440\u0430\u043D\u043E",
     "speech.use": "\u0412\u044B\u0431\u0440\u0430\u0442\u044C",
     "speech.speakersInfo": "\u0421\u043B\u043E\u0432\u0430 \u0443\u0436\u0435 \u0440\u0430\u0441\u043F\u043E\u0437\u043D\u0430\u044E\u0442\u0441\u044F. \u0420\u0430\u0437\u043B\u0438\u0447\u0430\u0442\u044C \u0433\u043E\u043B\u043E\u0441\u0430 \u2014 \u0434\u0435\u043B\u043E \u0434\u0440\u0443\u0433\u043E\u0439 \u043C\u043E\u0434\u0435\u043B\u0438; \u043E\u043D\u0430 \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442 \u043D\u0430 PyTorch, \u0435\u0433\u043E \u0438 \u0441\u043A\u0430\u0447\u0438\u0432\u0430\u044E\u0442 \u0437\u0434\u0435\u0441\u044C.",
+    "speech.speakersInfoMac": "\u0421\u043B\u043E\u0432\u0430 \u0443\u0436\u0435 \u0440\u0430\u0441\u043F\u043E\u0437\u043D\u0430\u044E\u0442\u0441\u044F. \u0420\u0430\u0437\u043B\u0438\u0447\u0430\u0442\u044C \u0433\u043E\u043B\u043E\u0441\u0430 \u2014 \u0434\u0435\u043B\u043E \u043E\u0442\u0434\u0435\u043B\u044C\u043D\u043E\u0439 \u043D\u0435\u0431\u043E\u043B\u044C\u0448\u043E\u0439 \u043C\u043E\u0434\u0435\u043B\u0438; \u043E\u043D\u0430 \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442 \u043D\u0430 \u0441\u043E\u0431\u0441\u0442\u0432\u0435\u043D\u043D\u043E\u043C \u0447\u0438\u043F\u0435 \u044D\u0442\u043E\u0433\u043E Mac, \u0431\u044B\u0441\u0442\u0440\u043E \u0438 \u0431\u0435\u0437 \u0438\u043D\u0442\u0435\u0440\u043D\u0435\u0442\u0430.",
     "speech.runsOn": "\u0413\u0434\u0435 \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442",
     "speech.voicesHere": "\u043C\u043E\u0434\u0435\u043B\u044C \u0433\u043E\u043B\u043E\u0441\u043E\u0432 \u0443\u0436\u0435 \u0435\u0441\u0442\u044C: \u043A\u043B\u044E\u0447 Hugging Face \u043D\u0435 \u043D\u0443\u0436\u0435\u043D",
     "speech.voicesKey": "\u0437\u0430\u0442\u0435\u043C \u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0439 \u043A\u043B\u044E\u0447 Hugging Face, \u043E\u0434\u0438\u043D \u0440\u0430\u0437, \u0434\u043B\u044F \u043C\u043E\u0434\u0435\u043B\u0438 \u0433\u043E\u043B\u043E\u0441\u043E\u0432",
     "speech.downloadGrp": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430",
     "speech.whoOnCard": "\u041A\u0442\u043E \u043A\u043E\u0433\u0434\u0430 \u0433\u043E\u0432\u043E\u0440\u0438\u043B, \u043D\u0430 \u0432\u0438\u0434\u0435\u043E\u043A\u0430\u0440\u0442\u0435",
     "speech.whoOnCpu": "\u041A\u0442\u043E \u043A\u043E\u0433\u0434\u0430 \u0433\u043E\u0432\u043E\u0440\u0438\u043B, \u043D\u0430 \u043F\u0440\u043E\u0446\u0435\u0441\u0441\u043E\u0440\u0435",
+    "speech.whoMac": "\u041A\u0442\u043E \u043A\u043E\u0433\u0434\u0430 \u0433\u043E\u0432\u043E\u0440\u0438\u043B, \u043D\u0430 \u044D\u0442\u043E\u043C Mac",
     "speech.dlOnce": "\u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u2248{size}, \u043E\u0434\u0438\u043D \u0440\u0430\u0437 \xB7 {model}",
+    "speech.dlOnceMac": "\u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u2248{size}, \u043E\u0434\u0438\u043D \u0440\u0430\u0437 \xB7 \u043A\u043B\u044E\u0447 \u043D\u0435 \u043D\u0443\u0436\u0435\u043D",
     "speech.nowCard": "\u0421\u0435\u0439\u0447\u0430\u0441 \u043D\u0430 \u0432\u0438\u0434\u0435\u043E\u043A\u0430\u0440\u0442\u0435",
     "speech.nowCpu": "\u0421\u0435\u0439\u0447\u0430\u0441 \u043D\u0430 \u043F\u0440\u043E\u0446\u0435\u0441\u0441\u043E\u0440\u0435",
     "speech.switchCard": "\u043F\u0435\u0440\u0435\u0445\u043E\u0434 \u043D\u0430 \u0432\u0438\u0434\u0435\u043E\u043A\u0430\u0440\u0442\u0443: \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u2248{size}; \u0434\u0440\u0443\u0433\u043E\u0439 PyTorch \u0431\u0443\u0434\u0435\u0442 \u0443\u0434\u0430\u043B\u0451\u043D",
@@ -2142,6 +2159,8 @@
     "speech.switch": "\u041F\u0435\u0440\u0435\u0439\u0442\u0438",
     "speech.installedCard": "\u0423\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E \xB7 \u043D\u0430 \u0432\u0438\u0434\u0435\u043E\u043A\u0430\u0440\u0442\u0435",
     "speech.installedCpu": "\u0423\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E \xB7 \u043D\u0430 \u043F\u0440\u043E\u0446\u0435\u0441\u0441\u043E\u0440\u0435",
+    "speech.installedMac": "\u0423\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E \xB7 \u043D\u0430 \u044D\u0442\u043E\u043C Mac",
+    "speech.helperMissing": "\u0432 \u043F\u0430\u043F\u043A\u0435 \u0422\u0438\u0446\u044C \u043D\u0435\u0442 \u043F\u0440\u043E\u0433\u0440\u0430\u043C\u043C\u044B, \u043A\u043E\u0442\u043E\u0440\u0430\u044F \u0440\u0430\u0437\u043B\u0438\u0447\u0430\u0435\u0442 \u0433\u043E\u043B\u043E\u0441\u0430: \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u0435 \u0422\u0438\u0446\u044C \u0435\u0449\u0451 \u0440\u0430\u0437",
     "speech.hfKey": "\u041A\u043B\u044E\u0447 Hugging Face",
     "speech.save": "\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C",
     "speech.replaceKey": "\u0417\u0430\u043C\u0435\u043D\u0438\u0442\u044C \u043A\u043B\u044E\u0447",
@@ -2627,6 +2646,8 @@
     "transcribe.notInstalled": "\u043D\u0435 \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E \xB7 \u2248{size}",
     "transcribe.onCard": "\u043D\u0430 \u0432\u0438\u0434\u0435\u043E\u043A\u0430\u0440\u0442\u0435",
     "transcribe.onCpu": "\u043D\u0430 \u043F\u0440\u043E\u0446\u0435\u0441\u0441\u043E\u0440\u0435",
+    "transcribe.onMac": "\u043D\u0430 \u044D\u0442\u043E\u043C Mac",
+    "transcribe.helperMissing": "\u0443\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u0435 \u0422\u0438\u0446\u044C \u0435\u0449\u0451 \u0440\u0430\u0437",
     "transcribe.ready": "\u0433\u043E\u0442\u043E\u0432\u043E",
     "transcribe.keySaved": "\u043A\u043B\u044E\u0447 \u0441\u043E\u0445\u0440\u0430\u043D\u0451\u043D",
     "transcribe.checking": "\u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0430\u2026",
@@ -2769,6 +2790,9 @@
     "storage.gpu": "\u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430 \u0432\u0438\u0434\u0435\u043E\u043A\u0430\u0440\u0442\u044B",
     "storage.gpuNote": "\u0440\u0435\u0447\u044C \u043D\u0430 \u0432\u0438\u0434\u0435\u043E\u043A\u0430\u0440\u0442\u0435 NVIDIA, \u0432 \u043D\u0435\u0441\u043A\u043E\u043B\u044C\u043A\u043E \u0440\u0430\u0437 \u0431\u044B\u0441\u0442\u0440\u0435\u0435 (CUDA)",
     "storage.speakersNote": "\u0440\u0430\u0437\u043B\u0438\u0447\u0430\u0435\u0442 \u0433\u043E\u043B\u043E\u0441\u0430 \u0432 \u0437\u0430\u043F\u0438\u0441\u0438 (PyTorch, pyannote)",
+    "storage.speakersNoteMac": "\u0440\u0430\u0437\u043B\u0438\u0447\u0430\u0435\u0442 \u0433\u043E\u043B\u043E\u0441\u0430 \u0432 \u0437\u0430\u043F\u0438\u0441\u0438, \u043D\u0430 \u0441\u043E\u0431\u0441\u0442\u0432\u0435\u043D\u043D\u043E\u043C \u0447\u0438\u043F\u0435 \u044D\u0442\u043E\u0433\u043E Mac",
+    "storage.speakersOld": "\u041A\u0442\u043E \u043A\u043E\u0433\u0434\u0430 \u0433\u043E\u0432\u043E\u0440\u0438\u043B, \u0441\u0442\u0430\u0440\u044B\u0439 \u0441\u043F\u043E\u0441\u043E\u0431",
+    "storage.speakersOldNote": "\u043E\u0441\u0442\u0430\u043B\u043E\u0441\u044C \u043E\u0442 \u0441\u0442\u0430\u0440\u043E\u0439 \u0432\u0435\u0440\u0441\u0438\u0438 \u0422\u0438\u0446\u044C; \u044D\u0442\u043E\u0442 Mac \u0442\u0435\u043F\u0435\u0440\u044C \u0440\u0430\u0437\u043B\u0438\u0447\u0430\u0435\u0442 \u0433\u043E\u043B\u043E\u0441\u0430 \u0431\u0435\u0437 \u043D\u0435\u0433\u043E (pyannote)",
     "storage.yours": "\u0412\u0430\u0448\u0438 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u0438 \u0441\u043F\u0438\u0441\u043A\u0438",
     "storage.yoursNote": "\u0441\u043B\u043E\u0432\u0430, \u043E\u0448\u0438\u0431\u043A\u0438, \u0432\u044B\u0443\u0447\u0435\u043D\u043D\u043E\u0435 \u0422\u0438\u0446\u044C, \u0436\u0443\u0440\u043D\u0430\u043B\u044B",
     "storage.transcriptsNote": "\u0432\u0430\u0448\u0438: \u0442\u0435\u043A\u0441\u0442 \u0438 \u043D\u0435\u0431\u043E\u043B\u044C\u0448\u0430\u044F \u043A\u043E\u043F\u0438\u044F \u0437\u0432\u0443\u043A\u0430",
@@ -3446,6 +3470,7 @@
     "setup.why.transcribeSlow": "\u043C\u043E\u0436\u043B\u0438\u0432\u043E, \u0430\u043B\u0435 \u0442\u0443\u0442 \u043F\u043E\u0432\u0456\u043B\u044C\u043D\u043E: {model} \u0437\u0430\u043F\u0438\u0441\u0443\u0454 \u0433\u043E\u0434\u0438\u043D\u0443 \u0437\u0430 \u2248{time}",
     "setup.why.speakers": "\u0433\u043E\u043B\u043E\u0441\u0438 \u0440\u043E\u0437\u0440\u0456\u0437\u043D\u044F\u044E\u0442\u044C\u0441\u044F \u043D\u0430 \u0432\u0456\u0434\u0435\u043E\u043A\u0430\u0440\u0442\u0456: \u0433\u043E\u0434\u0438\u043D\u0430 \u0437\u0430 \u2248{time}",
     "setup.why.speakersSlow": "\u043C\u043E\u0436\u043B\u0438\u0432\u043E, \u0430\u043B\u0435 \u0442\u0443\u0442 \u043F\u043E\u0432\u0456\u043B\u044C\u043D\u043E: \u043D\u0430 \u043F\u0440\u043E\u0446\u0435\u0441\u043E\u0440\u0456 \u0433\u043E\u043B\u043E\u0441\u0438 \u0433\u043E\u0434\u0438\u043D\u0438 \u0437\u0430\u043F\u0438\u0441\u0443 \u0437\u0430\u0439\u043C\u0430\u044E\u0442\u044C \u2248{time}",
+    "setup.why.speakersMac": "\u0433\u043E\u043B\u043E\u0441\u0438 \u0440\u043E\u0437\u0440\u0456\u0437\u043D\u044F\u0454 \u0432\u043B\u0430\u0441\u043D\u0438\u0439 \u0447\u0438\u043F \u0446\u044C\u043E\u0433\u043E Mac: \u0433\u043E\u0434\u0438\u043D\u0430 \u0437\u0430\u043F\u0438\u0441\u0443 \u0437\u0430 \u2248{time}",
     "setup.why.startWithWindows": "\u043A\u043B\u0430\u0432\u0456\u0448\u0456 \u043F\u0440\u0430\u0446\u044E\u044E\u0442\u044C \u0437 \u043F\u0435\u0440\u0448\u043E\u0457 \u0445\u0432\u0438\u043B\u0438\u043D\u0438",
     "setup.item.translator": "\u041F\u0435\u0440\u0435\u043A\u043B\u0430\u0434\u0430\u0447 {pair}",
     "setup.item.translatorNote": "Firefox Translations, \u043E\u0434\u0438\u043D \u0440\u0430\u0437 \xB7 \u0434\u0430\u043B\u0456 \u0431\u0435\u0437 \u0456\u043D\u0442\u0435\u0440\u043D\u0435\u0442\u0443",
@@ -3495,6 +3520,7 @@
     "speech.backSoon": "\u0440\u0443\u0448\u0456\u0439 \u043C\u043E\u0432\u043B\u0435\u043D\u043D\u044F \u0437\u0430\u0440\u0430\u0437 \u043F\u043E\u0432\u0435\u0440\u043D\u0435\u0442\u044C\u0441\u044F",
     "speech.stepTool": "\u043C\u0435\u043D\u0435\u0434\u0436\u0435\u0440 Python; \u0432\u0456\u043A\u043D\u043E \u043C\u043E\u0436\u043D\u0430 \u0437\u0430\u043A\u0440\u0438\u0442\u0438, \u0437\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0435\u043D\u043D\u044F \u0442\u0440\u0438\u0432\u0430\u0442\u0438\u043C\u0435",
     "speech.stepPackages": "\u043F\u0430\u043A\u0435\u0442\u0438; \u0432\u0456\u043A\u043D\u043E \u043C\u043E\u0436\u043D\u0430 \u0437\u0430\u043A\u0440\u0438\u0442\u0438, \u0437\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0435\u043D\u043D\u044F \u0442\u0440\u0438\u0432\u0430\u0442\u0438\u043C\u0435",
+    "speech.stepModels": "\u043C\u043E\u0434\u0435\u043B\u0456; \u0432\u0456\u043A\u043D\u043E \u043C\u043E\u0436\u043D\u0430 \u0437\u0430\u043A\u0440\u0438\u0442\u0438, \u0437\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0435\u043D\u043D\u044F \u0442\u0440\u0438\u0432\u0430\u0442\u0438\u043C\u0435",
     "speech.dlSpeakers": "\u0417\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0435\u043D\u043D\u044F \u0447\u0430\u0441\u0442\u0438\u043D\u0438 \u0434\u043B\u044F \u0441\u043F\u0456\u043A\u0435\u0440\u0456\u0432",
     "speech.dlEngine": "\u0417\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0435\u043D\u043D\u044F \u0440\u0443\u0448\u0456\u044F \u043C\u043E\u0432\u043B\u0435\u043D\u043D\u044F",
     "speech.download": "\u0417\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0438\u0442\u0438",
@@ -3595,13 +3621,16 @@
     "speech.chosen": "\u0432\u0438\u0431\u0440\u0430\u043D\u043E",
     "speech.use": "\u0412\u0438\u0431\u0440\u0430\u0442\u0438",
     "speech.speakersInfo": "\u0421\u043B\u043E\u0432\u0430 \u0432\u0436\u0435 \u0440\u043E\u0437\u043F\u0456\u0437\u043D\u0430\u044E\u0442\u044C\u0441\u044F. \u0420\u043E\u0437\u0440\u0456\u0437\u043D\u044F\u0442\u0438 \u0433\u043E\u043B\u043E\u0441\u0438 \u2014 \u0441\u043F\u0440\u0430\u0432\u0430 \u0456\u043D\u0448\u043E\u0457 \u043C\u043E\u0434\u0435\u043B\u0456; \u0432\u043E\u043D\u0430 \u043F\u0440\u0430\u0446\u044E\u0454 \u043D\u0430 PyTorch, \u0439\u043E\u0433\u043E \u0439 \u0437\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0443\u044E\u0442\u044C \u0442\u0443\u0442.",
+    "speech.speakersInfoMac": "\u0421\u043B\u043E\u0432\u0430 \u0432\u0436\u0435 \u0440\u043E\u0437\u043F\u0456\u0437\u043D\u0430\u044E\u0442\u044C\u0441\u044F. \u0420\u043E\u0437\u0440\u0456\u0437\u043D\u044F\u0442\u0438 \u0433\u043E\u043B\u043E\u0441\u0438 \u2014 \u0441\u043F\u0440\u0430\u0432\u0430 \u043E\u043A\u0440\u0435\u043C\u043E\u0457 \u043D\u0435\u0432\u0435\u043B\u0438\u043A\u043E\u0457 \u043C\u043E\u0434\u0435\u043B\u0456; \u0432\u043E\u043D\u0430 \u043F\u0440\u0430\u0446\u044E\u0454 \u043D\u0430 \u0432\u043B\u0430\u0441\u043D\u043E\u043C\u0443 \u0447\u0438\u043F\u0456 \u0446\u044C\u043E\u0433\u043E Mac, \u0448\u0432\u0438\u0434\u043A\u043E \u0439 \u0431\u0435\u0437 \u0456\u043D\u0442\u0435\u0440\u043D\u0435\u0442\u0443.",
     "speech.runsOn": "\u0414\u0435 \u043F\u0440\u0430\u0446\u044E\u0454",
     "speech.voicesHere": "\u043C\u043E\u0434\u0435\u043B\u044C \u0433\u043E\u043B\u043E\u0441\u0456\u0432 \u0443\u0436\u0435 \u0454: \u043A\u043B\u044E\u0447 Hugging Face \u043D\u0435 \u043F\u043E\u0442\u0440\u0456\u0431\u0435\u043D",
     "speech.voicesKey": "\u043F\u043E\u0442\u0456\u043C \u0431\u0435\u0437\u043A\u043E\u0448\u0442\u043E\u0432\u043D\u0438\u0439 \u043A\u043B\u044E\u0447 Hugging Face, \u043E\u0434\u0438\u043D \u0440\u0430\u0437, \u0434\u043B\u044F \u043C\u043E\u0434\u0435\u043B\u0456 \u0433\u043E\u043B\u043E\u0441\u0456\u0432",
     "speech.downloadGrp": "\u0417\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0435\u043D\u043D\u044F",
     "speech.whoOnCard": "\u0425\u0442\u043E \u043A\u043E\u043B\u0438 \u0433\u043E\u0432\u043E\u0440\u0438\u0432, \u043D\u0430 \u0432\u0456\u0434\u0435\u043E\u043A\u0430\u0440\u0442\u0456",
     "speech.whoOnCpu": "\u0425\u0442\u043E \u043A\u043E\u043B\u0438 \u0433\u043E\u0432\u043E\u0440\u0438\u0432, \u043D\u0430 \u043F\u0440\u043E\u0446\u0435\u0441\u043E\u0440\u0456",
+    "speech.whoMac": "\u0425\u0442\u043E \u043A\u043E\u043B\u0438 \u0433\u043E\u0432\u043E\u0440\u0438\u0432, \u043D\u0430 \u0446\u044C\u043E\u043C\u0443 Mac",
     "speech.dlOnce": "\u0437\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0435\u043D\u043D\u044F \u2248{size}, \u043E\u0434\u0438\u043D \u0440\u0430\u0437 \xB7 {model}",
+    "speech.dlOnceMac": "\u0437\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0435\u043D\u043D\u044F \u2248{size}, \u043E\u0434\u0438\u043D \u0440\u0430\u0437 \xB7 \u043A\u043B\u044E\u0447 \u043D\u0435 \u043F\u043E\u0442\u0440\u0456\u0431\u0435\u043D",
     "speech.nowCard": "\u0417\u0430\u0440\u0430\u0437 \u043D\u0430 \u0432\u0456\u0434\u0435\u043E\u043A\u0430\u0440\u0442\u0456",
     "speech.nowCpu": "\u0417\u0430\u0440\u0430\u0437 \u043D\u0430 \u043F\u0440\u043E\u0446\u0435\u0441\u043E\u0440\u0456",
     "speech.switchCard": "\u043F\u0435\u0440\u0435\u0445\u0456\u0434 \u043D\u0430 \u0432\u0456\u0434\u0435\u043E\u043A\u0430\u0440\u0442\u0443: \u0437\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0435\u043D\u043D\u044F \u2248{size}; \u0456\u043D\u0448\u0438\u0439 PyTorch \u0431\u0443\u0434\u0435 \u0432\u0438\u0434\u0430\u043B\u0435\u043D\u043E",
@@ -3609,6 +3638,8 @@
     "speech.switch": "\u041F\u0435\u0440\u0435\u0439\u0442\u0438",
     "speech.installedCard": "\u0412\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E \xB7 \u043D\u0430 \u0432\u0456\u0434\u0435\u043E\u043A\u0430\u0440\u0442\u0456",
     "speech.installedCpu": "\u0412\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E \xB7 \u043D\u0430 \u043F\u0440\u043E\u0446\u0435\u0441\u043E\u0440\u0456",
+    "speech.installedMac": "\u0412\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E \xB7 \u043D\u0430 \u0446\u044C\u043E\u043C\u0443 Mac",
+    "speech.helperMissing": "\u0443 \u0442\u0435\u0446\u0456 \u0422\u0438\u0446\u044C \u0431\u0440\u0430\u043A\u0443\u0454 \u043F\u0440\u043E\u0433\u0440\u0430\u043C\u0438, \u0449\u043E \u0440\u043E\u0437\u0440\u0456\u0437\u043D\u044F\u0454 \u0433\u043E\u043B\u043E\u0441\u0438: \u0432\u0441\u0442\u0430\u043D\u043E\u0432\u0456\u0442\u044C \u0422\u0438\u0446\u044C \u0449\u0435 \u0440\u0430\u0437",
     "speech.hfKey": "\u041A\u043B\u044E\u0447 Hugging Face",
     "speech.save": "\u0417\u0431\u0435\u0440\u0435\u0433\u0442\u0438",
     "speech.replaceKey": "\u0417\u0430\u043C\u0456\u043D\u0438\u0442\u0438 \u043A\u043B\u044E\u0447",
@@ -4094,6 +4125,8 @@
     "transcribe.notInstalled": "\u043D\u0435 \u0432\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E \xB7 \u2248{size}",
     "transcribe.onCard": "\u043D\u0430 \u0432\u0456\u0434\u0435\u043E\u043A\u0430\u0440\u0442\u0456",
     "transcribe.onCpu": "\u043D\u0430 \u043F\u0440\u043E\u0446\u0435\u0441\u043E\u0440\u0456",
+    "transcribe.onMac": "\u043D\u0430 \u0446\u044C\u043E\u043C\u0443 Mac",
+    "transcribe.helperMissing": "\u0432\u0441\u0442\u0430\u043D\u043E\u0432\u0456\u0442\u044C \u0422\u0438\u0446\u044C \u0449\u0435 \u0440\u0430\u0437",
     "transcribe.ready": "\u0433\u043E\u0442\u043E\u0432\u043E",
     "transcribe.keySaved": "\u043A\u043B\u044E\u0447 \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043D\u043E",
     "transcribe.checking": "\u043F\u0435\u0440\u0435\u0432\u0456\u0440\u043A\u0430\u2026",
@@ -4236,6 +4269,9 @@
     "storage.gpu": "\u041F\u0456\u0434\u0442\u0440\u0438\u043C\u043A\u0430 \u0432\u0456\u0434\u0435\u043E\u043A\u0430\u0440\u0442\u0438",
     "storage.gpuNote": "\u043C\u043E\u0432\u043B\u0435\u043D\u043D\u044F \u043D\u0430 \u0432\u0456\u0434\u0435\u043E\u043A\u0430\u0440\u0442\u0456 NVIDIA, \u0443 \u043A\u0456\u043B\u044C\u043A\u0430 \u0440\u0430\u0437\u0456\u0432 \u0448\u0432\u0438\u0434\u0448\u0435 (CUDA)",
     "storage.speakersNote": "\u0440\u043E\u0437\u0440\u0456\u0437\u043D\u044F\u0454 \u0433\u043E\u043B\u043E\u0441\u0438 \u0432 \u0437\u0430\u043F\u0438\u0441\u0456 (PyTorch, pyannote)",
+    "storage.speakersNoteMac": "\u0440\u043E\u0437\u0440\u0456\u0437\u043D\u044F\u0454 \u0433\u043E\u043B\u043E\u0441\u0438 \u0432 \u0437\u0430\u043F\u0438\u0441\u0456, \u043D\u0430 \u0432\u043B\u0430\u0441\u043D\u043E\u043C\u0443 \u0447\u0438\u043F\u0456 \u0446\u044C\u043E\u0433\u043E Mac",
+    "storage.speakersOld": "\u0425\u0442\u043E \u043A\u043E\u043B\u0438 \u0433\u043E\u0432\u043E\u0440\u0438\u0432, \u0441\u0442\u0430\u0440\u0438\u0439 \u0441\u043F\u043E\u0441\u0456\u0431",
+    "storage.speakersOldNote": "\u043B\u0438\u0448\u0438\u043B\u043E\u0441\u044F \u0432\u0456\u0434 \u0441\u0442\u0430\u0440\u0456\u0448\u043E\u0457 \u0432\u0435\u0440\u0441\u0456\u0457 \u0422\u0438\u0446\u044C; \u0446\u0435\u0439 Mac \u0442\u0435\u043F\u0435\u0440 \u0440\u043E\u0437\u0440\u0456\u0437\u043D\u044F\u0454 \u0433\u043E\u043B\u043E\u0441\u0438 \u0431\u0435\u0437 \u043D\u044C\u043E\u0433\u043E (pyannote)",
     "storage.yours": "\u0412\u0430\u0448\u0456 \u043D\u0430\u043B\u0430\u0448\u0442\u0443\u0432\u0430\u043D\u043D\u044F \u0456 \u0441\u043F\u0438\u0441\u043A\u0438",
     "storage.yoursNote": "\u0441\u043B\u043E\u0432\u0430, \u043F\u043E\u043C\u0438\u043B\u043A\u0438, \u0432\u0438\u0432\u0447\u0435\u043D\u0435 \u0422\u0438\u0446\u044C, \u0436\u0443\u0440\u043D\u0430\u043B\u0438",
     "storage.transcriptsNote": "\u0432\u0430\u0448\u0456: \u0442\u0435\u043A\u0441\u0442 \u0456 \u043D\u0435\u0432\u0435\u043B\u0438\u043A\u0430 \u043A\u043E\u043F\u0456\u044F \u0437\u0432\u0443\u043A\u0443",
@@ -5630,13 +5666,16 @@
 
   // engine/models.json
   var models_default = {
-    about: "The speech models Kryakl can use, read by the engine (asr.py) and by Kryakl (src/speechplan.ts). rank: how accurate, higher is better. phrase: seconds to recognize a 7 s phrase as Dictate does; rtf: seconds per second of a long recording as Transcribe does (words with their times). Both are first guesses, measured on an i9-9900K (cpu, int8) and an RTX 2080 SUPER (cuda, float16) on 2026-10-28, until this computer is tested. Whisper pads every phrase to a 30 s window, so a phrase costs one window whatever its length; turbo's decoder is light, so on long recordings it is nearly as quick as small. ramMb: memory on the processor; vramMb: on the card, per compute type. Parakeet (NVIDIA's TDT 0.6B v3 through onnx-asr, int8, on the processor) costs what the sound lasts, not a window: a 7 s phrase in 0.3 s on the i9, Russian as good as turbo on the card in a test on a LibriVox reading; it dictates in its 25 languages. devices and features: where and for what a model is used. metal: Whisper turbo on a Mac's graphics (Apple silicon) through mlx-whisper, its MLX copy (mlx: repo and size, its weights.safetensors 1.61 GB); measured on an M1 with 8 GB on 2026-11-06, fp16: rtf 0.25 on a 118 s call warm (38 s its first run; the 4-bit copy no quicker and fewer words), a 6-7 s phrase 4-6 s (the language read in a 30 s window of its own, about 2 s, then greedy decoding; slower on a phrase it hears badly, as it falls back to higher temperatures), so Parakeet on the processor dictates sooner there.",
+    about: "The speech models Kryakl can use, read by the engine (asr.py) and by Kryakl (src/speechplan.ts). rank: how accurate, higher is better. phrase: seconds to recognize a 7 s phrase as Dictate does; rtf: seconds per second of a long recording as Transcribe does (words with their times). Both are first guesses, measured on an i9-9900K (cpu, int8) and an RTX 2080 SUPER (cuda, float16) on 2026-10-28, until this computer is tested. Whisper pads every phrase to a 30 s window, so a phrase costs one window whatever its length; turbo's decoder is light, so on long recordings it is nearly as quick as small. ramMb: memory on the processor; vramMb: on the card, per compute type. Parakeet (NVIDIA's TDT 0.6B v3 through onnx-asr, int8, on the processor) costs what the sound lasts, not a window: a 7 s phrase in 0.3 s on the i9, Russian as good as turbo on the card in a test on a LibriVox reading; it dictates in its 25 languages. devices and features: where and for what a model is used. metal: Whisper turbo on a Mac's graphics (Apple silicon) through mlx-whisper, its MLX copy (mlx: repo and size, its weights.safetensors 1.61 GB); measured on an M1 with 8 GB on 2026-11-06, fp16: rtf 0.25 on a 118 s call warm (38 s its first run; the 4-bit copy no quicker and fewer words), a 6-7 s phrase 4-6 s (the language read in a 30 s window of its own, about 2 s, then greedy decoding; slower on a phrase it hears badly, as it falls back to higher temperatures), so Parakeet on the processor dictates sooner there. Parakeet transcribes calls on a Mac only (src/speechplan.ts): on an M1 with 8 GB on 2026-11-09, 10 minutes of a call in 39 s with its silences skipped, where turbo on Metal took a quarter of the sound's length. speakers: seconds per second of a call to tell its speakers apart, pyannote on the processor (cpu) or the card (cuda); mac: FluidAudio on a Mac's Neural Engine through vendor/speakers-mac, measured on an M1 with 8 GB on 2026-11-09, 10 minutes of a call in 7.5 s (pyannote there took 6-14 minutes).",
     speakers: {
       cpu: {
         rtf: 0.8
       },
       cuda: {
         rtf: 0.03
+      },
+      mac: {
+        rtf: 0.0125
       }
     },
     models: [
@@ -5844,7 +5883,8 @@
           "cpu"
         ],
         features: [
-          "dictation"
+          "dictation",
+          "transcripts"
         ],
         cpu: {
           phrase: 0.3,
@@ -5896,7 +5936,8 @@
       gpu: plan.offers.gpu ? { on: true, why: t("setup.why.gpu", { card: seconds(s.firstModel.cuda.phrase), cpu: seconds(s.firstModel.cpu.phrase) }) } : { on: false, why: d.at ? t("setup.why.noGpu") : t("setup.lookingCard") },
       dictate: { on: true, why: t("setup.why.dictate", { model: s.firstModel.cpu.model, time: seconds(s.firstModel.cpu.phrase) }) },
       transcribe: chosen.fits && !rough ? { on: true, why: t(plan.offers.gpu ? "setup.why.transcribeCard" : "setup.why.transcribe", { model: chosen.label, time: hourCpu }) } : { on: false, why: t(rough ? "setup.why.transcribeRough" : "setup.why.transcribeSlow", { model: chosen.label, time: hourCpu }) },
-      speakers: plan.offers.speakersGpu && plan.speakers.cuda !== void 0 ? { on: true, why: t("setup.why.speakers", { time: minutes(plan.speakers.cuda) }) } : { on: false, why: t("setup.why.speakersSlow", { time: minutes(plan.speakers.cpu) }) },
+      // A Mac tells the voices apart on its own chip, quickly and with a small download (2026-11-09).
+      speakers: v.speech.speakers.ane ? { on: true, why: t("setup.why.speakersMac", { time: minutes(plan.speakers.cpu) }) } : plan.offers.speakersGpu && plan.speakers.cuda !== void 0 ? { on: true, why: t("setup.why.speakers", { time: minutes(plan.speakers.cuda) }) } : { on: false, why: t("setup.why.speakersSlow", { time: minutes(plan.speakers.cpu) }) },
       startWithWindows: { on: true, why: t("setup.why.startWithWindows") }
     };
   }
@@ -6141,7 +6182,7 @@
     if (p.status === "removing") return row(t("speech.removing"), [], null);
     if (p.status !== "installing") return void 0;
     if (p.installing && p.installing.length < p.parts.length) return row(t("speech.removingPart"), [t("speech.backSoon"), bar(p.progress ?? 0)], el("span", { class: "pct" }, `${Math.round((p.progress ?? 0) * 100)}%`));
-    const what = p.step === "tool" ? t("speech.stepTool") : t("speech.stepPackages");
+    const what = p.step === "tool" ? t("speech.stepTool") : p.step === "models" ? t("speech.stepModels") : t("speech.stepPackages");
     const pct2 = Math.round((p.progress ?? 0) * 100);
     const parts = (p.installing ?? []).filter((x) => !p.parts.includes(x));
     const name = parts.includes("speakers") && p.parts.includes("core") ? t("speech.dlSpeakers") : t("speech.dlEngine");
@@ -6373,11 +6414,27 @@
     redraw();
   };
   function speakerRows(v) {
+    if (v.speech.speakers.ane) return macSpeakerRows(v);
     const s = v.speech;
     const out = [...speakersDeviceRows(v), ...speakersInstallRows(v)];
     if (!hasPart(v, "speakers")) return out;
     if (!running(v)) return [...out, card("lock", t("speech.voicesModel"), [t("speech.voicesLater")], null)];
     return [...out, grp(t("speech.voicesModel")), ...keyRows(v)];
+  }
+  function macSpeakerRows(v) {
+    const s = v.speech;
+    const rows = [aside("info", t("speech.speakersInfoMac"))];
+    const work = packWork(v);
+    if (work) return [...rows, work];
+    if (!hasPart(v, "speakers")) {
+      const failed = !!s.pack.message;
+      const go2 = btn(failed ? t("common.tryAgain") : t("speech.download"), () => post({ type: "installSpeech", parts: ["speakers"] }), "primary");
+      const lines = [t("speech.dlOnceMac", { size: size(s.speakers.sizes.cpu.download) }), failed ? bad(t("speech.dlStopped", { why: s.pack.message ?? t("speech.unknownError") })) : null];
+      return [...rows, grp(t("speech.downloadGrp")), card("download", t("speech.whoMac"), lines, go2)];
+    }
+    const ok = !running(v) || s.health?.diarization === "ready";
+    const line = ok ? el("small", { class: "ok" }, t("speech.voicesHour", { time: minutes(s.plan.speakers.cpu) })) : bad(t("speech.helperMissing"));
+    return [...rows, grp(t("speech.installed")), card("circle-check", t("speech.installedMac"), [line], null)];
   }
   function speakersDeviceRows(v) {
     const s = v.speech;
@@ -6717,7 +6774,8 @@
         r.transcribe
       ),
       c.transcribe ? advised(toggleCard("users", t("setup.speakers"), c.speakers, flip("speakers"), `${r.speakers.why} \xB7 ${sizeText(s.speakers.sizes[speakersWhere(c, v)].download)}`), r.speakers) : null,
-      c.transcribe && c.speakers ? speakersOnCard(v, h, c) : null,
+      // A Mac has no place to choose: its speakers run on its own chip.
+      c.transcribe && c.speakers && !s.speakers.ane ? speakersOnCard(v, h, c) : null,
       grp(t("app.name")),
       advised(toggleCard("power", t("setup.startWithWindows"), c.startWithWindows, flip("startWithWindows"), r.startWithWindows.why), r.startWithWindows),
       grp(t("setup.allOfIt")),
@@ -7745,7 +7803,10 @@
   function speakersNotice(v, tr) {
     if (tr.source === "note" || tr.speakersStatus === "ok" || tr.speakersStatus === "single") return null;
     const meet = tr.source === "meet" || tr.source === "system" ? ` ${t("tr.meetNote")}` : "";
-    const why = tr.speakersStatus === "failed" ? t("tr.whyFailed") : tr.speakersStatus === "no-part" ? `${t("tr.whyNoPart")}${meet}` : `${t("tr.whyNoKey")}${meet}`;
+    const why = tr.speakersStatus === "failed" ? t("tr.whyFailed") : tr.speakersStatus === "no-part" ? `${t("tr.whyNoPart")}${meet}` : (
+      // A Mac asks for no key (2026-11-09): one made there while a key was needed says the part was missing.
+      `${t(v.speech.speakers.ane ? "tr.whyNoPart" : "tr.whyNoKey")}${meet}`
+    );
     const missing = speakersMissing(v, () => hooks.setup());
     if (missing) return aside("users", why, " ", linkBtn(t("tr.setUpSpeakers"), () => hooks.setup()));
     const way = splitWay(tr);
@@ -10012,6 +10073,12 @@ ${t("dictate.said", { heard: e.heard })}` : e.text,
       const sz = s.speakers.sizes[s.speakers.on];
       return navCard("users", title, note, t("transcribe.notInstalled", { size: size(sz.download) }), open2, "speakers");
     }
+    if (s.speakers.ane) {
+      if (!running(v)) return navCard("users", title, note, t("transcribe.onMac"), open2, "speakers");
+      const ok2 = s.health?.diarization === "ready";
+      const value2 = ok2 ? t("transcribe.ready") : t("transcribe.helperMissing");
+      return navCard("users", title, note, quiet && ok2 ? t("transcribe.onMac") : value2, open2, "speakers", !quiet && ok2);
+    }
     const onCard = (s.pack.speakersOn ?? "cpu") === "cuda";
     const onDevice = t(onCard ? "transcribe.onCard" : "transcribe.onCpu");
     if (!running(v)) return navCard("users", title, note, onDevice, open2, "speakers");
@@ -10411,12 +10478,13 @@ ${t("dictate.said", { heard: e.heard })}` : e.text,
     speechModel: { title: t("dictate.speechModel"), note: t("storage.speechModelNote") },
     speech: { title: t("storage.speech"), note: t("storage.speechNote") },
     gpu: { title: t("storage.gpu"), note: t("storage.gpuNote") },
-    speakers: { title: t("transcribe.speakers"), note: t("storage.speakersNote") },
+    speakers: { title: t("transcribe.speakers"), note: t(onMac2 ? "storage.speakersNoteMac" : "storage.speakersNote") },
+    speakersOld: { title: t("storage.speakersOld"), note: t("storage.speakersOldNote") },
     yours: { title: t("storage.yours"), note: t("storage.yoursNote") },
     transcripts: { title: t("tray.transcripts"), note: t("storage.transcriptsNote") }
   };
   var MODEL_PARTS = ["fast", "dict", "voice", "accurate", "most", "unused", "speechModel"];
-  var PROGRAM_PARTS = ["llama", "speech", "gpu", "speakers"];
+  var PROGRAM_PARTS = ["llama", "speech", "gpu", "speakers", "speakersOld"];
   var DOWNLOADED = [...MODEL_PARTS, ...PROGRAM_PARTS];
   var downloadsMb = (s) => s.parts.filter((p) => DOWNLOADED.includes(p.id)).reduce((mb, p) => mb + p.bytes / 1e6, 0);
   var speechChoice = (v, name) => [...v.speech.plan.dictation.choices, ...v.speech.plan.transcripts.choices].find((c) => c.model === name);
@@ -10472,6 +10540,7 @@ ${t("dictate.said", { heard: e.heard })}` : e.text,
       case "speech":
       case "gpu":
       case "speakers":
+      case "speakersOld":
         return !pack && installed(v);
       default:
         return false;

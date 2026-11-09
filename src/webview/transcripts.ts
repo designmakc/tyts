@@ -760,7 +760,8 @@ function speakersNotice(v: AppView, tr: Transcript): HTMLElement | null {
       ? t('tr.whyFailed')
       : tr.speakersStatus === 'no-part'
         ? `${t('tr.whyNoPart')}${meet}`
-        : `${t('tr.whyNoKey')}${meet}`
+        : // A Mac asks for no key (2026-11-09): one made there while a key was needed says the part was missing.
+          `${t(v.speech.speakers.ane ? 'tr.whyNoPart' : 'tr.whyNoKey')}${meet}`
   const missing = speakersMissing(v, () => hooks.setup())
   if (missing) return aside('users', why, ' ', linkBtn(t('tr.setUpSpeakers'), () => hooks.setup()))
   const way = splitWay(tr)

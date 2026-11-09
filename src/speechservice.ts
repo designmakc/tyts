@@ -59,7 +59,8 @@ export type SpeechHealth = {
   calibration?: SpeechTestState
   bench?: Bench
   /** Where speakers are told apart: on the card when torch's CUDA build is installed. */
-  speakersDevice?: 'cuda' | 'cpu'
+  /** ane: a Mac's Neural Engine (FluidAudio through vendor/speakers-mac). */
+  speakersDevice?: 'cuda' | 'cpu' | 'ane'
   diarization: 'ready' | 'missing' | 'needs-token' | 'checking' | 'downloading' | 'bad-token' | 'no-access' | 'failed'
   diarizationMessage: string
   busy: string | null

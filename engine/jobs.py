@@ -11,7 +11,9 @@ recognizes its saved sound anew (for transcripts made before words were kept).
 
 from __future__ import annotations
 
+import bisect
 import gc
+import json
 import logging
 import os
 import queue
@@ -49,6 +51,12 @@ STALE = 180           # seconds without a chunk before a recording counts as cut
 WEIGHTS = {"decode": (0.0, 0.1), "words": (0.1, 0.6), "speakers": (0.6, 0.95), "save": (0.95, 1.0)}
 # A finished transcript worked on again: when that fails, the old one stays.
 AGAIN = ("speakers", "redo")
+# A call is transcribed while it records, a piece at a time, where the plan reads calls with Parakeet (a Mac,
+# 2026-11-09: a call of two hours on an 8 GB M1 waited ~50 min after Stop). Only the rest is left for the end.
+PIECE = 300   # seconds of new sound on a track before its next piece is transcribed
+SLICE = 10    # seconds in one chunk the recording sends (src/webview/capture.ts SLICE)
+PREROLL = 50  # packets (1 s) decoded before a piece's start and thrown away: Opus settles in a few frames
+QUIET = 0.3   # seconds of silence between two spans of speech (each padded 0.3 s) where a piece may end
 
 
 def ram_gb() -> float:
@@ -100,6 +108,39 @@ def finish_recording(store: Store, id: str, options: dict | None = None, interru
     return True
 
 
+def cut_at_silence(spans: list[tuple[int, int]], length: int) -> int:
+    """Where a piece of `length` samples ends: in the middle of the last silence of QUIET s or more (after the
+    last speech, 1 s before the end at most), so no word is split. With no such silence, where Silero itself
+    split the last span (its 30 s longest)."""
+    quiet = int(QUIET * audio.RATE)
+    cut = None
+    for a, b in zip([0] + [end for _, end in spans], [start for start, _ in spans] + [length]):
+        if b - a >= quiet:
+            cut = max((a + b) // 2, b - audio.RATE) if b == length else (a + b) // 2
+    if cut is None and spans and spans[-1][0] > 0:
+        cut = spans[-1][0]
+    return cut if cut is not None else length
+
+
+def shifted(segments: list[dict], by: float) -> list[dict]:
+    """Segments with their times and their words' moved by `by` seconds."""
+    move = lambda x: {**x, "start": round(x["start"] + by, 2), "end": round(x["end"] + by, 2)}
+    return [{**move(s), "words": [move(w) for w in s.get("words") or []]} for s in segments]
+
+
+def read_pieces(path: Path) -> dict | None:
+    """A track's pieces kept while it recorded (incoming/pieces-{track}.json), or None when missing or broken."""
+    try:
+        kept = json.loads(path.read_text("utf-8"))
+        ok = (isinstance(kept["end"], (int, float)) and kept["end"] >= 0 and isinstance(kept["segments"], list)
+              and all(isinstance(s, dict) and isinstance(s["start"], (int, float)) and isinstance(s["end"], (int, float))
+                      and isinstance(s.get("words", []), list) for s in kept["segments"])
+              and all(isinstance(kept[k], int) for k in ("covered", "first", "firstAt")))
+        return kept if ok else None
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
 # A call's screenshots (PUT /recordings/{id}/shots/{ms}): shots/<ms from the start>[-m].jpg, -m for one the person took.
 SHOT_NAME = re.compile(r"(\d{1,9})(-m)?\.jpg")
 
@@ -136,6 +177,10 @@ class Worker:
         self.bench = Bench(settings)
         self.queue: queue.Queue[str] = queue.Queue()
         self.current: str | None = None
+        # Pieces of a call being transcribed while it records (_pieces): the worker is not idle then.
+        self.piecing = False
+        # Recordings whose pieces failed once: the end transcribes the rest of them whole.
+        self.unpieced: set[str] = set()
         self.last_work = time.monotonic()
         self.last_scan = 0.0
         # Why the card is not used though it is there (it would not take a model); the processor's plan applies until a restart.
@@ -206,7 +251,12 @@ class Worker:
             t.load(entry["model"], device, None, self.threads())
         return device, entry
 
-    def words_model(self) -> Transcriber:
+    def words_model(self) -> Transcriber | Parakeet:
+        """The transcripts' model, loaded: Parakeet is dictation's own copy when the plan gives it both (a Mac's calls)."""
+        _, entry = self.entry("transcripts")
+        if asr.backend(entry["model"]) == "parakeet":
+            self.parakeet.load(entry["model"], "cpu", None, self.threads())
+            return self.parakeet
         self._load(self.transcriber, "transcripts")
         return self.transcriber
 
@@ -237,7 +287,7 @@ class Worker:
             pass
 
     def idle(self) -> bool:
-        return self.current is None and self.queue.empty()
+        return self.current is None and self.queue.empty() and not self.piecing
 
     def drop_unplanned(self, busy: Callable[[], bool] = lambda: False) -> list[str]:
         """The models in memory that no feature's plan names now (the person picked another): out at once, not
@@ -310,6 +360,7 @@ class Worker:
             touched = datetime.fromisoformat(row["touched"] or row["created"])
             if (now - touched).total_seconds() > STALE and finish_recording(store, row["id"], interrupted=True):
                 self.submit(row["id"])
+        self._pieces()
         now = time.monotonic()
         keep = DICTATION_IDLE["roomy" if ram_gb() >= 12 else "tight"]
 
@@ -336,6 +387,92 @@ class Worker:
         if gone:
             log.info("unloaded after resting: %s", ", ".join(gone))
             gc.collect()
+
+    # ------------------------------------------------------------ a call's pieces while it records
+
+    def _pieces(self) -> None:
+        """Calls being recorded, transcribed piece by piece where the plan reads them with Parakeet. It runs in
+        the worker's own loop when the queue is empty (every 30 s), so never beside a job on the same model and,
+        like a job, waiting between batches for a dictation; a long job in the queue holds the pieces back."""
+        if asr.backend(self.entry("transcripts")[1]["model"]) != "parakeet":
+            return
+        store = self.get_store()
+        for row in store.rows(("recording",)):
+            job = row["job"]
+            tracks = job.get("tracks", {})
+            # Only a call's two tracks: the end reads them apart (the microphone as "me"), anything else mixed.
+            if row["id"] in self.unpieced or job.get("kind") != "system" or not {"mic", "system"} <= set(tracks):
+                continue
+            first = min(info.get("startedAt", 0) for info in tracks.values())
+            self.piecing = True
+            try:
+                for track in ("mic", "system"):
+                    offset = (tracks[track].get("startedAt", 0) - first) / 1000
+                    while self.queue.empty() and self._piece(store.folder(row["id"]) / "incoming", track, offset, job):
+                        pass
+            except Exception:
+                # The recording goes on; the end transcribes from the last piece kept.
+                log.exception("pieces of %s failed", row["id"])
+                self.unpieced.add(row["id"])
+            finally:
+                self.piecing = False
+
+    def _piece(self, incoming: Path, track: str, offset: float, job: dict) -> bool:
+        """The track's next piece, once PIECE s of new sound have come: from the last piece's end to a silence,
+        transcribed and kept with its times on the recording's in pieces-{track}.json. True when one was made.
+        Only this piece's sound is held: the chunks so far are joined on disk and read from the last piece on."""
+        path = incoming / f"pieces-{track}.json"
+        kept = read_pieces(path) or {"covered": 0, "first": 0, "firstAt": 0, "end": offset, "segments": [], "language": ""}
+        parts = sorted(incoming.glob(f"{track}-*.part"))[:-1]  # the newest may be being written still
+        if len(parts) * SLICE - kept["covered"] / audio.RATE < PIECE:
+            return False
+        joined = incoming / f"pieces-{track}.webm"
+        try:
+            # ponytail: joined anew each time (tens of MB a track); keep it growing if two hours' copying shows.
+            with joined.open("wb") as out:
+                for part in parts:
+                    with part.open("rb") as src:
+                        shutil.copyfileobj(src, out)
+            skip = kept["covered"] - kept["firstAt"]
+            samples, starts = audio.decode_from(joined, kept["first"], skip + PIECE * audio.RATE)
+        finally:
+            joined.unlink(missing_ok=True)
+        new = samples[skip:]
+        # Chunks lost on the way: less sound than counted, so wait for more.
+        if len(new) < (PIECE - SLICE) * audio.RATE:
+            return False
+        cut = cut_at_silence(asr.speech_spans(new), len(new))
+        self.activity += 1
+        settings = self.settings.get()
+        language = job.get("language") or settings["language"]
+        segments, spoken = self._recognize(new[:cut], None if language == "auto" else language, settings)
+        covered = kept["covered"] + cut
+        k = max(bisect.bisect_right(starts, covered - kept["firstAt"]) - 1 - PREROLL, 0)
+        kept.update(segments=kept["segments"] + shifted(segments, offset + kept["covered"] / audio.RATE), covered=covered,
+                    first=kept["first"] + k, firstAt=kept["firstAt"] + starts[k], end=round(offset + covered / audio.RATE, 3),
+                    language=spoken or kept["language"])
+        part = path.with_suffix(".part")
+        part.write_text(json.dumps(kept), "utf-8")
+        part.replace(path)
+        return True
+
+    def _recognize(self, samples, language: str | None, settings: dict, step: Callable[[float], None] = lambda p: None) -> tuple[list[dict], str]:
+        """The transcripts' model's segments for this sound and the language heard, spelled as the vocabulary says.
+        A job's tracks and a call's pieces both come this way."""
+        t = self.words_model()
+
+        def each(p):
+            step(p)
+            if t.device == "cpu":
+                self.yield_to_dictation()
+
+        started = time.perf_counter()
+        segments, spoken = t.transcribe(samples, language, vocab.hotwords(settings["vocabulary"], settings["hotwords"]), each)
+        self.bench.words(t.name, t.device, t.compute, audio.duration(samples), time.perf_counter() - started)
+        # Spelled as the vocabulary says before the words are numbered and kept (merge.py), so the
+        # kept words, the utterances and a later split by speaker all read the same; in a meeting
+        # both tracks are corrected alike, so the echo of a name is still found on the microphone.
+        return vocab.correct_segments(segments, settings["vocabulary"]), spoken
 
     def _process(self, id: str) -> None:
         row = self.get_store().row(id)
@@ -386,8 +523,9 @@ class Worker:
         for n, item in enumerate(inputs):
             share = lambda p, n=n: progress("decode", (n + p) / len(inputs))
             tracks[item["track"]] = (audio.decode(item["path"], share), item.get("offset", 0.0))
-        mixed = audio.mix(list(tracks.values()))
-        duration = audio.duration(mixed)
+        # The mix is made only when it is used: a call's two tracks of two hours are 450 MB each, and on a
+        # Mac of 8 GB every copy more sent the run into swap (2026-11-09).
+        duration = max((offset + audio.duration(samples) for samples, offset in tracks.values()), default=0.0)
         if duration < 0.5:
             raise ValueError("The recording is empty")
         # The window can say how far into the recording the words are.
@@ -395,25 +533,11 @@ class Worker:
 
         language = job.get("language") or settings["language"]
         language = None if language == "auto" else language
-        hotwords = vocab.hotwords(settings["vocabulary"], settings["hotwords"])
         speakers_status = "single"
 
         def words(samples, share=(0.0, 1.0)):
             a, b = share
-            t = self.words_model()
-
-            def step(p):
-                progress("words", a + (b - a) * p)
-                if t.device == "cpu":
-                    self.yield_to_dictation()
-
-            started = time.perf_counter()
-            segments, spoken = t.transcribe(samples, language, hotwords, step)
-            self.bench.words(t.name, t.device, t.compute, audio.duration(samples), time.perf_counter() - started)
-            # Spelled as the vocabulary says before the words are numbered and kept (merge.py), so the
-            # kept words, the utterances and a later split by speaker all read the same; in a meeting
-            # both tracks are corrected alike, so the echo of a name is still found on the microphone.
-            return vocab.correct_segments(segments, settings["vocabulary"]), spoken
+            return self._recognize(samples, language, settings, lambda p: progress("words", a + (b - a) * p))
 
         # Loading the model, finding the language and cutting the silence come before the first words.
         progress("words")
@@ -422,13 +546,40 @@ class Worker:
         if kind in ("meet", "system") and "mic" in tracks and other:
             mine = audio.pad(*tracks["mic"])
             theirs = audio.pad(*tracks[other])
-            share = len(mine) / max(len(mine) + len(theirs), 1)
-            my_segments, my_language = words(mine, (0.0, share))
-            their_segments, their_language = words(theirs, (share, 1.0))
+            # The shifted copies replace the tracks, so each sound is held once.
+            tracks = {"mic": (mine, 0.0), other: (theirs, 0.0)}
+            # The pieces transcribed while the call recorded (_piece): only the sound after them is read now.
+            # Missing, broken or past the track's end, the track is read whole: the text is never lost.
+            pieces = {}
+            for track, samples in (("mic", mine), (other, theirs)):
+                kept = None if job.get("task") else read_pieces(store.folder(id) / "incoming" / f"pieces-{track}.json")
+                if kept and kept["end"] <= audio.duration(samples):
+                    pieces[track] = kept
+            start = {track: int(round(pieces[track]["end"] * audio.RATE)) if track in pieces else 0 for track in ("mic", other)}
+            rest = len(mine) - start["mic"], len(theirs) - start[other]
+            share = rest[0] / max(sum(rest), 1)
+
+            def words_after(track, samples, share):
+                segments, spoken = words(samples[start[track]:], share)
+                if track not in pieces:
+                    return segments, spoken
+                kept = pieces[track]
+                return kept["segments"] + shifted(segments, start[track] / audio.RATE), spoken or kept.get("language") or ""
+
+            # On a Mac's plan (Parakeet) the microphone's echo of the speakers is silenced before it is read;
+            # the pieces made during the call read it as it was (the other track was not at hand).
+            if isinstance(self.words_model(), Parakeet):
+                n = min(len(mine), len(theirs))
+                muted = asr.mute_echo(mine[start["mic"]:n], theirs[start["mic"]:n])
+                log.info("the microphone's echo of the speakers: %.0f s not read", muted)
+            my_segments, my_language = words_after("mic", mine, (0.0, share))
+            their_segments, their_language = words_after(other, theirs, (share, 1.0))
             spoken = their_language if their_segments else my_language
             turns, speakers_status = self._speakers(id, theirs, job.get("speakers"), progress)
             utterances, kept = merge.meeting(my_segments, their_segments, turns, other)
         else:
+            mixed = audio.mix(list(tracks.values()))
+            tracks = {"mixed": (mixed, 0.0)}
             segments, spoken = words(mixed)
             turns = None
             if kind != "note":
@@ -440,7 +591,7 @@ class Worker:
 
         progress("save")
         if not job.get("keepAudio"):
-            audio.save_opus(mixed, store.folder(id) / "audio.ogg", progress=lambda p: progress("save", p * 0.9))
+            audio.save_opus(audio.mix(list(tracks.values())), store.folder(id) / "audio.ogg", progress=lambda p: progress("save", p * 0.9))
         transcript = {
             "id": id,
             "title": row["title"],

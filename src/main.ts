@@ -95,6 +95,7 @@ import { MODELS as SPEECH_MODELS } from './speechplan'
 import { SPEECH_PORT } from './speechservice'
 import { recommendedModels } from './setup'
 import { cleanable, markAway, measureParts, partPackages, speechModelDir, splitSpeech, withUse, type Place, type UseContext } from './storage'
+import { leftoverPackages } from './speechpack'
 import { NaturalSpeaker } from './synth'
 import { system32 } from './system32'
 import { Talk } from './talk'
@@ -1104,10 +1105,13 @@ function storagePlaces(): Place[] {
   const fast = downloads('models')
   const dict = downloads('dict')
   const speechDir = localPart('speech')
-  const site = path.join(speechDir, 'env', 'Lib', 'site-packages')
+  const site = onMac ? path.join(speechDir, 'env', 'lib', 'python3.12', 'site-packages') : path.join(speechDir, 'env', 'Lib', 'site-packages')
   const packages = partPackages(namesIn(site))
   const inSite = (names: string[]) => names.map(name => path.join(site, name))
   const voices = path.join(speechDir, 'models', 'diarization')
+  // A Mac's speakers are FluidAudio's models (2026-11-09); pyannote's model and packages left from before are the person's to remove.
+  const macSpeakers = path.join(speechDir, 'models', 'speakers-mac')
+  const engine = ['installed.json', 'env', 'python', 'uv', 'cache', 'pycache'].map(name => path.join(speechDir, name))
   const transcripts = speech?.service.health?.dataDir
   return [
     ...namesIn(fast).map((code): Place => ({ id: 'fast', item: code, path: path.join(fast, code) })),
@@ -1123,9 +1127,17 @@ function storagePlaces(): Place[] {
     ...(['vulkan', 'cuda'] as const).map((kind): Place => ({ id: 'llama', item: kind, path: builds, only: namesIn(builds).filter(name => name.startsWith(`${kind}-`)).map(name => path.join(builds, name)) })),
     ...SPEECH_MODELS.map((m): Place => ({ id: 'speechModel', item: m.name, path: speechModelDir(path.join(speechDir, 'models'), m) })),
     // The engine but its speech models; its two parts are measured on their own and taken out of it (splitSpeech).
-    { id: 'speech', path: speechDir, only: [...['installed.json', 'env', 'python', 'uv', 'cache', 'pycache'].map(name => path.join(speechDir, name)), voices] },
-    { id: 'gpu', path: speechDir, only: inSite(packages.gpu) },
-    { id: 'speakers', path: speechDir, only: [...inSite(packages.speakers), voices] },
+    ...(onMac
+      ? [
+          { id: 'speech' as const, path: speechDir, only: [...engine, macSpeakers, voices] },
+          { id: 'speakers' as const, path: macSpeakers },
+          { id: 'speakersOld' as const, path: speechDir, only: [...leftoverPackages(site), voices] },
+        ]
+      : [
+          { id: 'speech' as const, path: speechDir, only: [...engine, voices] },
+          { id: 'gpu' as const, path: speechDir, only: inSite(packages.gpu) },
+          { id: 'speakers' as const, path: speechDir, only: [...inSite(packages.speakers), voices] },
+        ]),
     { id: 'yours', path: userDir() },
     ...(transcripts ? [{ id: 'transcripts' as const, path: transcripts }] : []),
   ]
@@ -1162,7 +1174,7 @@ function measureStorage(): void {
 const remeasure = () => (storage ? measureStorage() : postApp())
 
 /** Kryakl's downloads, which belong in its one folder; the person's own things live elsewhere. */
-const DOWNLOADED: readonly StorageId[] = ['fast', 'dict', 'voice', 'accurate', 'most', 'unused', 'llama', 'speechModel', 'speech', 'gpu', 'speakers']
+const DOWNLOADED: readonly StorageId[] = ['fast', 'dict', 'voice', 'accurate', 'most', 'unused', 'llama', 'speechModel', 'speech', 'gpu', 'speakers', 'speakersOld']
 
 /** What the parts serve now (storage.ts withUse): the settings, the build the model runs on here, the speech plan with its reserve on the other device. */
 function useContext(): UseContext {
@@ -1231,13 +1243,14 @@ async function removeStored(id: StorageId, item?: string): Promise<void> {
     case 'speech':
       await speech.remove()
       registerShortcuts()
-  // A few seconds after start, so the tray and the windows come first.
-  setTimeout(() => void offerUpdate(), 5_000)
       applyKeyboard()
       return
     case 'gpu':
     case 'speakers':
       await speech.removePart(id)
+      return
+    case 'speakersOld':
+      await speech.removeOldSpeakers()
       return
     case 'yours':
     case 'transcripts':
@@ -3894,6 +3907,7 @@ function setUpSpeechEngine(): void {
     root: localPart('speech'),
     userDir: userDir(),
     engineDir: unpacked('engine'),
+    ...(onMac ? { speakersHelper: unpacked('vendor', 'speakers-mac') } : {}),
     sharedCache: sharedUvCache(),
     port: speechPort,
     open: url => openStream(url),
@@ -4102,6 +4116,8 @@ function start(): void {
   trayPanel = createTrayPanel()
   refreshTray()
   registerShortcuts()
+  // A few seconds after start, so the tray and the windows come first.
+  setTimeout(() => void offerUpdate(), 5_000)
   keyboard = new KeyboardHelper(unpacked('dist', 'kbd-worker.js'), path.join(app.getAppPath(), 'media', 'layout'), unpacked('media'), {
     keep: word => {
       learned.kept(word)

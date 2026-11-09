@@ -164,7 +164,7 @@ def health_view() -> dict:
         "ok": True,
         "version": VERSION,
         "device": worker.device,
-        "parts": {"core": True, "gpu": asr.gpu(), "speakers": diarize.installed(), "mac": asr.mlx_ready()},
+        "parts": {"core": True, "gpu": asr.gpu(), "speakers": diarize.installed() and (not diarize.mac() or diarize.downloaded()), "mac": asr.mlx_ready()},
         "whisper": whisper_status(s["model"]),
         "models": {"transcripts": planned("transcripts"), "dictation": planned("dictation")},
         "downloaded": [m for m in ALL_MODELS if asr.downloaded(m)],
@@ -172,7 +172,7 @@ def health_view() -> dict:
         "fallback": worker.fallback,
         "calibration": calibrator.status(),
         "bench": {"fingerprint": bench.get("fingerprint", ""), "runs": bench.get("runs", {})},
-        "speakersDevice": "cuda" if asr.torch_cuda() and asr.gpu() else "cpu",
+        "speakersDevice": "ane" if diarize.mac() else "cuda" if asr.torch_cuda() and asr.gpu() else "cpu",
         "diarization": diarize.status(s["hfToken"], setup),
         "diarizationMessage": setup.message,
         "busy": worker.current,
@@ -451,7 +451,9 @@ def put_settings(changes: dict = Body(...)):
 
 @app.post("/diarization/setup")
 def setup_again():
-    """Checks the saved token again: after the model's terms were accepted, or the connection came back."""
+    """Checks the saved token again: after the model's terms were accepted, or the connection came back. A Mac needs no key."""
+    if diarize.mac():
+        return {"state": diarize.status("", setup)}
     if not settings["hfToken"]:
         raise HTTPException(409, "Paste a Hugging Face key first")
     setup.start(settings["hfToken"])
@@ -593,7 +595,7 @@ def split_speakers(id: str, body: dict = Body(default={})):
         raise HTTPException(409, "This recording is still being transcribed")
     if row["source"] == "note":
         raise HTTPException(409, "A note has one voice")
-    if not diarize.installed():
+    if not diarize.installed() or (diarize.mac() and not diarize.downloaded()):
         raise HTTPException(409, "Install the speakers part first")
     if diarize.status(settings["hfToken"], setup) == "needs-token":
         raise HTTPException(409, "Add a Hugging Face key first")

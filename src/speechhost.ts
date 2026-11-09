@@ -17,7 +17,7 @@ import { log } from './log'
 import { freeFolderSoon, runningProcessesSoon } from './oldfolder'
 import type { SpeechView } from './protocol'
 import { myLanguages, type Settings } from './settings'
-import { DOWNLOAD_MB, hasNvidia, INSTALLED_MB, SpeechPack, type SpeechPart } from './speechpack'
+import { DOWNLOAD_MB, hasNvidia, INSTALLED_MB, SPEAKERS_MAC_MB, SpeechPack, type SpeechPart } from './speechpack'
 import { AUTO_DOWNLOAD_MB, planSpeech, testKey, testRuns, type PlanInput, type SpeechPlan } from './speechplan'
 import { SpeechService, speechToken, type SpeechResult } from './speechservice'
 import { vocabularyFor } from './vocabulary'
@@ -38,6 +38,8 @@ export type SpeechHostOptions = {
   /** Kryakl's own folder (%APPDATA%\Kryakl): the engine's settings and log, device.json. */
   userDir: string
   engineDir: string
+  /** A Mac: the helper that tells the speakers apart (vendor/speakers-mac, unpacked), for the engine (TYTS_SPEAKERS_HELPER). */
+  speakersHelper?: string
   /** uv's download cache of this computer, when it has one (speechpack.ts `sharedCache`). */
   sharedCache?: string
   port: number
@@ -82,7 +84,7 @@ export class SpeechHost {
       pycache: path.join(o.root, 'pycache'),
       // A test run's own home (its models are still the installed engine's); else where the engine is installed:
       // %LOCALAPPDATA%\Kryakl\speech, or an old name's folder when it could not move (oldfolder.ts).
-      env: o.testHome ? { TYTS_SPEECH_HOME: o.testHome } : { TYTS_SPEECH_DIR: o.root },
+      env: { ...(o.testHome ? { TYTS_SPEECH_HOME: o.testHome } : { TYTS_SPEECH_DIR: o.root }), ...(o.speakersHelper ? { TYTS_SPEAKERS_HELPER: o.speakersHelper } : {}) },
       // Beside the engine's settings (its APP_DIR), where an engine run by hand finds it too.
       token: speechToken(path.join(o.testHome ?? o.userDir, 'speech-token')),
       // Its Python, run from the engine's own folder (the venv's launcher and the interpreter it starts); never uv.
@@ -277,6 +279,11 @@ export class SpeechHost {
 
   view(keysOk: SpeechView['keysOk']): SpeechView {
     const onCard = this.speakersOnCard()
+    // A Mac's speakers are their models alone: one size, downloaded and on the disk alike, with no place to choose.
+    const mac = process.platform === 'darwin'
+    const speakersMb = (table: typeof DOWNLOAD_MB) => (mac ? SPEAKERS_MAC_MB : onCard ? table.speakersGpu : table.speakers)
+    const sizes = (on: 'cuda' | 'cpu') =>
+      mac ? { download: SPEAKERS_MAC_MB, installed: SPEAKERS_MAC_MB } : on === 'cuda' ? { download: DOWNLOAD_MB.speakersGpu, installed: INSTALLED_MB.speakersGpu } : { download: DOWNLOAD_MB.speakers, installed: INSTALLED_MB.speakers }
     const gpuPlan = planSpeech({ ...this.input, cuda: true }).dictation.chosen
     const cpuPlan = planSpeech({ ...this.input, cuda: false }).dictation.chosen
     const first = (c: typeof gpuPlan) => ({ model: c.label, mb: c.downloaded ? 0 : c.mb, phrase: c.estimate })
@@ -293,16 +300,14 @@ export class SpeechHost {
         ? { health: this.service.health.diarizationMessage ? { ...this.service.health, diarizationMessage: engineMessage(this.service.health.diarizationMessage) } : this.service.health }
         : {}),
       port: this.service.port,
-      download: { core: DOWNLOAD_MB.core, gpu: DOWNLOAD_MB.gpu, speakers: onCard ? DOWNLOAD_MB.speakersGpu : DOWNLOAD_MB.speakers },
-      installed: { core: INSTALLED_MB.core, gpu: INSTALLED_MB.gpu, speakers: onCard ? INSTALLED_MB.speakersGpu : INSTALLED_MB.speakers },
+      download: { core: DOWNLOAD_MB.core, gpu: DOWNLOAD_MB.gpu, speakers: speakersMb(DOWNLOAD_MB) },
+      installed: { core: INSTALLED_MB.core, gpu: INSTALLED_MB.gpu, speakers: speakersMb(INSTALLED_MB) },
       speakers: {
         on: onCard ? 'cuda' : 'cpu',
-        sizes: {
-          cuda: { download: DOWNLOAD_MB.speakersGpu, installed: INSTALLED_MB.speakersGpu },
-          cpu: { download: DOWNLOAD_MB.speakers, installed: INSTALLED_MB.speakers },
-        },
+        sizes: { cuda: sizes('cuda'), cpu: sizes('cpu') },
         // The engine says "ready" once the voices' model is on the disk, the part installed or not.
         model: this.service.health?.diarization === 'ready',
+        ...(mac ? { ane: true as const } : {}),
       },
       firstModel: { cpu: first(cpuPlan), cuda: first(gpuPlan) },
       disk: { freeMb: freeMb(this.o.root), drive: driveOf(this.o.root) },
@@ -372,10 +377,19 @@ export class SpeechHost {
   }
 
   /** A part off the disk (the speakers', the graphics card's); the engine starts again without it. */
-  async removePart(part: SpeechPart): Promise<void> {
+  removePart(part: SpeechPart): Promise<void> {
+    return this.stopped(() => this.pack.drop(part))
+  }
+
+  /** A Mac's speakers from before 2026-11-09 off the disk (speechpack.ts dropOld); the engine starts again. */
+  removeOldSpeakers(): Promise<void> {
+    return this.stopped(() => this.pack.dropOld())
+  }
+
+  private async stopped(job: () => Promise<void>): Promise<void> {
     this.service.stop()
     try {
-      await this.pack.drop(part)
+      await job()
     } finally {
       if (this.installed) {
         await this.service.start()

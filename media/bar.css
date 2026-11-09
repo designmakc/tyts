@@ -1,6 +1,7 @@
-/* The bar by a selection: a pill of icon buttons in a transparent window that
-   never takes the keyboard (barwindow.ts), its tooltip in a band beside it, on
-   the side away from the text. Colors and faces are theme.css's. */
+/* The bar by a selection, in a transparent window that never takes the keyboard
+   (barwindow.ts): a duck-yellow dot under the selection's start; under the pointer
+   it opens to the right into a pill of named buttons; "…" adds a list under it
+   (over it where the screen ends). Colors and faces are theme.css's. */
 
 * {
   box-sizing: border-box;
@@ -9,36 +10,42 @@
 html,
 body {
   margin: 0;
+  height: 100%;
   background: transparent;
   overflow: hidden;
   user-select: none;
   cursor: default;
-  font: 400 var(--t-small) / 1.2 var(--font);
+  font: 500 var(--t-small) / 1.2 var(--font);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
 
+/* Its own size whatever the window's: the page measures it (barSize). */
 .sb {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: max-content;
   display: flex;
-  width: 100vw;
   flex-direction: column;
-  align-items: center;
+  gap: 4px;
   opacity: 0;
+  transform: scale(0.6);
+  transform-origin: 18px 18px;
 }
 
 .sb.above {
+  top: auto;
+  bottom: 0;
   flex-direction: column-reverse;
+  transform-origin: 18px calc(100% - 18px);
 }
 
 .sb.in {
-  animation: in 140ms ease-out forwards;
+  animation: in 150ms ease-out forwards;
 }
 
 @keyframes in {
-  from {
-    opacity: 0;
-    transform: translateY(2px);
-  }
   to {
     opacity: 1;
     transform: none;
@@ -49,6 +56,7 @@ body {
   .sb.in {
     animation: none;
     opacity: 1;
+    transform: none;
   }
 }
 
@@ -57,58 +65,106 @@ body {
   align-items: center;
   gap: 2px;
   height: 36px;
-  padding: 0 4px;
+  padding: 0 4px 0 8px;
   border: 1px solid var(--border);
-  border-radius: var(--r-sm);
+  border-radius: 18px;
   background: var(--surface);
   white-space: nowrap;
+  transition: background-color 120ms, border-color 120ms;
+}
+
+.dot-mark {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-left: -1px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.pill .sep {
+  flex: none;
+  width: 1px;
+  height: 18px;
+  margin: 0 4px 0 8px;
+  background: var(--border);
 }
 
 .pill button {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
   height: 28px;
-  min-width: 28px;
-  padding: 0 6px;
+  padding: 0 10px;
   border: 0;
-  border-radius: var(--r-sm);
+  border-radius: 14px;
   background: none;
-  color: var(--muted);
+  color: var(--text);
   font: inherit;
+  transition: opacity 120ms;
 }
 
-.pill button:hover {
+.pill button .lu {
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+}
+
+.pill button.more {
+  padding: 0 8px;
+}
+
+.pill button.on,
+.list button.on {
   background: var(--hover);
   color: var(--strong);
 }
 
-.pill button .lu {
-  width: 18px;
-  height: 18px;
+.pill button.on .lu {
+  color: var(--strong);
 }
 
-.pill .sep {
-  width: 1px;
-  height: 18px;
-  margin: 0 2px;
-  background: var(--border);
+/* The dot alone: the pill's ground and buttons are there, laid out (so the page knows its width), unseen. */
+.sb.p-dot .pill {
+  background: transparent;
+  border-color: transparent;
 }
 
-.tip {
-  height: 26px;
-  display: flex;
-  align-items: center;
+.sb.p-dot .pill .sep,
+.sb.p-dot .pill button {
+  opacity: 0;
 }
 
-.tip span {
-  padding: 3px 8px;
+.list {
+  display: none;
+  flex-direction: column;
+  min-width: 200px;
+  padding: 4px;
+  border: 1px solid var(--border);
   border-radius: var(--r-sm);
-  background: var(--strong);
-  color: var(--surface);
+  background: var(--surface);
+}
+
+.sb.p-list .list {
+  display: flex;
+}
+
+.list button {
+  display: block;
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--text);
+  font: 400 var(--t-small) / 1 var(--font);
+  text-align: left;
   white-space: nowrap;
 }
 
-.tip:empty {
-  visibility: hidden;
+.list .kd {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--border);
 }

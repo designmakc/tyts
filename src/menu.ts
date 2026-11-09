@@ -124,15 +124,37 @@ export function menuGroups(lang: UiLanguage, speech: boolean, clips = false): Me
     .filter(group => group.length > 0)
 }
 
-/** What a button of the bar by a selection does: the menu's actions on a selection (main.ts runMenu), and Copy. */
-export type BarAction = 'translate' | 'listen' | 'check' | 'rewrite' | 'copy' | RewriteStyle
+/** What a button of the bar by a selection does: the menu's actions on a selection (main.ts runMenu), Copy, leaving this program out, the setting's page. */
+export type BarAction = 'translate' | 'listen' | 'check' | 'copy' | 'notHere' | 'settings' | RewriteStyle
 
-/** The bar's row, in order; Rewrite… opens its own row of the rewrite styles (`rewriteGroups`). */
-export const BAR_ROW: readonly BarAction[] = ['translate', 'listen', 'check', 'rewrite', 'copy']
+/** The pill's buttons, after the dot; "…" opens the list (`BAR_LIST`). */
+export const BAR_ROW: readonly BarAction[] = ['translate', 'listen', 'check']
 
-/** Whether a page's word names a button of the bar (its row or Rewrite…'s). */
-export function isBarAction(id: string, lang: UiLanguage): id is BarAction {
-  return (BAR_ROW as readonly string[]).includes(id) || REWRITE[lang].some(([style]) => style === id)
+/** "…"'s list: the rewrite styles and Copy, then, after a line, leaving this program out and the settings. */
+export const BAR_LIST: readonly (readonly BarAction[])[] = [
+  ['shorten', 'polite', 'formal', 'natural', 'explain', 'copy'],
+  ['notHere', 'settings'],
+]
+
+/** Whether a page's word names a button of the bar. */
+export function isBarAction(id: string): id is BarAction {
+  return (BAR_ROW as readonly string[]).includes(id) || BAR_LIST.some(group => (group as readonly string[]).includes(id))
+}
+
+/** The bar's look: the dot alone, the pill, or the pill with "…"'s list. */
+export type BarPhase = 'dot' | 'pill' | 'list'
+/** The pill folds back into the dot this long after the pointer left it; the dot goes this long after that (or after it came). */
+export const BAR_FOLD_MS = 600
+export const BAR_DOT_MS = 4000
+/** What the bar is now: its look, and since when the pointer has been away from it (undefined: over it). */
+export type BarClock = { phase: BarPhase; away: number | undefined }
+
+/** The bar's next look, the pointer over it (`inside`) or not at `now`: over the dot it opens; away, the pill folds and the dot goes ('gone'). */
+export function barTick(c: BarClock, inside: boolean, now: number): BarClock | 'gone' {
+  if (inside) return { phase: c.phase === 'dot' ? 'pill' : c.phase, away: undefined }
+  const away = c.away ?? now
+  if (c.phase !== 'dot') return now - away >= BAR_FOLD_MS ? { phase: 'dot', away: now } : { phase: c.phase, away }
+  return now - away >= BAR_DOT_MS ? 'gone' : { phase: 'dot', away }
 }
 
 /** The keys the menu takes besides its letters: ↑ ↓ move, Enter picks, Esc closes. */

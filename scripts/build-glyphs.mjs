@@ -20,6 +20,8 @@ const NAMES = [
   'pencil-line', 'monitor-speaker', 'scan-text', 'text-cursor', 'panel-bottom',
   // controls
   'plus', 'x', 'minus', 'square', 'camera', 'chevron-right', 'chevron-left', 'chevron-down', 'arrow-up', 'arrow-down',
+  // the bar by a selection: "…"
+  'ellipsis',
 ]
 
 const here = fileURLToPath(new URL('.', import.meta.url))

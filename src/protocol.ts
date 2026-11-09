@@ -444,6 +444,10 @@ export type ToView =
   | { type: 'menu'; view: MenuView }
   /** The bar by a selection: what it draws now (`n` grows with each showing, which fades it in again). */
   | { type: 'bar'; view: BarView }
+  /** Where the pointer is over the bar's window (CSS pixels; -1, -1 away from it): main looks, as a window that never takes the keyboard may get no pointer events. */
+  | { type: 'barPointer'; x: number; y: number }
+  /** A click on the bar there (CSS pixels): the keyboard thread kept it from every window, the page finds the button. */
+  | { type: 'barClick'; x: number; y: number }
   | { type: 'natural'; state: NaturalState }
   /** One sentence of reading `id` in the natural voice: 24 kHz audio and when each of its words is spoken. */
   | { type: 'naturalAudio'; id: number; index: number; samples: Float32Array; words: WordTime[] }
@@ -455,8 +459,8 @@ export type DictationMode = 'type' | 'english' | 'note' | 'check'
 /** The menu on one key: its groups of items by letter and name, the one lit, and the one just picked (-1 for none); both count through all the groups. */
 export type MenuView = { groups: { letter: string; label: string }[][]; lit: number; fired: number; foot?: string }
 
-/** The bar by a selection: its row of buttons (an icon each, its tooltip), Rewrite…'s row of words, the way back, and whether it is over the text (its tooltip then on top). */
-export type BarView = { row: { id: string; tip: string }[]; sub: { id: string; label: string }[]; back: string; above: boolean; n: number }
+/** The bar by a selection: the dot alone, the pill, or the pill and "…"'s list (over it when `listAbove`); the pill's buttons and the list's lines by name. */
+export type BarView = { phase: 'dot' | 'pill' | 'list'; row: { id: string; label: string }[]; more: string; list: { id: string; label: string }[][]; listAbove: boolean; n: number }
 
 export type ToHost =
   | { type: 'lookup'; word: string }
@@ -532,7 +536,7 @@ export type ToHost =
   | { type: 'menuHeight'; px: number }
   | { type: 'menuHover'; index: number }
   | { type: 'menuPick'; index: number }
-  // The bar by a selection (barwindow.ts): its page is ready; its pill is this big, in CSS pixels; a button was clicked.
+  // The bar by a selection (barwindow.ts): its page is ready; its pill (with the list when open) is this big, in CSS pixels; a button was clicked ('more': "…").
   | { type: 'barReady' }
   | { type: 'barSize'; width: number; height: number }
   | { type: 'barPick'; id: string }

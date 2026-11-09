@@ -84,7 +84,7 @@ import { recognize, recognizeMac } from './ocr'
 import { pickLines } from './ocrpick'
 import { adoptLocalFolder, adoptOldFolders, freeFolder, hasToMove, healSpeech, leftIn, moveDownloads, OLD_LOCAL_FOLDERS, partDir, removeOldUpdaterCaches, type LeftPart, type Warn } from './oldfolder'
 import { paragraphsOf } from './ocrtext'
-import { clipGroups, menuGroups, rewriteGroups, type MenuAction } from './menu'
+import { clipGroups, menuGroups, rewriteGroups, type BarAction, type MenuAction } from './menu'
 import { createRewriter, REWRITE_MOST_CHARS, type Rewriter, type RewriteStyle } from './rewrite'
 import { TytsMenu } from './menuwindow'
 import { SelectionBar, type BarSelection } from './barwindow'
@@ -1958,6 +1958,7 @@ function onMessage(message: ToHost, page: Page): void {
     }
     case 'micRecording':
       micRecording = message.on
+      if (micRecording) selectionBar?.gone()
       refreshTray()
       return
     case 'captureState':
@@ -3261,7 +3262,7 @@ function runMenu(action: MenuAction): void {
 
 /**
  * Whether the program in front has a selection, for the bar by a selection: a Mac asks Accessibility through the
- * keyboard helper (where it ends too), Windows UI Automation (the mouse-up's point then). Never the clipboard;
+ * keyboard helper (where it starts too), Windows UI Automation (the mouse then). Never the clipboard;
  * a password field, or a program that will not say, has none. Only the length is ever looked at, and not logged.
  */
 async function barSelection(): Promise<BarSelection> {
@@ -3278,6 +3279,23 @@ async function barSelection(): Promise<BarSelection> {
   const ok = selectionIn(field).length > 0
   releaseField(field)
   return { ok }
+}
+
+/** A button of the bar by a selection: the menu's own handlers; Copy; the program left out (its rule's `bar` part); the setting's page. */
+function runBar(action: BarAction): void {
+  if (action === 'copy') return copySelection()
+  if (action === 'settings') return openApp('settings')
+  if (action === 'notHere') {
+    const exe = lastApp
+    if (!exe) return
+    const rule = settings.apps.find(a => a.exe === exe)
+    const apps = rule
+      ? settings.apps.map(a => (a.exe === exe && !a.off.includes('bar') ? { ...a, off: [...a.off, 'bar' as const] } : a))
+      : [...settings.apps, { exe, off: ['bar' as const], layout: '' }]
+    log(`bar: left out of ${exe}`)
+    return saveSettings({ apps })
+  }
+  runMenu(action)
 }
 
 /** The bar's Copy: the program's own copy of its selection, as the person's Ctrl+C (Cmd+C) would. */
@@ -4356,6 +4374,7 @@ function setUpSpeechEngine(): void {
     openTranscript,
     onChange: () => {
       keyboard?.dictating(dictation.state !== 'idle')
+      if (dictation.state !== 'idle') selectionBar?.gone()
       refreshTray()
     },
     log: dictationLog,
@@ -4618,9 +4637,11 @@ function start(): void {
     },
     menuKey: code => oneKeyMenu?.key(code),
     menuClosed: () => oneKeyMenu?.closed(),
-    selected: point => {
-      if (settings.selectionBar && !settings.paused) selectionBar?.selected(point)
+    // Not while a phrase or a Talk / practice is being recorded: the bar would be in the way of the voice.
+    selected: (_point, start) => {
+      if (settings.selectionBar && !settings.paused && dictation.state === 'idle' && !micRecording) selectionBar?.selected(start)
     },
+    barClick: point => selectionBar?.click(point),
     barGone: () => selectionBar?.gone(),
     failed: message => {
       keyboardTrouble = message
@@ -4681,10 +4702,10 @@ function start(): void {
     page: path.join(app.getAppPath(), 'media', 'bar.html'),
     preload: path.join(__dirname, 'preload.js'),
     query: pageQuery,
-    lang: () => settings.uiLanguage,
+    program: () => lastApp ?? '',
     ask: barSelection,
     keys: (on, rect) => keyboard.bar(on, rect),
-    run: action => (action === 'copy' ? copySelection() : runMenu(action)),
+    run: runBar,
     log: win => logPageErrors(win, 'bar'),
   })
   applyKeyboard()

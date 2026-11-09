@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { clipGroups, isBarAction, menuGroups, menuKeyOf, rewriteGroups } from './menu'
+import { barTick, clipGroups, isBarAction, menuGroups, menuKeyOf, rewriteGroups, type BarClock } from './menu'
 import { placeMenu } from './placement'
 
 describe('the items', () => {
@@ -98,8 +98,23 @@ describe('where it opens', () => {
 })
 
 describe('the bar by a selection', () => {
-  test('takes its row and the rewrite styles from its page, nothing else', () => {
-    for (const id of ['translate', 'listen', 'check', 'rewrite', 'copy', 'shorten', 'explain']) expect(isBarAction(id, 'ru'), id).toBe(true)
-    for (const id of ['fix', 'dictate', 'awake', 'clipboard', 'screen', 'inPlace', '']) expect(isBarAction(id, 'en'), id).toBe(false)
+  test('takes its buttons and its list from its page, nothing else', () => {
+    for (const id of ['translate', 'listen', 'check', 'copy', 'shorten', 'explain', 'notHere', 'settings']) expect(isBarAction(id), id).toBe(true)
+    for (const id of ['fix', 'dictate', 'awake', 'clipboard', 'screen', 'inPlace', 'rewrite', '']) expect(isBarAction(id), id).toBe(false)
+  })
+
+  test('the dot opens under the pointer, folds back 0.6 s after it leaves, and goes 4 s later', () => {
+    let c: BarClock | 'gone' = { phase: 'dot', away: 0 }
+    c = barTick(c as BarClock, false, 3000)
+    expect(c).toEqual({ phase: 'dot', away: 0 })
+    c = barTick(c as BarClock, true, 3500)
+    expect(c).toEqual({ phase: 'pill', away: undefined })
+    c = barTick({ phase: 'list', away: undefined }, false, 10_000)
+    expect(c).toEqual({ phase: 'list', away: 10_000 })
+    expect(barTick(c as BarClock, false, 10_500)).toEqual({ phase: 'list', away: 10_000 })
+    c = barTick(c as BarClock, false, 10_600)
+    expect(c).toEqual({ phase: 'dot', away: 10_600 })
+    expect(barTick(c as BarClock, false, 14_500)).toEqual({ phase: 'dot', away: 10_600 })
+    expect(barTick(c as BarClock, false, 14_600)).toBe('gone')
   })
 })

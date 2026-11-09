@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { badgeOffset, flightPoint, placeBadge, placeBar, placeByTray, placeNear, resize } from './placement'
+import { badgeOffset, flightPoint, placeBadge, placeBar, placeByTray, placeDot, placeNear, resize } from './placement'
 
 const area = { x: 0, y: 0, width: 1920, height: 1040 }
 const size = { width: 440, height: 200 }
@@ -85,39 +85,26 @@ describe('placeBadge', () => {
   })
 })
 
-describe('placeBar', () => {
-  const pill = { width: 200, height: 36 }
-  test('centred on the selection end, 8 px above its lines, the tooltip band on top', () => {
-    expect(placeBar({ x: 500, top: 300, bottom: 340 }, pill, 26, 0, area)).toEqual({
-      window: { x: 400, y: 230, width: 200, height: 62 },
-      pill: { x: 400, y: 256, width: 200, height: 36 },
-      above: true,
-    })
+describe('the bar by a selection', () => {
+  test('the dot sits under the line where the selection starts, its left edge at the text', () => {
+    expect(placeDot({ x: 300, top: 100, bottom: 116 }, area)).toEqual({ x: 292, y: 118, width: 36, height: 36 })
   })
 
-  test('below the lines when the top of the screen has no room, the band under it', () => {
-    expect(placeBar({ x: 500, top: 40, bottom: 60 }, pill, 26, 0, area)).toEqual({
-      window: { x: 400, y: 68, width: 200, height: 62 },
-      pill: { x: 400, y: 68, width: 200, height: 36 },
-      above: false,
-    })
+  test('over the line at the bottom of the screen, and inside the work area at its edges', () => {
+    expect(placeDot({ x: 300, top: 1010, bottom: 1026 }, area)).toEqual({ x: 292, y: 972, width: 36, height: 36 })
+    expect(placeDot({ x: 2, top: 0, bottom: 10 }, area).x).toBe(0)
+    expect(placeDot({ x: 1915, top: 0, bottom: 10 }, area).x).toBe(1884)
   })
 
-  test('a window wider than the pill for its tooltip keeps the pill in its middle', () => {
-    // Near the top: above while the pill fits, the tooltips' band cut by the screen (never down over the next line).
-    expect(placeBar({ x: 500, top: 60, bottom: 80 }, pill, 26, 0, area)).toEqual({
-      window: { x: 400, y: 0, width: 200, height: 52 },
-      pill: { x: 400, y: 16, width: 200, height: 36 },
-      above: true,
-    })
-    const r = placeBar({ x: 500, top: 300, bottom: 340 }, pill, 26, 300, area)
-    expect([r.window.x, r.window.width, r.pill.x, r.pill.width]).toEqual([350, 300, 400, 200])
+  test('the pill grows to the right of the dot, the dot staying, moved left only by the screen\'s edge', () => {
+    const box = { x: 292, y: 118, width: 36, height: 36 }
+    expect(placeBar(box, { width: 320, height: 36 }, area)).toEqual({ window: { x: 292, y: 118, width: 320, height: 36 }, listAbove: false })
+    expect(placeBar({ ...box, x: 1800 }, { width: 320, height: 36 }, area).window.x).toBe(1600)
   })
 
-  test('kept inside the work area at its edges', () => {
-    const r = placeBar({ x: 1910, top: 1030, bottom: 1040 }, pill, 26, 0, area)
-    expect(r.pill.x).toBe(1720)
-    expect(r.above).toBe(true)
-    expect(placeBar({ x: 5, top: 30, bottom: 1035 }, pill, 26, 0, area).pill).toEqual({ x: 0, y: 978, width: 200, height: 36 })
+  test('"…"\'s list goes under the pill, over it where the screen ends, the pill in place', () => {
+    const box = { x: 292, y: 118, width: 36, height: 36 }
+    expect(placeBar(box, { width: 320, height: 300 }, area)).toEqual({ window: { x: 292, y: 118, width: 320, height: 300 }, listAbove: false })
+    expect(placeBar({ ...box, y: 900 }, { width: 320, height: 300 }, area)).toEqual({ window: { x: 292, y: 636, width: 320, height: 300 }, listAbove: true })
   })
 })

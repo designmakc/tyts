@@ -137,7 +137,11 @@ port.on('message', (message: KbdIn) =>
     if (message.type === 'paste') return tell({ c: 'press', keys: [{ k: 9, cmd: true }] })
     if (message.type === 'caret') return tell({ c: 'caret', n: message.n, pid: front.pid })
     if (message.type === 'sel') return tell({ c: 'sel', n: message.n, pid: front.pid })
-    if (message.type === 'bar') return typist.barShown(message.on, message.rect)
+    if (message.type === 'bar') {
+      // The helper keeps the bar's clicks from every window itself: the tap does not wait for Node on a click.
+      tell(message.on && message.rect ? { c: 'bar', rect: message.rect } : { c: 'bar' })
+      return typist.barShown(message.on, message.rect)
+    }
     // A config before the helper said hello waits for its layouts.
     pending = message.config
     if (layouts.size) configure(message.config)

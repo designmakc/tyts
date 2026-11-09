@@ -106,31 +106,34 @@ export function badgeOffset(bounds: Rect, area: Rect): { dx: number; dy: number 
   }
 }
 
-const BAR_GAP = 8
+/** The bar by a selection: its dot's square (the pill's height; the dot in its middle), and the gap from the line. */
+export const BAR_BOX = 36
+const BAR_GAP = 2
 
 /**
- * The bar by a selection: its pill (`size`) centred on the selection's end (`at.x`),
- * BAR_GAP above its lines (`top`), below them (`bottom`) where the work area has no room
- * for the pill and its tooltip's `band`. The window is `wide` at least (a tooltip may be
- * wider than the pill), the pill in its middle, the band on the side away from the text
- * (`above`: the bar is over the text, its band on top). `pill`: the pill alone.
+ * The dot by a selection: its square under the line where the selection starts (`at.x`, `top` to
+ * `bottom`), the dot's left edge at the text's, never over the text; above the line where the work
+ * area ends; never outside it.
  */
-export function placeBar(
-  at: { x: number; top: number; bottom: number },
-  size: { width: number; height: number },
-  band: number,
-  wide: number,
-  area: Rect,
-): { window: Rect; pill: Rect; above: boolean } {
-  const width = Math.min(Math.max(size.width, wide), area.width)
-  const height = size.height
-  const x = Math.round(Math.min(Math.max(at.x - width / 2, area.x), area.x + area.width - width))
-  const up = at.top - BAR_GAP - height
-  // Above whenever the pill itself fits there (so it never covers the next line); the tooltips' band may be cut by the screen's edge.
-  const above = up >= area.y
-  const y = Math.round(above ? up : Math.min(at.bottom + BAR_GAP, area.y + area.height - height - band))
-  const pillWidth = Math.min(size.width, width)
-  const pill = { x: Math.round(x + (width - pillWidth) / 2), y, width: pillWidth, height }
-  const top = above ? Math.max(area.y, y - band) : y
-  return { window: { x, y: top, width, height: height + (above ? y - top : band) }, pill, above }
+export function placeDot(at: { x: number; top: number; bottom: number }, area: Rect): Rect {
+  const dot = (BAR_BOX - 20) / 2
+  const x = Math.min(Math.max(at.x - dot, area.x), area.x + area.width - BAR_BOX)
+  let y = at.bottom + BAR_GAP
+  if (y + BAR_BOX > area.y + area.height) y = at.top - BAR_GAP - BAR_BOX
+  y = Math.min(Math.max(y, area.y), area.y + area.height - BAR_BOX)
+  return { x: Math.round(x), y: Math.round(y), width: BAR_BOX, height: BAR_BOX }
+}
+
+/**
+ * The bar opened from its dot (`box`): the pill grows to the right, the dot staying where it is
+ * (moved left only where the screen ends); with "…"'s list (`size.height` over the pill's) the list
+ * is under the pill, or over it where the work area ends (`listAbove`), the pill staying in place.
+ */
+export function placeBar(box: Rect, size: { width: number; height: number }, area: Rect): { window: Rect; listAbove: boolean } {
+  const width = Math.min(Math.max(size.width, BAR_BOX), area.width)
+  const height = Math.max(size.height, BAR_BOX)
+  const x = Math.max(Math.min(box.x, area.x + area.width - width), area.x)
+  const listAbove = height > BAR_BOX && box.y + height > area.y + area.height
+  const y = listAbove ? box.y + BAR_BOX - height : box.y
+  return { window: { x: Math.round(x), y: Math.round(Math.max(y, area.y)), width, height }, listAbove }
 }

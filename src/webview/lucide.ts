@@ -83,7 +83,8 @@ export const LUCIDE = {
   "chevron-left": "<path d=\"m15 18-6-6 6-6\" />",
   "chevron-down": "<path d=\"m6 9 6 6 6-6\" />",
   "arrow-up": "<path d=\"m5 12 7-7 7 7\" /> <path d=\"M12 19V5\" />",
-  "arrow-down": "<path d=\"M12 5v14\" /> <path d=\"m19 12-7 7-7-7\" />"
+  "arrow-down": "<path d=\"M12 5v14\" /> <path d=\"m19 12-7 7-7-7\" />",
+  "ellipsis": "<circle cx=\"12\" cy=\"12\" r=\"1\" /> <circle cx=\"19\" cy=\"12\" r=\"1\" /> <circle cx=\"5\" cy=\"12\" r=\"1\" />"
 } as const
 
 export type LucideName = keyof typeof LUCIDE

@@ -146,8 +146,8 @@ func caretOf(_ pid: Int32) -> [String: Any] {
 }
 
 /**
- * Whether the program `pid` has a selection, for the bar by a selection: {ok, secret, x, y, h} with x the selection end's
- * right edge and y…y+h the selection's lines (points, as `caretOf`); ok false when it shows none by Accessibility.
+ * Whether the program `pid` has a selection, for the bar by a selection: {ok, secret, x, y, h} with x the left edge of
+ * its first character and y…y+h that character's line (points, as `caretOf`); ok false when it shows none by Accessibility.
  * Only whether there is text is told: the text itself never leaves this function.
  */
 func selectionOf(_ pid: Int32) -> [String: Any] {
@@ -166,14 +166,11 @@ func selectionOf(_ pid: Int32) -> [String: Any] {
   guard !text.isEmpty || (ranged && range.length > 0) else { return ["ok": false] }
   var o: [String: Any] = ["ok": true]
   guard ranged, range.length > 0 else { return o }
-  let end = boundsOf(element, range.location + range.length - 1, 1)
-  let all = boundsOf(element, range.location, range.length)
-  guard let anchor = end ?? all else { return o }
-  let top = min(anchor.minY, all?.minY ?? anchor.minY)
-  let bottom = max(anchor.maxY, all?.maxY ?? anchor.maxY)
-  o["x"] = Int(anchor.maxX.rounded())
-  o["y"] = Int(top.rounded())
-  o["h"] = max(1, Int((bottom - top).rounded()))
+  // The first character; a line break first has no box of its own, the whole range's top left stands for it.
+  guard let start = boundsOf(element, range.location, 1) ?? boundsOf(element, range.location, range.length) else { return o }
+  o["x"] = Int(start.minX.rounded())
+  o["y"] = Int(start.minY.rounded())
+  o["h"] = max(1, Int(min(start.height, 400).rounded()))
   return o
 }
 
@@ -324,6 +321,17 @@ Thread {
       answerLock.unlock()
       continue
     }
+    if command == "bar" {
+      // The bar's window (points): its clicks are kept from every window, so the program in front stays key; Node is told them as usual.
+      barLock.lock()
+      if let r = c["rect"] as? [String: Any], let x = r["x"] as? Double, let y = r["y"] as? Double, let w = r["width"] as? Double, let h = r["height"] as? Double {
+        barRect = CGRect(x: x, y: y, width: w, height: h)
+      } else {
+        barRect = nil
+      }
+      barLock.unlock()
+      continue
+    }
     if command == "sel" {
       let n = c["n"] as? Int ?? 0
       let pid = Int32(c["pid"] as? Int ?? 0)
@@ -363,6 +371,11 @@ Thread {
 }.start()
 
 // ---------------------------------------------------------------- the tap
+
+/** The bar by a selection, while shown: a click on it goes to Node alone, never to a window (a click on any window takes the keyboard from the program). */
+let barLock = NSLock()
+var barRect: CGRect?
+var barDown = false
 
 /** Each modifier key's own bit in the event's flags (NX_DEVICE…KEYMASK), so left and right are told apart. */
 let SIDE: [Int: UInt64] = [55: 0x08, 54: 0x10, 56: 0x02, 60: 0x04, 58: 0x20, 61: 0x40, 59: 0x01, 62: 0x2000]
@@ -410,6 +423,16 @@ func onEvent(_ type: CGEventType, _ event: CGEvent) -> Bool {
     default: break
     }
     if !name.isEmpty { emit(["e": "m", "t": name, "x": Int(p.x), "y": Int(p.y), "time": t, "b": button]) }
+    if type == .leftMouseDown {
+      barLock.lock()
+      barDown = barRect?.contains(p) ?? false
+      barLock.unlock()
+      return barDown
+    }
+    if type == .leftMouseUp && barDown {
+      barDown = false
+      return true
+    }
     return false
   }
 }

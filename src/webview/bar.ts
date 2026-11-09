@@ -1,7 +1,9 @@
-// The bar by a selection: a row of icon buttons over or under the text selected
-// in another program. The window never takes the keyboard, so the program keeps
-// its selection; the main process (barwindow.ts) says what to draw and runs what
-// is clicked. Here only the pointer is the page's own: a tooltip, Rewrite…'s row.
+// The bar by a selection: a dot under the start of a text selected in another
+// program, opening into a pill of named buttons, and "…"'s list. The window never
+// takes the keyboard, and even a click on it never reaches it: the keyboard thread
+// keeps the click from every window (so the program keeps its selection) and main
+// says where it was (`barClick`), as it says where the pointer is (`barPointer`);
+// this page only draws, lights the button under the pointer and names the one clicked.
 
 import type { BarView, ToHost, ToView, TutorHost } from '../protocol'
 import { el } from './dom'
@@ -16,65 +18,73 @@ declare global {
 const post = (message: ToHost) => window.tutorHost.post(message)
 const root = document.getElementById('root') as HTMLDivElement
 const pill = document.getElementById('pill') as HTMLDivElement
-const tip = document.getElementById('tip') as HTMLDivElement
+const list = document.getElementById('list') as HTMLDivElement
 
-const ICONS: Record<string, LucideName> = { translate: 'languages', listen: 'volume-2', check: 'spell-check', rewrite: 'wand-sparkles', copy: 'copy' }
+const ICONS: Record<string, LucideName> = { translate: 'languages', listen: 'volume-2', check: 'spell-check' }
 
-let view: BarView | undefined
+let drawn = ''
 let shown = -1
 
-function say(text: string): void {
-  tip.replaceChildren(...(text ? [el('span', {}, text)] : []))
-}
-
-function button(label: string, content: Node | string, run: () => void, aria = label): HTMLButtonElement {
-  const b = el('button', { type: 'button', 'aria-label': aria, onmouseenter: () => say(label), onmouseleave: () => say(''), onclick: run }, content)
-  return b
-}
-
-function row(): void {
-  if (!view) return
+function draw(view: BarView): void {
   pill.replaceChildren(
-    ...view.row.map(item =>
-      button(item.tip, lucide(ICONS[item.id] ?? 'sparkles'), () => {
-        if (item.id === 'rewrite') return sub()
-        post({ type: 'barPick', id: item.id })
-      }),
-    ),
-  )
-  say('')
-  size()
-}
-
-/** Rewrite…'s row in place of the icons: the styles by name, and the way back. */
-function sub(): void {
-  if (!view) return
-  const v = view
-  pill.replaceChildren(
-    button(v.back, lucide('chevron-left'), row),
+    el('span', { class: 'dot-mark' }),
     el('span', { class: 'sep' }),
-    ...v.sub.map(item => button('', item.label, () => post({ type: 'barPick', id: item.id }), item.label)),
+    ...view.row.map(item => el('button', { type: 'button', 'data-id': item.id }, lucide(ICONS[item.id] ?? 'sparkles'), item.label)),
+    el('button', { type: 'button', class: 'more', 'data-id': 'more', 'aria-label': view.more }, lucide('ellipsis')),
   )
-  say('')
-  size()
+  list.replaceChildren(
+    ...view.list.flatMap((group, g) => [
+      ...(g > 0 ? [el('div', { class: 'kd' })] : []),
+      ...group.map(item => el('button', { type: 'button', role: 'menuitem', 'data-id': item.id }, item.label)),
+    ]),
+  )
+}
+
+const buttonAt = (x: number, y: number): HTMLElement | null => (x < 0 ? null : (document.elementFromPoint(x, y)?.closest<HTMLElement>('button[data-id]') ?? null))
+
+let lit: HTMLElement | null = null
+function light(button: HTMLElement | null): void {
+  if (button === lit) return
+  lit?.classList.remove('on')
+  lit = button
+  lit?.classList.add('on')
 }
 
 function size(): void {
-  const r = pill.getBoundingClientRect()
-  post({ type: 'barSize', width: Math.ceil(r.width), height: Math.ceil(r.height) })
+  // offset sizes: the showing's scale is no change of size.
+  post({ type: 'barSize', width: root.offsetWidth, height: root.offsetHeight })
 }
 
 window.addEventListener('message', (event: MessageEvent<ToView>) => {
-  if (event.source !== window || event.data.type !== 'bar') return
-  view = event.data.view
-  root.classList.toggle('above', view.above)
-  if (view.n === shown) return
-  shown = view.n
-  row()
-  // Faded in again at each showing.
-  root.classList.remove('in')
-  void root.offsetWidth
-  root.classList.add('in')
+  if (event.source !== window) return
+  const m = event.data
+  if (m.type === 'barPointer') return light(root.classList.contains('p-dot') ? null : buttonAt(m.x, m.y))
+  if (m.type === 'barClick') {
+    const id = root.classList.contains('p-dot') ? undefined : buttonAt(m.x, m.y)?.dataset.id
+    if (id) post({ type: 'barPick', id })
+    return
+  }
+  if (m.type !== 'bar') return
+  const view = m.view
+  const content = JSON.stringify([view.row, view.list, view.more])
+  if (content !== drawn) {
+    drawn = content
+    draw(view)
+    lit = null
+  }
+  for (const phase of ['dot', 'pill', 'list'] as const) root.classList.toggle(`p-${phase}`, view.phase === phase)
+  root.classList.toggle('above', view.listAbove)
+  if (view.phase === 'dot') light(null)
+  if (view.n !== shown) {
+    shown = view.n
+    // Faded and grown in again at each showing.
+    root.classList.remove('in')
+    void root.offsetWidth
+    root.classList.add('in')
+  }
+  size()
 })
+
+new ResizeObserver(size).observe(root)
 
 post({ type: 'barReady' })

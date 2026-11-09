@@ -235,7 +235,9 @@ export type KbdOut =
   /** Another key, a click outside, or another window in front closed the menu; the key or click went on. */
   | { type: 'menuClosed' }
   /** A selection made with the mouse (a drag, a double or triple click, Shift and a click) ended here (the hooks' pixels): the bar may show by it. */
-  | { type: 'selected'; x: number; y: number }
+  | { type: 'selected'; x: number; y: number; start: { x: number; y: number } }
+  /** A click on the bar by a selection (the hooks' pixels): kept from every window, so the program keeps the keyboard and its selection; the bar's page finds the button. */
+  | { type: 'barClick'; x: number; y: number }
   /** The bar by a selection is to go (or not to come): a key, a click elsewhere, the wheel, another window in front. */
   | { type: 'barGone' }
   /** A Mac: the program in front has a selection (`ok`), in a password field (`secret`); `at`: its end's right edge and its lines, in points. */
@@ -751,21 +753,27 @@ export class Typist {
     this.env.send({ type: 'barGone' })
   }
 
-  /** A mouse event while the bar is asked for or shown: a click on it is its own; a click elsewhere or the wheel ends it. True: it was the bar's. */
-  private barMouse(event: MouseEvent, x: number, y: number): boolean {
+  /**
+   * A mouse event while the bar is asked for or shown. A left click on it is its own and kept from every window
+   * (`kept`: a click on a window would take the keyboard from the program, and its selection with it), told as
+   * `barClick`; the wheel or another button over it does nothing (`over`); a click elsewhere or the wheel ends it.
+   */
+  private barMouse(event: MouseEvent, x: number, y: number): 'kept' | 'over' | undefined {
     if (event === 'left-up' && this.clickInBar) {
       this.clickInBar = false
-      return true
+      return 'kept'
     }
     const b = this.bar
-    if (!b || event === 'left-up' || event === 'x-up') return false
+    if (!b || event === 'left-up' || event === 'x-up') return undefined
     const r = b.rect
     if (r && x >= r.x && x < r.x + r.width && y >= r.y && y < r.y + r.height) {
-      this.clickInBar = event === 'left-down'
-      return true
+      if (event !== 'left-down') return 'over'
+      this.clickInBar = true
+      this.env.send({ type: 'barClick', x, y })
+      return 'kept'
     }
     this.closeBar()
-    return false
+    return undefined
   }
 
   /** Whether a selection made here may bring the bar: on, not in full screen, not Tyts's own window, not turned off for this program. */
@@ -777,7 +785,8 @@ export class Typist {
   /** A mouse event; true keeps it from the program (a side button that is a hotkey). */
   mouse(event: MouseEvent, x: number, y: number, time: number, button = 0): boolean {
     if (this.menuMouse(event, x, y, button)) return false
-    if (this.barMouse(event, x, y)) return false
+    const onBar = this.barMouse(event, x, y)
+    if (onBar) return onBar === 'kept'
     if (event === 'x-down') {
       this.spoilTap()
       const mods = this.heldMods()
@@ -806,7 +815,9 @@ export class Typist {
         const front = this.env.foreground()
         if (!this.menuOpen && this.barHere(front)) {
           this.bar = { hwnd: front.hwnd }
-          this.env.send({ type: 'selected', x, y })
+          // Where the selection starts: the earlier of the press and the release in reading order (a drag may go back).
+          const back = d.y > y + 4 || (Math.abs(d.y - y) <= 4 && d.x > x)
+          this.env.send({ type: 'selected', x, y, start: back ? { x, y } : { x: d.x, y: d.y } })
         }
       }
     } else if (event === 'other-down') {

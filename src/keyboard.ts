@@ -72,7 +72,9 @@ export type KeyboardEvents = {
   /** Another key, a click elsewhere or another window closed the menu. */
   menuClosed(): void
   /** A selection made with the mouse ended at this point (the hooks' pixels): the bar by a selection may show. */
-  selected(point: { x: number; y: number }): void
+  selected(point: { x: number; y: number }, start: { x: number; y: number }): void
+  /** A click on the bar by a selection, kept from every window (the hooks' pixels). */
+  barClick(point: { x: number; y: number }): void
   /** A key, a click elsewhere, the wheel or another window ended the bar by a selection. */
   barGone(): void
   failed(message: string): void
@@ -383,7 +385,10 @@ export class KeyboardHelper {
         this.events.menuClosed()
         return
       case 'selected':
-        this.events.selected({ x: message.x, y: message.y })
+        this.events.selected({ x: message.x, y: message.y }, message.start)
+        return
+      case 'barClick':
+        this.events.barClick({ x: message.x, y: message.y })
         return
       case 'barGone':
         this.events.barGone()

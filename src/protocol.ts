@@ -13,6 +13,7 @@ import type { SpeechHealth, SpeechResult, SpeechServiceState } from './speechser
 import type { TalkState, TalkTurn } from './talk'
 import type { TalkRecord, TalkSummary } from './talks'
 import type { TranslationEntry } from './translationlog'
+import type { Clip } from './cliphistory'
 import type { TranslatorState } from './translator'
 import type { MistakeEntry } from './mistakes'
 import type { Learned } from './typist'
@@ -264,6 +265,8 @@ export type AppView = {
   elevatedApp?: string
   /** The texts translated lately, newest first (the last 10). */
   translations: TranslationEntry[]
+  /** The clipboard history: the pinned first, then the texts copied lately, newest first (empty while it is off and was never on). */
+  clips: Clip[]
   /** The translator between English and the person's language: here, downloading, or to be downloaded on the first translation. */
   translator: 'absent' | 'downloading' | 'ready' | 'failed' | 'unsupported'
   /** The keyboard layouts Windows has, in its order. */
@@ -446,7 +449,7 @@ export type ToView =
 export type DictationMode = 'type' | 'english' | 'note' | 'check'
 
 /** The menu on one key: its groups of items by letter and name, the one lit, and the one just picked (-1 for none); both count through all the groups. */
-export type MenuView = { groups: { letter: string; label: string }[][]; lit: number; fired: number }
+export type MenuView = { groups: { letter: string; label: string }[][]; lit: number; fired: number; foot?: string }
 
 export type ToHost =
   | { type: 'lookup'; word: string }
@@ -563,6 +566,10 @@ export type ToHost =
   /** What Kryakl learned from the person's typing: one word out of a list, or everything. */
   | { type: 'unlearn'; list: 'alwaysFix' | 'myWords'; word: string }
   | { type: 'forgetLearned' }
+  /** The clipboard history: a clip pinned or not, one forgotten (by when it was copied), or all but the pinned. */
+  | { type: 'clipPin'; at: string; on: boolean }
+  | { type: 'clipForget'; at: string }
+  | { type: 'clipsClear' }
   /** A backup of the settings and the libraries saved as a file, imported from one (the person picks it), or the settings all back to how they came. */
   | { type: 'exportBackup' }
   | { type: 'importBackup' }

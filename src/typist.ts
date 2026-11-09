@@ -71,6 +71,7 @@ export type KeyAction =
   | 'pause'
   | 'window'
   | 'menu'
+  | 'clipboard'
 
 /** The parts of the keyboard helper a program can be left out of: fixing as one types, the switch and layout keys, the badge, every key of Kryakl's. */
 export type AppPart = 'fix' | 'switch' | 'badge' | 'keys'

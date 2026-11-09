@@ -34,11 +34,11 @@ function draw(view: MenuView): void {
       return row
     }),
   ])
-  root.replaceChildren(el('div', { class: 'kh' }, logo()), ...groups.filter(n => n !== null), el('div', { class: 'kf' }, t('menu.foot')))
+  root.replaceChildren(el('div', { class: 'kh' }, logo()), ...groups.filter(n => n !== null), el('div', { class: 'kf' }, view.foot ?? t('menu.foot')))
 }
 
 function paint(view: MenuView): void {
-  const groups = JSON.stringify(view.groups)
+  const groups = JSON.stringify([view.groups, view.foot])
   if (groups !== drawn) {
     drawn = groups
     draw(view)

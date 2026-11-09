@@ -32,7 +32,7 @@ Bump `version` in package.json, commit, tag `v<version>`, push the tag. `.github
 
 Main process `src/main.ts` (tray, windows, flows). Pages in `src/webview/*` with HTML/CSS in `media/`, talking to main through `preload.ts` and `protocol.ts`; `src/bridge.ts` decides which page may send what (tested). Data: `%APPDATA%\Tyts` (settings, the person's lists, logs) and `%LOCALAPPDATA%\Tyts` (everything downloaded); `oldfolder.ts` moves the old names' folders over once.
 
-- **Selection and clipboard**: `winclip.ts`, `clipboard.ts` (Ctrl+C twice), `clipguard.ts` + `winclipboard.ts` (every borrowing of the clipboard is put back; Tyts's writes are hidden from Win+V and the cloud clipboard).
+- **Selection and clipboard**: `winclip.ts`, `clipboard.ts` (Ctrl+C twice), `clipguard.ts` + `winclipboard.ts` (every borrowing of the clipboard is put back; Tyts's writes are hidden from Win+V and the cloud clipboard); `cliphistory.ts` (the clipboard history, off by default, its list in the menu's window).
 - **Screen text**: `ocr.ts` (Windows.Media.Ocr), `ocrpick.ts`, `ocrtext.ts`; on a Mac `build/ocr.swift`.
 - **Translation**: `translate.ts` (direction, language guess, pairs), `sentences.ts`, `render.ts`; Fast = Firefox's Bergamot (`engine.ts`, `mt-worker.ts`, `src/mt-manifest.json`); Accurate / Most accurate = Gemma 4 through llama.cpp (`llama.ts`, `llmtranslator.ts`, `llmfiles.ts`, `src/llm-manifest.json`). Fast drafts first, the model replaces it (`sweep.ts`); a busy card falls back to Fast with a notice (`modelbusy.ts`, `resources.ts`).
 - **Check my English**: `checker.ts`, `worddiff.ts`, `mistakes.ts`. **Talk**: `duck.ts`, `topics.ts`, `talk.ts`, `talks.ts`, `webview/talk.ts`.

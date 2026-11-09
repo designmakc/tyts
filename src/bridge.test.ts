@@ -30,6 +30,14 @@ describe('a page that shows text from outside opens, removes and exports nothing
     expect(patchAllowed('edge', { native: 'German' })).toBe(false)
     expect(callAllowed('edge', { call: 'speech', method: 'GET', route: '/transcripts' } as never)).toBe(false)
   })
+  test('the look at the top of the screen only says it is ready', () => {
+    expect(pageOf(at('top.html'))).toBe('top')
+    expect(messageAllowed('top', 'topReady')).toBe(true)
+    for (const type of [...dangerous, 'tray', 'saveSettings', 'edgeAct', 'copyText', 'pasteText']) expect(messageAllowed('top', type), type).toBe(false)
+    for (const page of ['app', 'edge', 'tray'] as const) expect(messageAllowed(page, 'topReady'), page).toBe(false)
+    expect(patchAllowed('top', { edgeStyle: 'glow' })).toBe(false)
+    expect(callAllowed('top', { call: 'speech', method: 'GET', route: '/recordings/1/live' } as never)).toBe(false)
+  })
   test('the calls window is the app window\'s Transcripts page: it may what the app window may', () => {
     expect(pageOf(at('calls.html'))).toBe('calls')
     for (const type of dangerous) expect(messageAllowed('calls', type), type).toBe(true)

@@ -57,6 +57,8 @@ import { Dictation } from './dictation'
 import { createDuck, type Duck } from './duck'
 import { DictationLog } from './dictationlog'
 import { EDGE_TICK_MS, EdgeWatch, panelPlace } from './edgepanel'
+import { liveAnswer, liveRows } from './calllive'
+import { TOP_LIVE_MS, TOP_SIZE, topMode, topRows, type TopRow } from './toplook'
 import { DOWNLOADABLE, DictionaryStore } from './dictstore'
 import { fetchPinned, openStream } from './download'
 import { findUpdate } from './update'
@@ -338,6 +340,12 @@ let edgeHeight = 150
 let edgeTimer: NodeJS.Timeout | undefined
 let edgeCalls: EdgeView['calls'] = []
 const edgeWatch = new EdgeWatch()
+let topWin: BrowserWindow | undefined
+let topReady = false
+let topTimer: NodeJS.Timeout | undefined
+/** The recording call's last lines as the top of the screen shows them, and whether its draft is being read at all. */
+let topLines: TopRow[] = []
+let topLive = true
 let trayReady = false
 let trayHeight = 600
 /** The last word fixed by itself, as typed and as fixed, for the tray's "Keep a word as typed…"; kept in memory only. */
@@ -510,6 +518,7 @@ function saveSettings(patch: Partial<Settings>): void {
   if ('talkOnTop' in patch) talkWin?.setAlwaysOnTop(settings.talkOnTop)
   if ('callAuto' in patch) void callAutoChanged()
   if ('edgePanel' in patch) applyEdge()
+  if ('edgeStyle' in patch) postEdge()
   if (('selectionBar' in patch || 'paused' in patch) && (!settings.selectionBar || settings.paused)) selectionBar?.gone()
   refreshTray()
   if (shown) postCard()
@@ -579,6 +588,10 @@ function applyUiLanguage(): void {
   if (edgeWin && !edgeWin.isDestroyed()) {
     edgeReady = false
     void edgeWin.loadFile(media('edge.html'), pageOptions())
+  }
+  if (topWin && !topWin.isDestroyed()) {
+    topReady = false
+    void topWin.loadFile(media('top.html'), pageOptions())
   }
   dictation?.languageChanged()
   oneKeyMenu?.languageChanged()
@@ -2037,7 +2050,11 @@ function onMessage(message: ToHost, page: Page): void {
       return
     case 'edgeReady':
       edgeReady = true
-      postEdge()
+      postEdge(true)
+      return
+    case 'topReady':
+      topReady = true
+      applyTop()
       return
     case 'edgeHeight':
       edgeHeight = Math.ceil(message.px)
@@ -3892,6 +3909,7 @@ function refreshTray(): void {
 function sendTrayView(): void {
   if (trayPanel && trayReady && !trayPanel.isDestroyed()) trayPanel.webContents.send('to-view', { type: 'tray', view: trayView() } satisfies ToView)
   postEdge()
+  applyTop()
 }
 
 // ---------------------------------------------------------------- the panel at the top of the screen
@@ -3903,6 +3921,7 @@ function sendTrayView(): void {
 /** What the panel shows (protocol.ts EdgeView). */
 function edgeView(): EdgeView {
   return {
+    style: settings.edgeStyle,
     problem: settings.paused ? 'paused' : speech?.installed ? '' : 'noEngine',
     speech: speech?.installed ?? false,
     dictating: dictation?.state === 'recording',
@@ -3916,8 +3935,9 @@ function edgeView(): EdgeView {
   }
 }
 
-function postEdge(): void {
-  if (edgeWin && edgeReady && !edgeWin.isDestroyed() && edgeWin.isVisible()) edgeWin.webContents.send('to-view', { type: 'edge', view: edgeView() } satisfies ToView)
+/** `fresh`: the panel has just been shown, and comes in its look. */
+function postEdge(fresh = false): void {
+  if (edgeWin && edgeReady && !edgeWin.isDestroyed() && edgeWin.isVisible()) edgeWin.webContents.send('to-view', { type: 'edge', view: edgeView(), ...(fresh ? { fresh } : {}) } satisfies ToView)
 }
 
 /** The setting turned on or off: the pointer is watched, or no more. */
@@ -3984,7 +4004,7 @@ function showEdge(work: Rectangle): void {
   if (!edgeWin || edgeWin.isDestroyed()) edgeWin = createEdgeWindow()
   edgeWin.setBounds(panelPlace(work, { width: 480, height: edgeHeight }))
   edgeWin.showInactive()
-  postEdge()
+  postEdge(true)
   if (speech?.ready) {
     void speech.call<{ id: string; title: string; created: string; duration: number; source: string }[]>('GET', '/transcripts').then(r => {
       if (!r.ok) return
@@ -3996,6 +4016,97 @@ function showEdge(work: Rectangle): void {
 
 function hideEdge(): void {
   if (edgeWin && !edgeWin.isDestroyed() && edgeWin.isVisible()) edgeWin.hide()
+}
+
+// ---------------------------------------------------------------- the look at the top of the screen
+// While dictation listens: the glow or the drop (settings.edgeStyle). While a call
+// records with its draft read (callLive) and wanted here (callLiveTop): the draft's
+// last lines, asked from the engine every TOP_LIVE_MS. What shows is toplook.ts's
+// to say. The window has no ground, takes no pointer and no focus, and asks the
+// system to keep it out of screenshots and a shared screen (a newer macOS may not).
+// Nothing runs while it is put away.
+
+function applyTop(): void {
+  const dictating = dictation?.state === 'recording'
+  const lines = !!capture?.busy && !!capture.id && settings.callLive && settings.callLiveTop
+  if (lines && !topTimer) {
+    topTimer = setInterval(() => void topTick(), TOP_LIVE_MS)
+    void topTick()
+  } else if (!lines && topTimer) {
+    clearInterval(topTimer)
+    topTimer = undefined
+    topLines = []
+    topLive = true
+  }
+  const shown = !!topWin && !topWin.isDestroyed() && topWin.isVisible()
+  const hide = () => shown && topWin?.hide()
+  if (!dictating && !lines) return void hide()
+  const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint())
+  // ponytail: as the panel's: on a Mac a program fills a screen that has no menu bar.
+  const quiet = settings.quietFullScreen && (process.platform === 'win32' ? fullScreenNow() : display.workArea.y === display.bounds.y)
+  const mode = topMode({ style: settings.edgeStyle, dictating, callLines: lines && topLive, paused: settings.paused, quiet })
+  if (!mode) return void hide()
+  if (!topWin || topWin.isDestroyed()) topWin = createTopWindow()
+  if (!shown) {
+    // It stays on the screen it came to: a call's lines do not jump after the pointer.
+    topWin.setBounds(panelPlace(display.workArea, TOP_SIZE))
+    topWin.showInactive()
+  }
+  if (topReady) topWin.webContents.send('to-view', { type: 'top', view: { style: settings.edgeStyle, mode, rows: mode === 'call' ? topLines : [] } } satisfies ToView)
+}
+
+/** The recording call's draft, asked once more: its last lines, or that it is not read (no model here, the card busy). */
+async function topTick(): Promise<void> {
+  const id = capture?.id
+  if (!id || !speech?.ready) return
+  const answer = await speech.call<unknown>('GET', `/recordings/${id}/live`)
+  if (capture?.id !== id || !topTimer) return
+  if (answer.ok) {
+    const got = liveAnswer(answer.data)
+    topLive = got.state === 'listening' || got.state === 'paused'
+    topLines = topRows(liveRows(got.lines))
+  }
+  applyTop()
+}
+
+function createTopWindow(): BrowserWindow {
+  const win = new BrowserWindow({
+    ...TOP_SIZE,
+    show: false,
+    frame: false,
+    transparent: true,
+    hasShadow: false,
+    resizable: false,
+    movable: false,
+    minimizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    skipTaskbar: true,
+    focusable: false,
+    alwaysOnTop: true,
+    title: t('app.name'),
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      sandbox: true,
+      nodeIntegration: false,
+      spellcheck: false,
+    },
+  })
+  win.setIgnoreMouseEvents(true)
+  win.setContentProtection(true)
+  // Under the panel at the top and the menus, over the programs.
+  win.setAlwaysOnTop(true, 'floating')
+  win.removeMenu()
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+  win.webContents.on('will-navigate', event => event.preventDefault())
+  logPageErrors(win, 'top look')
+  win.on('closed', () => {
+    topWin = undefined
+    topReady = false
+  })
+  void win.loadFile(path.join(app.getAppPath(), 'media', 'top.html'), pageOptions())
+  return win
 }
 
 /** The middle of the tray icon; Windows gives no place for one kept among the hidden icons: the corner of the screen by them. */

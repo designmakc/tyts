@@ -27,6 +27,9 @@ export const TARGET = 'English'
 export const RATES: readonly number[] = [0.75, 0.9, 1, 1.15, 1.3, 1.5]
 
 export type ThemeMode = 'system' | 'light' | 'dark'
+/** How Tyts looks at the top of the screen: nothing moving, a warm glow with sparks, or a dark drop. */
+export type EdgeStyle = 'plain' | 'glow' | 'drop'
+export const EDGE_STYLES: readonly EdgeStyle[] = ['plain', 'glow', 'drop']
 
 /** The sounds of a layout switch, media/switch/<name>-<1|2|3>.wav (English's note, then the others' lower): glass and pluck are Kenney's (CC0), string and duck Kryakl's own. */
 export const SWITCH_SOUNDS = ['glass', 'pluck', 'string', 'duck'] as const
@@ -149,6 +152,8 @@ export type Settings = {
   quietFullScreen: boolean
   /** The panel at the top of the screen (edgepanel.ts): the pointer resting at the top middle shows it. Off by default. */
   edgePanel: boolean
+  /** The look at the top of the screen (toplook.ts): how the panel comes in, and what shows there while dictation listens. Plain by default. */
+  edgeStyle: EdgeStyle
   /** A key that pauses Kryakl and resumes it; a key that opens its window. Empty for none. */
   pauseKey: string
   windowKey: string
@@ -174,6 +179,8 @@ export type Settings = {
   callShots: boolean
   /** While a call records, a rough draft of its words on the panel (engine live.py, the dictation model on the processor). Off by default. */
   callLive: boolean
+  /** With `callLive`, the draft's last lines at the top of the screen while the call records. Off by default. */
+  callLiveTop: boolean
   /** The reminder that the others' consent is needed was shown once, before the first call recording. */
   callConsentSeen: boolean
   /** A known call program holding the microphone 10 s (callwatch.ts): nothing, a question, or a recording at once. Off by default. */
@@ -315,6 +322,7 @@ export const DEFAULTS: Settings = {
   trayLayout: false,
   quietFullScreen: true,
   edgePanel: false,
+  edgeStyle: 'plain',
   pauseKey: '',
   windowKey: '',
   dictateKey: 'Control+Alt+D',
@@ -327,6 +335,7 @@ export const DEFAULTS: Settings = {
   shotKey: '',
   callShots: false,
   callLive: false,
+  callLiveTop: false,
   callConsentSeen: false,
   callAuto: 'off',
   callPanelOffset: { dx: 0, dy: 0 },
@@ -537,6 +546,7 @@ export function normalize(raw: unknown, native = DEFAULTS.native): Settings {
     trayLayout: flag(r.trayLayout, DEFAULTS.trayLayout),
     quietFullScreen: flag(r.quietFullScreen, DEFAULTS.quietFullScreen),
     edgePanel: flag(r.edgePanel, DEFAULTS.edgePanel),
+    edgeStyle: EDGE_STYLES.includes(r.edgeStyle as EdgeStyle) ? (r.edgeStyle as EdgeStyle) : DEFAULTS.edgeStyle,
     pauseKey: key(r.pauseKey, DEFAULTS.pauseKey),
     windowKey: key(r.windowKey, DEFAULTS.windowKey),
     dictateKey: key(r.dictateKey, DEFAULTS.dictateKey),
@@ -549,6 +559,7 @@ export function normalize(raw: unknown, native = DEFAULTS.native): Settings {
     shotKey: key(r.shotKey, DEFAULTS.shotKey),
     callShots: flag(r.callShots, DEFAULTS.callShots),
     callLive: flag(r.callLive, DEFAULTS.callLive),
+    callLiveTop: flag(r.callLiveTop, DEFAULTS.callLiveTop),
     callConsentSeen: flag(r.callConsentSeen, DEFAULTS.callConsentSeen),
     callAuto: CALL_AUTO.includes(r.callAuto as CallAuto) ? (r.callAuto as CallAuto) : DEFAULTS.callAuto,
     callPanelOffset: badgeOffset(r.callPanelOffset),

@@ -1,3 +1,9 @@
+## Tyts 0.5.1
+
+**A look at the top of the screen (new).** Pick how Tyts shows itself at the top edge: **Plain** (as before), **Glow** (a soft cone of warm light with a few sparks) or **Drop** (a dark bead with a glint). The panel at the top comes in that look, and while you dictate the look hangs at the top middle of the screen, so you see that Tyts is listening. It takes no clicks and no focus. Settings › General, "Look at the top of the screen".
+
+**A call's words at the top of the screen (new, off by default).** With "Show the words while recording" on, a new switch under it, "Show the words at the top of the screen", puts the draft's last lines over any program while the call records. Tyts asks the system to keep them out of screenshots and a shared screen; a newer macOS may still show them to some recorders, so mind what you share.
+
 ## Tyts 0.5.0
 
 **A bar by the selected text (new, off by default).** Select text with the mouse in any program, and a small dot appears under it. Point at the dot, and it opens into **Translate · Read aloud · Check · …**; the **…** holds Shorten, More polite, Formal, Natural English, Explain, Copy, "Don't show in this program" and Settings. The program keeps its selection: a click on the bar never takes the focus. Turn it on in Settings › General ("Actions by a selection"), and off for one program on Wrong letters › Programs.

@@ -4,6 +4,7 @@
 // button opens its card under the row: the last phrases (a click pastes one),
 // the last calls (a click opens one), the recording, the quick switches. The
 // panel never takes the focus, so what it types goes where the person was.
+// It comes in the look picked in Settings (settings.edgeStyle, edge.css).
 
 import { hotkeyLabel } from '../hotkey'
 import { formatDate, t } from '../i18n'
@@ -148,6 +149,11 @@ window.addEventListener('message', (event: MessageEvent<ToView>) => {
   if (event.source !== window || event.data.type !== 'edge') return
   view = event.data.view
   render()
+  if (!event.data.fresh) return
+  // Shown anew: it comes in the look picked in Settings (edge.css), from the start each time.
+  root.className = ''
+  void root.offsetWidth
+  root.className = `in ${view.style}`
 })
 
 // Shown anew: no card open until the pointer asks for one.

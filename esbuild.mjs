@@ -102,9 +102,11 @@ const callsWindow = { ...card, entryPoints: ['src/webview/calls.ts'], outfile: '
 /** The panel at the top of the screen. */
 const edgePanel = { ...card, entryPoints: ['src/webview/edge.ts'], outfile: 'media/edge.js' }
 /** The badge's audio thread: the microphone as 16 kHz samples for the engine (an AudioWorklet, loaded by URL). */
+/** The look at the top of the screen while dictation listens or a call records. */
+const topLook = { ...card, entryPoints: ['src/webview/top.ts'], outfile: 'media/top.js' }
 const pcmWorklet = { ...card, entryPoints: ['src/webview/pcm-worklet.ts'], outfile: 'media/pcm-worklet.js' }
 
-const all = [main, preload, voice, translator, keyboard, keyboardMac, field, card, appWindow, trayPanel, dictation, menuWindow, barWindow, talkWindow, callsWindow, edgePanel, captureWindow, pcmWorklet]
+const all = [main, preload, voice, translator, keyboard, keyboardMac, field, card, appWindow, trayPanel, dictation, menuWindow, barWindow, talkWindow, callsWindow, edgePanel, topLook, captureWindow, pcmWorklet]
 if (watch) {
   const contexts = await Promise.all(all.map(o => context(o)))
   await Promise.all(contexts.map(c => c.watch()))

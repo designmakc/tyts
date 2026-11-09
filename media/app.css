@@ -3534,3 +3534,25 @@ li + li > .ti::before {
   gap: 8px;
   margin-top: 10px;
 }
+
+/* Settings: the picked look at the top of the screen, drawn small (topfx.css) on a dark tile, as it shows over a program. */
+.fxshow {
+  flex: none;
+  width: 112px;
+  height: 44px;
+  overflow: hidden;
+  border-radius: var(--r-sm);
+  background: #23201e;
+}
+
+.fxshow:empty {
+  display: none;
+}
+
+.fxshow .fx {
+  width: 280px;
+  height: 110px;
+  margin-left: -84px;
+  transform: scale(0.4);
+  transform-origin: 50% 0;
+}

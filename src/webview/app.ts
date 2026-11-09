@@ -22,7 +22,7 @@ import { DOUBLE_MS, HotkeyRecorder, hotkeyLabel, onMac, type Recorded } from '..
 import type { AppTab, AppView, DiffPart, Feature, KeyboardLayout, MistakeEntry, SavedWord, Settings, StorageId, StoragePart, StorageView, ToView, TutorHost } from '../protocol'
 import { LANGUAGES } from '../languages'
 import { translationAdvice, type LevelFit } from '../hardware'
-import { COPY_TWICE_KEYS, DEFAULTS, EDIT_OWN_MAX, EDIT_STYLES, keptForm, myLanguages, RATES, SUMMARY_OWN_MAX, SWITCH_SOUNDS, TALK_ABOUT_MAX, TALK_LEVELS, type AppRule, type CallAuto, type LlmModel, type TalkLevel, type ThemeMode, type TranslationLevel } from '../settings'
+import { COPY_TWICE_KEYS, DEFAULTS, EDIT_OWN_MAX, EDIT_STYLES, keptForm, myLanguages, RATES, SUMMARY_OWN_MAX, SWITCH_SOUNDS, TALK_ABOUT_MAX, TALK_LEVELS, type AppRule, type CallAuto, type EdgeStyle, type LlmModel, type TalkLevel, type ThemeMode, type TranslationLevel } from '../settings'
 import type { AppPart } from '../typist'
 // app.ts has a languageName of its own (a code's English name); the interface's is langName here.
 import { formatDate, languageName as langName, levelName, setUiLanguage, t, uiLanguage, type Key } from '../i18n'
@@ -36,6 +36,7 @@ import { el, icon, setIcon } from './dom'
 import { glyph } from './glyphs'
 import { caps, COPY_TWICE } from './keycaps'
 import { lucide, type LucideName } from './lucide'
+import { topFx } from './topfx'
 import { aside, bad, bar, btn, card, chip, enginePlate, grp, ib, lineList, linkBtn, listPage, liveField, navCard, post, row, seg, select, radioRow, recommended, tiles, toggle, toggleCard, toggleKnob, twoNames, uiLanguageCard, warn, wordChips } from './ui'
 import { seconds } from '../speechplan'
 import { recommend, recommendedModels } from '../setup'
@@ -2517,6 +2518,7 @@ function recordingsPage(v: AppView): HTMLElement[] {
     keyRow('meetingKey', t('call.record'), t('call.keyNote'), !v.speech.keysOk.meeting),
     installed(v) ? toggleCard('camera', t('call.shots'), v.settings.callShots, callShots => save({ callShots }), t('call.shotsNote')) : null,
     installed(v) ? toggleCard('message-square-text', t('call.live'), v.settings.callLive, callLive => save({ callLive }), t('call.liveNote')) : null,
+    installed(v) && v.settings.callLive ? toggleCard('message-square-text', t('call.liveTop'), v.settings.callLiveTop, callLiveTop => save({ callLiveTop }), t('call.liveTopNote')) : null,
     installed(v) && v.settings.callShots ? toggleCard('camera', t('call.names'), v.settings.callNames, callNames => save({ callNames }), t('call.namesNote')) : null,
     keyRow('shotKey', t('call.shotKey'), t('call.shotKeyNote'), !v.speech.keysOk.shot),
     ...summarySettings(v),
@@ -3315,6 +3317,22 @@ function settingsPage(v: AppView): HTMLElement[] {
     toggleCard('power', t('settings.startWithWindows'), s.startWithWindows, startWithWindows => save({ startWithWindows })),
     toggleCard('pause', t('settings.pause'), s.paused, paused => save({ paused }), t('settings.pauseNote')),
     toggleCard('panel-bottom', t('edge.setting'), s.edgePanel, edgePanel => save({ edgePanel }), t('edge.settingNote')),
+    // The look at the top of the screen (toplook.ts), with the picked one drawn small beside the choice.
+    card(
+      'sparkles',
+      t('edge.style'),
+      [t('edge.styleNote')],
+      el('span', { class: 'fxshow', 'aria-hidden': 'true' }, topFx(s.edgeStyle)),
+      seg<EdgeStyle>(
+        s.edgeStyle,
+        [
+          ['plain', t('edge.stylePlain')],
+          ['glow', t('edge.styleGlow')],
+          ['drop', t('edge.styleDrop')],
+        ],
+        edgeStyle => save({ edgeStyle }),
+      ),
+    ),
     toggleCard('text-cursor', t('bar.setting'), s.selectionBar, selectionBar => save({ selectionBar }), t('bar.settingNote')),
     // Keep the computer awake (awake.ts): how long and whether the screen stays on; turned on from the tray or the menu on one key.
     card(

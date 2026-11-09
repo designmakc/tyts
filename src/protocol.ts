@@ -5,8 +5,9 @@ import type { DeviceProfile } from './hardware'
 import type { WordTime } from './kokoro'
 import type { Gloss } from './lemma'
 import type { NaturalState } from './natural'
-import type { LlmModel, Settings, TranslationLevel } from './settings'
+import type { EdgeStyle, LlmModel, Settings, TranslationLevel } from './settings'
 import type { SummaryTemplate } from './summary'
+import type { TopMode, TopRow } from './toplook'
 import type { SpeechPackState, SpeechPart } from './speechpack'
 import type { Choice, Feature, FeaturePlan, SpeechPlan } from './speechplan'
 import type { SpeechHealth, SpeechResult, SpeechServiceState } from './speechservice'
@@ -363,7 +364,12 @@ export type TrayView = {
  * whether there is a speech engine, a phrase or a call being recorded; the keys; the switches; the last phrases
  * dictated and the last calls recorded.
  */
+/** What the top of the screen shows while dictation listens or a call records (toplook.ts). */
+export type TopView = { style: EdgeStyle; mode: TopMode; rows: TopRow[] }
+
 export type EdgeView = {
+  /** The look the panel comes in with (settings.edgeStyle). */
+  style: EdgeStyle
   problem: '' | 'noEngine' | 'paused'
   speech: boolean
   dictating: boolean
@@ -439,7 +445,8 @@ export type ToView =
   | { type: 'capture'; command: 'start' | 'stop' | 'pause' | 'resume' | 'discard' | 'ask' | 'unask' | 'shot'; title?: string; app?: string; auto?: boolean; shots?: boolean; live?: boolean }
   /** The tray's panel was just shown: focus its first command. */
   | { type: 'trayShown' }
-  | { type: 'edge'; view: EdgeView }
+  | { type: 'edge'; view: EdgeView; fresh?: boolean }
+  | { type: 'top'; view: TopView }
   /** Kryakl's menu on one key: what it draws now. */
   | { type: 'menu'; view: MenuView }
   /** The bar by a selection: what it draws now (`n` grows with each showing, which fades it in again). */
@@ -543,6 +550,7 @@ export type ToHost =
   // The tray's panel.
   | { type: 'trayReady' }
   | { type: 'edgeReady' }
+  | { type: 'topReady' }
   | { type: 'edgeHeight'; px: number }
   | ({ type: 'edgeAct' } & EdgeAct)
   /** The panel's content is this tall, in CSS pixels; the window follows. */

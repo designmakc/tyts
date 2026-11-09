@@ -14,6 +14,8 @@ import { badgeOffset, placeBadge } from './placement'
 import type { CallState, ToHost, ToView } from './protocol'
 
 const PANEL = { width: 360, height: 96 }
+/** The panel with its draft of the words open: taller, growing upward from where it stands. */
+const OPEN = { width: 420, height: 340 }
 
 export type CaptureOptions = {
   page: string
@@ -32,7 +34,7 @@ export type CaptureOptions = {
   log: (line: string) => void
 }
 
-type CaptureMessage = Extract<ToHost, { type: 'captureState' | 'captureDone' | 'captureHide' | 'captureOpenSettings' | 'captureAnswer' }>
+type CaptureMessage = Extract<ToHost, { type: 'captureState' | 'captureDone' | 'captureHide' | 'captureOpenSettings' | 'captureAnswer' | 'captureExpand' }>
 
 export class CallCapture {
   state: CallState = 'idle'
@@ -57,13 +59,13 @@ export class CallCapture {
     return Math.round(seconds + (this.state === 'recording' && at ? (Date.now() - at) / 1000 : 0))
   }
 
-  /** `auto`: started by itself (callwatch.ts); the panel says so and offers not to record. `shots`: a screenshot every 4 s when the screen changed. */
-  start(title: string, app?: string, auto = false, shots = false): void {
+  /** `auto`: started by itself (callwatch.ts); the panel says so and offers not to record. `shots`: a screenshot every 4 s when the screen changed. `live`: a draft of the words can be opened. */
+  start(title: string, app?: string, auto = false, shots = false, live = false): void {
     if (this.busy) return
     clearTimeout(this.hiding)
     this.state = 'starting'
     this.o.onChange()
-    this.send({ type: 'capture', command: 'start', title, ...(app ? { app } : {}), ...(auto ? { auto } : {}), ...(shots ? { shots } : {}) })
+    this.send({ type: 'capture', command: 'start', title, ...(app ? { app } : {}), ...(auto ? { auto } : {}), ...(shots ? { shots } : {}), ...(live ? { live } : {}) })
     this.show()
   }
 
@@ -160,6 +162,9 @@ export class CallCapture {
       case 'captureOpenSettings':
         this.o.openSettings()
         return
+      case 'captureExpand':
+        this.resize(m.open ? OPEN : PANEL)
+        return
       case 'captureAnswer':
         this.o.log(`call: asked, ${m.record ? 'record' : 'not now'}`)
         if (!m.record) this.hideSoon(0)
@@ -177,6 +182,17 @@ export class CallCapture {
     this.hiding = setTimeout(() => {
       if (!this.busy) this.win?.hide()
     }, ms)
+  }
+
+  /** The window to `size`, its bottom centre where it was (the panel sits at the window's bottom), kept on the screen. */
+  private resize(size: { width: number; height: number }): void {
+    const win = this.win
+    if (!win || win.isDestroyed()) return
+    const b = win.getBounds()
+    const area = screen.getDisplayMatching(b).workArea
+    const x = Math.min(Math.max(area.x, Math.round(b.x + (b.width - size.width) / 2)), area.x + area.width - size.width)
+    const y = Math.min(Math.max(area.y, b.y + b.height - size.height), area.y + area.height - size.height)
+    win.setBounds({ x, y, ...size })
   }
 
   private send(message: ToView): void {

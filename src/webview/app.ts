@@ -2425,6 +2425,7 @@ function recordingsPage(v: AppView): HTMLElement[] {
     installed(v) ? callAutoRow(v) : null,
     keyRow('meetingKey', t('call.record'), t('call.keyNote'), !v.speech.keysOk.meeting),
     installed(v) ? toggleCard('camera', t('call.shots'), v.settings.callShots, callShots => save({ callShots }), t('call.shotsNote')) : null,
+    installed(v) ? toggleCard('message-square-text', t('call.live'), v.settings.callLive, callLive => save({ callLive }), t('call.liveNote')) : null,
     installed(v) && v.settings.callShots ? toggleCard('camera', t('call.names'), v.settings.callNames, callNames => save({ callNames }), t('call.namesNote')) : null,
     keyRow('shotKey', t('call.shotKey'), t('call.shotKeyNote'), !v.speech.keysOk.shot),
     ...summarySettings(v),

@@ -151,7 +151,7 @@ describe('what a page may open with the system', () => {
 describe('the call recording\'s panel', () => {
   test('is a page of its own, the only one that says how its recording goes', () => {
     expect(pageOf(at('capture.html'))).toBe('capture')
-    for (const type of ['captureState', 'captureDone', 'captureHide', 'captureOpenSettings']) {
+    for (const type of ['captureState', 'captureDone', 'captureHide', 'captureOpenSettings', 'captureAnswer', 'captureExpand']) {
       expect(messageAllowed('capture', type), type).toBe(true)
       for (const page of ['app', 'card', 'tray', 'dictation', 'talk', 'menu'] as const) expect(messageAllowed(page, type), `${page} ${type}`).toBe(false)
     }

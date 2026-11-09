@@ -6,6 +6,8 @@
 
 Website: [designmakc.github.io/tyts](https://designmakc.github.io/tyts/). Tyts is a fork of [Kryakl](https://github.com/ikstro/kryakl) by Yevhen Peshynskyi.
 
+[![Tyts in 20 seconds: click to watch](docs/media/tyts-en.jpg)](docs/media/tyts-en.mp4)
+
 ## What it does
 
 The window's menu, in the order you will likely need it:

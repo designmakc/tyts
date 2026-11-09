@@ -21,6 +21,15 @@ describe('a page that shows text from outside opens, removes and exports nothing
   test('the app window may', () => {
     for (const type of dangerous) expect(messageAllowed('app', type), type).toBe(true)
   })
+  test('the panel at the top of the screen runs the tray\'s commands and its own, saves its switches, and nothing else', () => {
+    expect(pageOf(at('edge.html'))).toBe('edge')
+    for (const type of ['edgeReady', 'edgeHeight', 'edgeAct', 'tray', 'saveSettings']) expect(messageAllowed('edge', type), type).toBe(true)
+    for (const type of [...dangerous, 'summarize', 'speak', 'talkSay', 'copyText', 'pasteText']) expect(messageAllowed('edge', type), type).toBe(false)
+    for (const page of ['app', 'card', 'tray', 'talk'] as const) expect(messageAllowed(page, 'edgeAct'), page).toBe(false)
+    expect(patchAllowed('edge', { autoFix: false })).toBe(true)
+    expect(patchAllowed('edge', { native: 'German' })).toBe(false)
+    expect(callAllowed('edge', { call: 'speech', method: 'GET', route: '/transcripts' } as never)).toBe(false)
+  })
   test('the calls window is the app window\'s Transcripts page: it may what the app window may', () => {
     expect(pageOf(at('calls.html'))).toBe('calls')
     for (const type of dangerous) expect(messageAllowed('calls', type), type).toBe(true)

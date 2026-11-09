@@ -351,6 +351,27 @@ export type TrayView = {
   dev: boolean
 }
 
+/**
+ * What the panel at the top of the screen shows (edgepanel.ts, webview/edge.ts): one problem in the way, if any;
+ * whether there is a speech engine, a phrase or a call being recorded; the keys; the switches; the last phrases
+ * dictated and the last calls recorded.
+ */
+export type EdgeView = {
+  problem: '' | 'noEngine' | 'paused'
+  speech: boolean
+  dictating: boolean
+  call: boolean
+  keys: { dictate: string; again: string; call: string; fix: string }
+  autoFix: boolean
+  switchOn: boolean
+  layoutBadge: boolean
+  recent: { at: string; text: string }[]
+  calls: { id: string; title: string; created: string; duration: number }[]
+}
+
+/** What the panel at the top of the screen does besides the tray's commands; each puts the panel away. */
+export type EdgeAct = { act: 'dictate' } | { act: 'again' } | { act: 'paste'; at: string } | { act: 'openCall'; id: string } | { act: 'setup' }
+
 /** What the tray's panel can do; each puts the panel away first. */
 export type TrayCommand = 'listenCopied' | 'translateCopied' | 'typeToTranslate' | 'checkEnglish' | 'talk' | 'listenScreen' | 'translateScreen' | 'note' | 'call' | 'transcripts' | 'transcribe' | 'vocabulary' | 'kept' | 'settings' | 'report' | 'open' | 'quit'
 
@@ -411,6 +432,7 @@ export type ToView =
   | { type: 'capture'; command: 'start' | 'stop' | 'pause' | 'resume' | 'discard' | 'ask' | 'unask' | 'shot'; title?: string; app?: string; auto?: boolean; shots?: boolean }
   /** The tray's panel was just shown: focus its first command. */
   | { type: 'trayShown' }
+  | { type: 'edge'; view: EdgeView }
   /** Kryakl's menu on one key: what it draws now. */
   | { type: 'menu'; view: MenuView }
   | { type: 'natural'; state: NaturalState }
@@ -500,6 +522,9 @@ export type ToHost =
   | { type: 'menuPick'; index: number }
   // The tray's panel.
   | { type: 'trayReady' }
+  | { type: 'edgeReady' }
+  | { type: 'edgeHeight'; px: number }
+  | ({ type: 'edgeAct' } & EdgeAct)
   /** The panel's content is this tall, in CSS pixels; the window follows. */
   | { type: 'trayHeight'; px: number }
   | { type: 'tray'; command: TrayCommand }

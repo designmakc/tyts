@@ -9,9 +9,9 @@ import * as path from 'node:path'
 
 import type { HostCall, ToHost } from './protocol'
 
-export type Page = 'app' | 'calls' | 'card' | 'tray' | 'dictation' | 'talk' | 'menu' | 'capture' | 'other'
+export type Page = 'app' | 'calls' | 'edge' | 'card' | 'tray' | 'dictation' | 'talk' | 'menu' | 'capture' | 'other'
 
-const PAGES: Record<string, Page> = { 'app.html': 'app', 'calls.html': 'calls', 'card.html': 'card', 'tray.html': 'tray', 'dictation.html': 'dictation', 'talk.html': 'talk', 'menu.html': 'menu', 'capture.html': 'capture' }
+const PAGES: Record<string, Page> = { 'app.html': 'app', 'calls.html': 'calls', 'edge.html': 'edge', 'card.html': 'card', 'tray.html': 'tray', 'dictation.html': 'dictation', 'talk.html': 'talk', 'menu.html': 'menu', 'capture.html': 'capture' }
 
 /** The page a window shows, by its file (media/<page>.html, with or without a query); 'other' for anything else. */
 export function pageOf(url: string): Page {
@@ -87,6 +87,9 @@ const TALK_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>([
 /** Messages only the menu on one key sends, and the only ones it may: it is drawn over any program, so it asks for nothing but its own items. */
 const MENU_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>(['menuReady', 'menuHeight', 'menuHover', 'menuPick'])
 
+/** Messages only the panel at the top of the screen sends; it may also run the tray's commands and save its switches, nothing else. */
+const EDGE_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>(['edgeReady', 'edgeHeight', 'edgeAct'])
+
 /** Messages only the call recording's panel sends, and the only ones it may: how its recording goes. */
 const CAPTURE_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>(['captureState', 'captureDone', 'captureHide', 'captureOpenSettings', 'captureAnswer'])
 
@@ -96,6 +99,8 @@ export function messageAllowed(page: Page, type: string): boolean {
   if (page === 'menu') return false
   if (CAPTURE_ONLY.has(type as ToHost['type'])) return page === 'capture'
   if (page === 'capture') return false
+  if (EDGE_ONLY.has(type as ToHost['type'])) return page === 'edge'
+  if (page === 'edge') return type === 'tray' || type === 'saveSettings'
   if (TALK_ONLY.has(type as ToHost['type'])) return page === 'talk'
   // The talk window listens too: the tray shows the red dot meanwhile.
   if (type === 'micRecording') return full(page) || page === 'talk'
@@ -106,6 +111,7 @@ export function messageAllowed(page: Page, type: string): boolean {
 const PAGE_SETTINGS: Partial<Record<Page, ReadonlySet<string>>> = {
   card: new Set(['oneAtATime']),
   tray: new Set(['autoFix', 'switchOn', 'layoutBadge', 'trayLayout', 'paused']),
+  edge: new Set(['autoFix', 'switchOn', 'layoutBadge', 'paused']),
 }
 
 /** Whether `page` may save this settings patch: the app window any, the card and the tray panel only their own. */

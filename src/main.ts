@@ -55,6 +55,7 @@ import { ClipboardGuard } from './clipguard'
 import { Dictation } from './dictation'
 import { createDuck, type Duck } from './duck'
 import { DictationLog } from './dictationlog'
+import { EDGE_TICK_MS, EdgeWatch, panelPlace } from './edgepanel'
 import { DOWNLOADABLE, DictionaryStore } from './dictstore'
 import { fetchPinned, openStream } from './download'
 import { findUpdate } from './update'
@@ -85,7 +86,7 @@ import { paragraphsOf } from './ocrtext'
 import { menuGroups, type MenuAction } from './menu'
 import { TytsMenu } from './menuwindow'
 import { placeByTray, placeNear, resize, type Point } from './placement'
-import type { AppTab, AppView, BusyPart, CardKind, CardState, CheckResult, DictationMode, DictionaryStatus, GlossMissing, HostCall, HostVoice, Refused, StorageId, StoragePart, StorageView, TalkWindowView, TextResult, ToHost, ToView, TranslationState, TrayCommand, TrayView, ViewConfig } from './protocol'
+import type { AppTab, AppView, BusyPart, EdgeView, CardKind, CardState, CheckResult, DictationMode, DictionaryStatus, GlossMissing, HostCall, HostVoice, Refused, StorageId, StoragePart, StorageView, TalkWindowView, TextResult, ToHost, ToView, TranslationState, TrayCommand, TrayView, ViewConfig } from './protocol'
 import { draftsIn, englishHtml, textOutHtml, translationHtml } from './render'
 import { issueUrl, mailUrl, makeReport, namesHere, reportName, type ReportFacts } from './report'
 import { addKept, CARD_WIDTH, DEFAULTS, keptForm, LEVEL_NAMES, myLanguages, normalize, SUMMARY_OWN_MAX, TARGET, type LlmModel, type Settings, type TranslationLevel } from './settings'
@@ -329,6 +330,13 @@ let rivals: string[] = []
 let keyboardApps: string[] = []
 let foreignKeys = false
 let trayPanel: BrowserWindow | undefined
+/** The panel at the top of the screen (edgepanel.ts), its page ready, its height as the page asks, its watch on the pointer. */
+let edgeWin: BrowserWindow | undefined
+let edgeReady = false
+let edgeHeight = 150
+let edgeTimer: NodeJS.Timeout | undefined
+let edgeCalls: EdgeView['calls'] = []
+const edgeWatch = new EdgeWatch()
 let trayReady = false
 let trayHeight = 600
 /** The last word fixed by itself, as typed and as fixed, for the tray's "Keep a word as typed…"; kept in memory only. */
@@ -500,6 +508,7 @@ function saveSettings(patch: Partial<Settings>): void {
   if (speech && (['native', 'speechPrefer', 'dictationModel', 'transcriptsModel', 'speechTestAgreed', 'vocabulary'] as const).some(k => k in patch)) speech.replan()
   if ('talkOnTop' in patch) talkWin?.setAlwaysOnTop(settings.talkOnTop)
   if ('callAuto' in patch) void callAutoChanged()
+  if ('edgePanel' in patch) applyEdge()
   refreshTray()
   if (shown) postCard()
   postApp()
@@ -565,6 +574,10 @@ function applyUiLanguage(): void {
     trayReady = false
     void trayPanel.loadFile(media('tray.html'), pageOptions())
   }
+  if (edgeWin && !edgeWin.isDestroyed()) {
+    edgeReady = false
+    void edgeWin.loadFile(media('edge.html'), pageOptions())
+  }
   dictation?.languageChanged()
   oneKeyMenu?.languageChanged()
 }
@@ -586,9 +599,10 @@ function applyColors(): void {
     win.setBackgroundColor(appColor())
     frameWindow(win, { corner: 'default', border: borderColor() })
   }
-  if (trayPanel && !trayPanel.isDestroyed()) {
-    trayPanel.setBackgroundColor(appColor())
-    frameWindow(trayPanel, { corner: 'round', border: borderColor() })
+  for (const panel of [trayPanel, edgeWin]) {
+    if (!panel || panel.isDestroyed()) continue
+    panel.setBackgroundColor(appColor())
+    frameWindow(panel, { corner: 'round', border: borderColor() })
   }
   if (talkWin && !talkWin.isDestroyed()) {
     talkWin.setBackgroundColor(cardColor())
@@ -1996,6 +2010,25 @@ function onMessage(message: ToHost, page: Page): void {
       trayReady = true
       refreshTray()
       return
+    case 'edgeReady':
+      edgeReady = true
+      postEdge()
+      return
+    case 'edgeHeight':
+      edgeHeight = Math.ceil(message.px)
+      if (edgeWin?.isVisible()) edgeWin.setBounds({ ...edgeWin.getBounds(), height: edgeHeight })
+      return
+    case 'edgeAct':
+      hideEdge()
+      if (message.act === 'dictate') dictation.press('type', settings.dictateKey)
+      else if (message.act === 'again') dictation.typeAgain()
+      else if (message.act === 'openCall') openCalls(message.id)
+      else if (message.act === 'setup') openApp('recordings')
+      else {
+        const entry = dictationLog.list().find(e => e.at === message.at)
+        if (entry) void typeText(`${entry.text} `).catch(error => console.warn('Tyts: could not type the phrase', error))
+      }
+      return
     case 'trayHeight':
       trayHeight = Math.ceil(message.px)
       if (trayPanel?.isVisible()) placeTrayPanel()
@@ -2013,6 +2046,7 @@ function onMessage(message: ToHost, page: Page): void {
     }
     case 'tray':
       hideTrayPanel()
+      hideEdge()
       runTrayCommand(message.command)
       return
   }
@@ -3678,9 +3712,114 @@ function refreshTray(): void {
   sendTrayView()
 }
 
-/** The tray's panel drawn again, the icon left as it is. */
+/** The tray's panel drawn again, the icon left as it is; the panel at the top of the screen too, while it shows. */
 function sendTrayView(): void {
   if (trayPanel && trayReady && !trayPanel.isDestroyed()) trayPanel.webContents.send('to-view', { type: 'tray', view: trayView() } satisfies ToView)
+  postEdge()
+}
+
+// ---------------------------------------------------------------- the panel at the top of the screen
+// Shown when the pointer rests at the top middle of a screen (edgepanel.ts), while
+// settings.edgePanel is on: the pointer's place is asked every EDGE_TICK_MS, nothing
+// else runs. The panel never takes the focus (`focusable: false`), so dictation and
+// a phrase pasted from it go into the program the person was in.
+
+/** What the panel shows (protocol.ts EdgeView). */
+function edgeView(): EdgeView {
+  return {
+    problem: settings.paused ? 'paused' : speech?.installed ? '' : 'noEngine',
+    speech: speech?.installed ?? false,
+    dictating: dictation?.state === 'recording',
+    call: capture?.busy ?? false,
+    keys: { dictate: settings.dictateKey, again: settings.againKey, call: settings.meetingKey, fix: settings.fixKey },
+    autoFix: settings.autoFix,
+    switchOn: settings.switchOn,
+    layoutBadge: settings.layoutBadge,
+    recent: dictationLog.list(3).map(e => ({ at: e.at, text: e.text })),
+    calls: edgeCalls,
+  }
+}
+
+function postEdge(): void {
+  if (edgeWin && edgeReady && !edgeWin.isDestroyed() && edgeWin.isVisible()) edgeWin.webContents.send('to-view', { type: 'edge', view: edgeView() } satisfies ToView)
+}
+
+/** The setting turned on or off: the pointer is watched, or no more. */
+function applyEdge(): void {
+  clearInterval(edgeTimer)
+  edgeTimer = undefined
+  if (settings.edgePanel) edgeTimer = setInterval(edgeTick, EDGE_TICK_MS)
+  else hideEdge()
+}
+
+function edgeTick(): void {
+  const point = screen.getCursorScreenPoint()
+  const display = screen.getDisplayNearestPoint(point)
+  const panel = edgeWin && !edgeWin.isDestroyed() && edgeWin.isVisible() ? edgeWin.getBounds() : undefined
+  // Only asked at the very top: on Windows it reads the window in front.
+  // ponytail: on a Mac a full-screen program is a screen without a menu bar; one whose menu bar hides by itself gets no panel either.
+  const fullScreen = !panel && point.y <= display.bounds.y + 2 && (process.platform === 'win32' ? fullScreenNow() : display.workArea.y === display.bounds.y)
+  const step = edgeWatch.step({ now: Date.now(), point, screen: display.bounds, fullScreen, panel })
+  if (step === 'show') showEdge(display.workArea)
+  else if (step === 'hide') hideEdge()
+}
+
+function createEdgeWindow(): BrowserWindow {
+  const win = new BrowserWindow({
+    width: 480,
+    height: edgeHeight,
+    show: false,
+    frame: false,
+    resizable: false,
+    movable: false,
+    minimizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    skipTaskbar: true,
+    focusable: false,
+    alwaysOnTop: true,
+    title: t('app.name'),
+    backgroundColor: appColor(),
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      sandbox: true,
+      nodeIntegration: false,
+      spellcheck: false,
+      backgroundThrottling: false,
+    },
+  })
+  frameWindow(win, { corner: 'round', border: borderColor() })
+  win.setAlwaysOnTop(true, 'pop-up-menu')
+  win.removeMenu()
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+  win.webContents.on('will-navigate', event => event.preventDefault())
+  logPageErrors(win, 'edge panel')
+  win.on('closed', () => {
+    edgeWin = undefined
+    edgeReady = false
+  })
+  void win.loadFile(path.join(app.getAppPath(), 'media', 'edge.html'), pageOptions())
+  return win
+}
+
+/** Under the top of `work` (a Mac's menu bar), centred; the last calls are asked for as it opens. */
+function showEdge(work: Rectangle): void {
+  if (!edgeWin || edgeWin.isDestroyed()) edgeWin = createEdgeWindow()
+  edgeWin.setBounds(panelPlace(work, { width: 480, height: edgeHeight }))
+  edgeWin.showInactive()
+  postEdge()
+  if (speech?.ready) {
+    void speech.call<{ id: string; title: string; created: string; duration: number; source: string }[]>('GET', '/transcripts').then(r => {
+      if (!r.ok) return
+      edgeCalls = r.data.filter(row => row.source === 'system' || row.source === 'meet').slice(0, 3).map(({ id, title, created, duration }) => ({ id, title, created, duration }))
+      postEdge()
+    })
+  }
+}
+
+function hideEdge(): void {
+  if (edgeWin && !edgeWin.isDestroyed() && edgeWin.isVisible()) edgeWin.hide()
 }
 
 /** The middle of the tray icon; Windows gives no place for one kept among the hidden icons: the corner of the screen by them. */
@@ -4206,6 +4345,7 @@ function start(): void {
   setUpSpeechEngine()
   // Made now, so the first click on the tray icon opens it at once.
   trayPanel = createTrayPanel()
+  applyEdge()
   refreshTray()
   registerShortcuts()
   // A few seconds after start, so the tray and the windows come first.

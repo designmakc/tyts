@@ -140,6 +140,8 @@ export type Settings = {
   trayLayout: boolean
   /** Nothing of the keyboard helper while a program fills the screen (a game, a presentation, a video). */
   quietFullScreen: boolean
+  /** The panel at the top of the screen (edgepanel.ts): the pointer resting at the top middle shows it. Off by default. */
+  edgePanel: boolean
   /** A key that pauses Kryakl and resumes it; a key that opens its window. Empty for none. */
   pauseKey: string
   windowKey: string
@@ -294,6 +296,7 @@ export const DEFAULTS: Settings = {
   layoutBadge: false,
   trayLayout: false,
   quietFullScreen: true,
+  edgePanel: false,
   pauseKey: '',
   windowKey: '',
   dictateKey: 'Control+Alt+D',
@@ -508,6 +511,7 @@ export function normalize(raw: unknown, native = DEFAULTS.native): Settings {
     layoutBadge: flag(r.layoutBadge, DEFAULTS.layoutBadge),
     trayLayout: flag(r.trayLayout, DEFAULTS.trayLayout),
     quietFullScreen: flag(r.quietFullScreen, DEFAULTS.quietFullScreen),
+    edgePanel: flag(r.edgePanel, DEFAULTS.edgePanel),
     pauseKey: key(r.pauseKey, DEFAULTS.pauseKey),
     windowKey: key(r.windowKey, DEFAULTS.windowKey),
     dictateKey: key(r.dictateKey, DEFAULTS.dictateKey),

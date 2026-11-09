@@ -10,6 +10,11 @@ import { frameWindow } from './dwm'
 import { t } from './i18n'
 import { menuKeyOf, type MenuAction, type MenuItem } from './menu'
 import { placeMenu, type Rect } from './placement'
+
+// Windows' hooks and caret count physical pixels; on a Mac they already are Electron's points (and its screen has no dipToScreenRect).
+const MAC = process.platform === 'darwin'
+const toScreen = (win: BrowserWindow, rect: Rect): Rect => (MAC ? rect : screen.dipToScreenRect(win, rect))
+const toDip = (point: { x: number; y: number }): { x: number; y: number } => (MAC ? point : screen.screenToDipPoint(point))
 import type { MenuView, ToHost, ToView } from './protocol'
 import { handleOf } from './winclip'
 import { putOnTop } from './winkbd'
@@ -73,8 +78,8 @@ export class TytsMenu {
     this.list = list
     const caret = this.o.caret()
     if (caret) {
-      const top = screen.screenToDipPoint({ x: caret.x, y: caret.y })
-      this.at = { x: top.x, top: top.y, bottom: screen.screenToDipPoint({ x: caret.x, y: caret.y + caret.h }).y }
+      const top = toDip({ x: caret.x, y: caret.y })
+      this.at = { x: top.x, top: top.y, bottom: toDip({ x: caret.x, y: caret.y + caret.h }).y }
     } else {
       const p = screen.getCursorScreenPoint()
       this.at = { x: p.x, top: p.y, bottom: p.y }
@@ -138,7 +143,7 @@ export class TytsMenu {
       this.items = sub.flat()
       this.lit = 0
       const win = this.win
-      this.o.keys(true, this.codes(), win && !win.isDestroyed() ? screen.dipToScreenRect(win, win.getBounds()) : undefined)
+      this.o.keys(true, this.codes(), win && !win.isDestroyed() ? toScreen(win, win.getBounds()) : undefined)
       this.send()
       return
     }
@@ -209,7 +214,7 @@ export class TytsMenu {
     win.setBounds(bounds)
     if (!win.isVisible()) win.showInactive()
     putOnTop(handleOf(win))
-    if (!this.firing) this.o.keys(true, this.codes(), screen.dipToScreenRect(win, win.getBounds()))
+    if (!this.firing) this.o.keys(true, this.codes(), toScreen(win, win.getBounds()))
   }
 
   private window(): BrowserWindow {

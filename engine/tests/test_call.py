@@ -59,6 +59,7 @@ def worker() -> Worker:
     out.bench = FakeBench()
     out.yield_to_dictation = lambda: None
     out._speakers = lambda id, samples, wanted, progress: ([(0, 10, "SPEAKER_00")], "ok")
+    out.diarizer = jobs.Diarizer()
     return out
 
 

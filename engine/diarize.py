@@ -155,6 +155,8 @@ class Diarizer:
         self._pipeline = None
         self._lock = threading.Lock()
         self.device = "ane" if mac() else "cpu"
+        # The last run's voice print per label (the mean embedding of its turns), for voices.py.
+        self.voices: dict[str, list[float]] = {}
 
     @property
     def loaded(self) -> bool:
@@ -200,12 +202,14 @@ class Diarizer:
         speakers: int | None = None,
         progress: Callable[[float], None] | None = None,
     ) -> list[tuple[float, float, str]]:
-        """Turns as (start, end, label), one speaker at a time (the exclusive diarization)."""
+        """Turns as (start, end, label), one speaker at a time (the exclusive diarization); each label's voice print in `voices`."""
+        self.voices = {}
         self.load(token)
         if len(samples) < RATE:
             return []
         if mac():
-            return _helper_turns(samples, speakers, progress)
+            turns, self.voices = _helper_turns(samples, speakers, progress)
+            return turns
         import torch
 
         # shares of the run, measured on an hour of speech: the voice prints (embeddings) take most of it
@@ -221,14 +225,20 @@ class Diarizer:
         waveform = torch.from_numpy(np.ascontiguousarray(samples)).unsqueeze(0)
         output = self._pipeline({"waveform": waveform, "sample_rate": RATE}, hook=hook, **options)
         annotation = getattr(output, "exclusive_speaker_diarization", None) or getattr(output, "speaker_diarization", output)
+        # community-1 gives one embedding per speaker, in speaker_diarization.labels() order.
+        prints = getattr(output, "speaker_embeddings", None)
+        if prints is not None:
+            labels = output.speaker_diarization.labels()
+            self.voices = {str(label): np.asarray(prints[i]).tolist() for i, label in enumerate(labels) if i < len(prints)}
         return [
             (round(turn.start, 2), round(turn.end, 2), str(label))
             for turn, _, label in annotation.itertracks(yield_label=True)
         ]
 
 
-def _helper_turns(samples: np.ndarray, speakers: int | None, progress: Callable[[float], None] | None) -> list[tuple[float, float, str]]:
-    """The Mac's helper on a WAV of our own (16 kHz mono PCM16): "progress done total" lines on stderr, one line of JSON on stdout."""
+def _helper_turns(samples: np.ndarray, speakers: int | None, progress: Callable[[float], None] | None) -> tuple[list[tuple[float, float, str]], dict[str, list[float]]]:
+    """The Mac's helper on a WAV of our own (16 kHz mono PCM16): "progress done total" lines on stderr, one line of JSON on stdout
+    (the turns, and each speaker's voice print under "embeddings"; a helper from before 2026-11-09 gives none)."""
     fd, wav = tempfile.mkstemp(prefix="tyts-speakers-", suffix=".wav")
     os.close(fd)
     try:
@@ -273,6 +283,8 @@ def _helper_turns(samples: np.ndarray, speakers: int | None, progress: Callable[
                 raise RuntimeError(last or f"the speakers helper exited with {code}")
             stdout.seek(0)
             result = json.loads(stdout.read().decode("utf-8") or "{}")
-        return [(round(float(a), 2), round(float(b), 2), str(label)) for a, b, label in result.get("turns", [])]
+        turns = [(round(float(a), 2), round(float(b), 2), str(label)) for a, b, label in result.get("turns", [])]
+        prints = result.get("embeddings") or {}
+        return turns, {str(k): list(v) for k, v in prints.items() if isinstance(v, list)}
     finally:
         os.unlink(wav)

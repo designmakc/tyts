@@ -85,7 +85,7 @@ class Client:
         return self.request("PUT", route, **kw)
 
 
-@pytest.mark.parametrize("route", ["/settings", "/transcripts"])
+@pytest.mark.parametrize("route", ["/settings", "/transcripts", "/voices"])
 def test_without_the_key_nothing_is_served(client, route):
     assert client.get(route).status_code == 401
     assert client.get(route, headers={"x-tyts-token": "wrong"}).status_code == 401
@@ -180,3 +180,27 @@ def test_the_key_is_made_once_and_kept(tmp_path, monkeypatch):
     assert auth.load_token(file) == first
     monkeypatch.setenv("TYTS_SPEECH_TOKEN", "given")
     assert auth.load_token(file) == "given"
+
+
+def test_a_named_speaker_is_offered_by_voice_and_the_prints_never_leave(client):
+    import voices
+
+    store = engine.state.get_store()
+    store.save(ID, {"id": ID, "title": "Standup", "created": "2026-10-30T12:00:00", "speakers": {"S1": {"name": "Speaker 1"}},
+                    "utterances": [{"speaker": "S1", "start": 0, "end": 1, "text": "Hello."}]})
+    before = "2026-10-01_120000-0000"
+    voices.known.keep(before, {"S1": [1.0, 0.0]})
+    voices.known.keep(ID, {"S1": [0.9, 0.1]})
+    assert voices.known.learn("Sasha", before, "S1")
+    shown = client.request("PATCH", f"/transcripts/{ID}", headers=KEY, json={"notes": "x"}).json()
+    assert shown["voiceHints"] == {"S1": {"name": "Sasha", "score": 0.99}} and "print" not in json.dumps(shown)
+    assert shown["speakers"]["S1"]["name"] == "Speaker 1"
+    no = client.request("PATCH", f"/transcripts/{ID}", headers=KEY, json={"voiceRejected": {"S1": "Sasha"}}).json()
+    assert no["voiceHints"] == {} and no["voiceRejected"] == {"S1": ["Sasha"]}
+    client.request("PATCH", f"/transcripts/{ID}", headers=KEY, json={"speakers": {"S1": "Sasha"}})
+    assert client.get("/voices", headers=KEY).json() == [{"name": "Sasha", "meetings": 2}]
+    assert client.request("DELETE", "/voices", headers={**KEY, **PAGE}).status_code == 403
+    assert client.request("DELETE", "/voices", headers=KEY, json={"name": "Sasha"}).status_code == 200
+    assert client.get("/voices", headers=KEY).json() == []
+    assert client.request("DELETE", "/voices", headers=KEY).status_code == 200
+    assert not voices.known.path.exists()

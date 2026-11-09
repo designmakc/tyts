@@ -9,7 +9,8 @@
 //
 // stderr: "progress <done> <total>" lines; "missing models: <names>" and exit 3; any other
 // error as one line and exit 1.
-// stdout: {"turns": [[start, end, "S1"], ...], "speakers": <count>}, seconds to 0.01, in time order.
+// stdout: {"turns": [[start, end, "S1"], ...], "speakers": <count>, "embeddings": {"S1": [256 numbers], ...}},
+// seconds to 0.01, in time order; each speaker's voice print is the mean embedding of their turns.
 @preconcurrency import CoreML
 import FluidAudio
 import Foundation
@@ -134,7 +135,12 @@ do {
         String(format: "[%.2f, %.2f, ", $0.startTimeSeconds, $0.endTimeSeconds) + label($0.speakerId) + "]"
     }
     let count = Set(segments.map(\.speakerId)).count
-    print("{\"turns\": [\(turns.joined(separator: ", "))], \"speakers\": \(count)}")
+    // Each speaker's voice print: the mean embedding of their turns (256 numbers), for Tyts's
+    // voices recognised across meetings (engine/voices.py). Never written anywhere by the helper.
+    let prints = (result.speakerDatabase ?? [:]).sorted { $0.key < $1.key }.map { id, vector in
+        label(id) + ": [" + vector.map { String(format: "%.5f", $0) }.joined(separator: ", ") + "]"
+    }
+    print("{\"turns\": [\(turns.joined(separator: ", "))], \"speakers\": \(count), \"embeddings\": {\(prints.joined(separator: ", "))}}")
 } catch {
     fail("diarization failed: \(error.localizedDescription)")
 }

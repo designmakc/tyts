@@ -62,6 +62,10 @@ export type Transcript = {
   shots?: Shot[]
   /** Names read off the call's screen (callNames), by speaker: offered until applied or dismissed. */
   speakerHints?: Record<string, string>
+  /** Names offered by the sound of a voice from earlier meetings (engine/voices.py), by speaker: a suggestion, never a name by itself. */
+  voiceHints?: Record<string, { name: string; score: number }>
+  /** Names offered by voice the person said no to, by speaker: never offered for that speaker again. */
+  voiceRejected?: Record<string, string[]>
   /** The person's own notes on the recording (the calls window's Notes). */
   notes?: string
 }

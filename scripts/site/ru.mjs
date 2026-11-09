@@ -174,7 +174,7 @@ export default {
     [`<h3>Your talks with the duck</h3>`, `<h3>Ваши разговоры с Тиць</h3>`],
     [`<p>The duck answers on your own graphics card. Talks are kept on this computer for 30 days, and what you write about yourself never leaves it.</p>`, `<p>Тиць отвечает на вашей собственной видеокарте. Разговоры хранятся на этом компьютере 30 дней, а то, что вы пишете о себе, никогда его не покидает.</p>`],
     [`<h3>Your voice and transcripts</h3>`, `<h3>Ваш голос и расшифровки</h3>`],
-    [`<p>Recognized and edited on this computer. A compressed copy of the sound stays beside the transcript; the source file is never copied.</p>`, `<p>Распознаются и правятся на этом компьютере. Сжатая копия звука лежит рядом с расшифровкой; исходный файл никогда не копируется.</p>`],
+    [`<p>Recognized and edited on this computer. A compressed copy of the sound stays beside the transcript; the source file is never copied. The voice prints of the speakers you name stay only in Tyts’s own folder, and you can forget them on the Recordings page.</p>`, `<p>Распознаются и правятся на этом компьютере. Сжатая копия звука лежит рядом с расшифровкой; исходный файл никогда не копируется. Отпечатки голосов говорящих, которых вы назвали, лежат только в папке Tyts, и их можно забыть на странице записей.</p>`],
     [`<h3>Your clipboard</h3>`, `<h3>Ваш буфер обмена</h3>`],
     [`</svg>As it was</span>`, `</svg>Как и был</span>`],
     [`<p>Every copy Tyts borrows is put back, and Windows' clipboard history never sees Tyts's own copies.</p>`, `<p>Всё, что Тиць берёт из буфера, возвращается на место, а журнал буфера Windows никогда не видит копий Тиць.</p>`],

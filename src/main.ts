@@ -87,6 +87,7 @@ import { paragraphsOf } from './ocrtext'
 import { clipGroups, menuGroups, rewriteGroups, type MenuAction } from './menu'
 import { createRewriter, REWRITE_MOST_CHARS, type Rewriter, type RewriteStyle } from './rewrite'
 import { TytsMenu } from './menuwindow'
+import { SelectionBar, type BarSelection } from './barwindow'
 import { placeByTray, placeNear, resize, type Point } from './placement'
 import type { AppTab, AppView, BusyPart, EdgeView, CardKind, CardState, CheckResult, DictationMode, DictionaryStatus, GlossMissing, HostCall, HostVoice, Refused, StorageId, StoragePart, StorageView, TalkWindowView, TextResult, ToHost, ToView, TranslationState, TrayCommand, TrayView, ViewConfig } from './protocol'
 import { draftsIn, englishHtml, textOutHtml, translationHtml } from './render'
@@ -126,7 +127,7 @@ import manifest from './voice-manifest.json'
 import { vocabularyFor } from './vocabulary'
 import { VoiceStore, type VoiceManifest } from './voicestore'
 import { wordDiff } from './worddiff'
-import { focus, focusedElement, release, saysNothingSelected, selectedText } from './uia'
+import { focus, focusedElement, focusedIsPassword, release, saysNothingSelected, selectedText } from './uia'
 import { allowForeground, ctrlHeld, handleOf, inFront, keysLetGo, macConcealed, pressCopy, pressPaste, pressSelectBack, watchClipboard, watchRendering } from './winclip'
 import {
   privateCopy,
@@ -202,6 +203,7 @@ const KEYBOARD_SETTINGS: readonly (keyof Settings)[] = [
   'layoutBadge',
   'trayLayout',
   'quietFullScreen',
+  'selectionBar',
   'paused',
 ]
 /** The links the About tab may open. */
@@ -317,6 +319,8 @@ let balloonClick: (() => void) | undefined
 let keyboard: KeyboardHelper
 /** The menu on one key, by the text cursor. */
 let oneKeyMenu: TytsMenu | undefined
+/** The bar by a selection (settings.selectionBar). */
+let selectionBar: SelectionBar | undefined
 let keyboardTrouble: string | undefined
 /** On a Mac without Accessibility the keyboard thread sees no key: the dictation keys held to talk go back to Electron's toggle. */
 let keysUnseen = false
@@ -514,6 +518,7 @@ function saveSettings(patch: Partial<Settings>): void {
   if ('talkOnTop' in patch) talkWin?.setAlwaysOnTop(settings.talkOnTop)
   if ('callAuto' in patch) void callAutoChanged()
   if ('edgePanel' in patch) applyEdge()
+  if (('selectionBar' in patch || 'paused' in patch) && (!settings.selectionBar || settings.paused)) selectionBar?.gone()
   refreshTray()
   if (shown) postCard()
   postApp()
@@ -1678,6 +1683,7 @@ function setCardHeight(px: number): void {
 function onMessage(message: ToHost, page: Page): void {
   if (dictation?.onMessage(message)) return
   if (oneKeyMenu?.onMessage(message)) return
+  if (selectionBar?.onMessage(message)) return
   const asker: VoicePage = page === 'talk' ? 'talk' : 'card'
   switch (message.type) {
     case 'clearDictation':
@@ -3253,6 +3259,33 @@ function runMenu(action: MenuAction): void {
   }
 }
 
+/**
+ * Whether the program in front has a selection, for the bar by a selection: a Mac asks Accessibility through the
+ * keyboard helper (where it ends too), Windows UI Automation (the mouse-up's point then). Never the clipboard;
+ * a password field, or a program that will not say, has none. Only the length is ever looked at, and not logged.
+ */
+async function barSelection(): Promise<BarSelection> {
+  if (onMac) {
+    const sel = await keyboard.macSelection()
+    return { ok: sel.ok && !sel.secret, ...(sel.at ? { at: sel.at } : {}) }
+  }
+  try {
+    if (focusedIsPassword() !== false) return { ok: false }
+  } catch {
+    return { ok: false }
+  }
+  const field = focusedField()
+  const ok = selectionIn(field).length > 0
+  releaseField(field)
+  return { ok }
+}
+
+/** The bar's Copy: the program's own copy of its selection, as the person's Ctrl+C (Cmd+C) would. */
+function copySelection(): void {
+  if (onMac) return void macKeystroke('c')
+  void pressCopy().catch(error => console.warn('Tyts: could not copy the selection', error))
+}
+
 /** The pause key: Kryakl paused, or back. */
 function togglePause(): void {
   saveSettings({ paused: !settings.paused })
@@ -4585,6 +4618,10 @@ function start(): void {
     },
     menuKey: code => oneKeyMenu?.key(code),
     menuClosed: () => oneKeyMenu?.closed(),
+    selected: point => {
+      if (settings.selectionBar && !settings.paused) selectionBar?.selected(point)
+    },
+    barGone: () => selectionBar?.gone(),
     failed: message => {
       keyboardTrouble = message
       // 'macAccess' (kbdmac-worker.ts) until Accessibility is given; '' once the thread sees keys.
@@ -4639,6 +4676,16 @@ function start(): void {
     keys: (on, codes, rect) => keyboard.menu(on, codes, rect),
     run: runMenu,
     log: win => logPageErrors(win, 'menu'),
+  })
+  selectionBar = new SelectionBar({
+    page: path.join(app.getAppPath(), 'media', 'bar.html'),
+    preload: path.join(__dirname, 'preload.js'),
+    query: pageQuery,
+    lang: () => settings.uiLanguage,
+    ask: barSelection,
+    keys: (on, rect) => keyboard.bar(on, rect),
+    run: action => (action === 'copy' ? copySelection() : runMenu(action)),
+    log: win => logPageErrors(win, 'bar'),
   })
   applyKeyboard()
   card = createCard()

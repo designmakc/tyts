@@ -19,7 +19,7 @@ const CALL_AUTO: readonly CallAuto[] = ['off', 'ask', 'record']
 /** A program by its .exe name (lower case): the parts of the keyboard helper left out there, and the layout it starts in ('' for none). */
 export type AppRule = { exe: string; off: AppPart[]; layout: string }
 
-export const APP_PARTS: readonly AppPart[] = ['fix', 'switch', 'badge', 'keys']
+export const APP_PARTS: readonly AppPart[] = ['fix', 'switch', 'badge', 'keys', 'bar']
 
 export const TARGET = 'English'
 
@@ -92,6 +92,8 @@ export type Settings = {
   menuKey: string
   /** The clipboard history (cliphistory.ts): the texts copied lately kept to paste again; off unless the person turns it on. Its key opens the list by the text cursor. */
   clipboardHistory: boolean
+  /** A small bar of actions by a text selected with the mouse in another program (barwindow.ts); off by default. */
+  selectionBar: boolean
   clipboardKey: string
   /**
    * Keys (hotkey.ts; empty for none): listen to the selection (Kryakl copies it), or to a piece of the screen;
@@ -282,6 +284,7 @@ export const DEFAULTS: Settings = {
   cardHeight: 0,
   menuKey: '',
   clipboardHistory: false,
+  selectionBar: false,
   clipboardKey: '',
   selectKey: '',
   snipKey: 'Control+Alt+S',
@@ -502,6 +505,7 @@ export function normalize(raw: unknown, native = DEFAULTS.native): Settings {
     cardHeight: r.cardHeight === 0 ? 0 : within(r.cardHeight, CARD_HEIGHT, DEFAULTS.cardHeight),
     menuKey: key(r.menuKey, DEFAULTS.menuKey),
     clipboardHistory: flag(r.clipboardHistory, DEFAULTS.clipboardHistory),
+    selectionBar: flag(r.selectionBar, DEFAULTS.selectionBar),
     clipboardKey: key(r.clipboardKey, DEFAULTS.clipboardKey),
     selectKey: movedSelectKey(raw, r, key(r.selectKey, DEFAULTS.selectKey)),
     snipKey: key(r.snipKey, DEFAULTS.snipKey),

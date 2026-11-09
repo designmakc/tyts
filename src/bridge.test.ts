@@ -62,6 +62,19 @@ describe('a page that shows text from outside opens, removes and exports nothing
   })
 })
 
+describe('the bar by a selection', () => {
+  test('is a page of its own, sends its own messages and no other, and no other page sends them', () => {
+    expect(pageOf('file:///C:/app/media/bar.html?lang=ru')).toBe('bar')
+    for (const type of ['barReady', 'barSize', 'barPick']) {
+      expect(messageAllowed('bar', type), type).toBe(true)
+      for (const page of ['app', 'card', 'tray', 'dictation', 'talk', 'menu'] as const) expect(messageAllowed(page, type), `${page} ${type}`).toBe(false)
+    }
+    for (const type of ['saveSettings', 'copyText', 'speak', 'tray', 'menuPick', 'openLink']) expect(messageAllowed('bar', type), type).toBe(false)
+    expect(patchAllowed('bar', { selectionBar: false })).toBe(false)
+    expect(callAllowed('bar', { call: 'speech', method: 'POST', route: '/dictate' })).toBe(false)
+  })
+})
+
 describe('the menu on one key', () => {
   test('is a page of its own, sends its own messages and no other, and no other page sends them', () => {
     expect(pageOf('file:///C:/app/media/menu.html?lang=ru')).toBe('menu')

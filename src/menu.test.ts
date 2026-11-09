@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { clipGroups, menuGroups, menuKeyOf, rewriteGroups } from './menu'
+import { clipGroups, isBarAction, menuGroups, menuKeyOf, rewriteGroups } from './menu'
 import { placeMenu } from './placement'
 
 describe('the items', () => {
@@ -94,5 +94,12 @@ describe('where it opens', () => {
     expect(placeMenu({ x: 990, top: 100, bottom: 120 }, size, area).x).toBe(700)
     expect(placeMenu({ x: 5, top: 100, bottom: 120 }, size, area).x).toBe(0)
     expect(placeMenu({ x: -1900, top: 100, bottom: 120 }, size, { ...area, x: -1920 }).x).toBe(-1912)
+  })
+})
+
+describe('the bar by a selection', () => {
+  test('takes its row and the rewrite styles from its page, nothing else', () => {
+    for (const id of ['translate', 'listen', 'check', 'rewrite', 'copy', 'shorten', 'explain']) expect(isBarAction(id, 'ru'), id).toBe(true)
+    for (const id of ['fix', 'dictate', 'awake', 'clipboard', 'screen', 'inPlace', '']) expect(isBarAction(id, 'en'), id).toBe(false)
   })
 })

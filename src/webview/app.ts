@@ -2724,7 +2724,7 @@ function programsPage(v: AppView): HTMLElement[] {
   ].filter((n): n is HTMLElement => n !== null)
 }
 
-const APP_PART_NAMES: Record<AppPart, string> = { fix: t('kb.partFix'), switch: t('kb.partSwitch'), badge: t('kb.partBadge'), keys: t('kb.partKeys') }
+const APP_PART_NAMES: Record<AppPart, string> = { fix: t('kb.partFix'), switch: t('kb.partSwitch'), badge: t('kb.partBadge'), keys: t('kb.partKeys'), bar: t('kb.partBar') }
 
 /** What a program's rule does, in a few words. */
 function programNote(v: AppView, a: AppRule): string {
@@ -2747,6 +2747,7 @@ function programPage(v: AppView): HTMLElement[] {
     part('switch', 'keyboard', t('kb.switches'), t('kb.switchesNote')),
     part('badge', 'type', t('kb.shows'), t('kb.partBadge')),
     part('keys', 'circle-alert', t('kb.hears'), t('kb.hearsNote')),
+    part('bar', 'text-cursor', t('kb.barHere'), t('kb.barHereNote')),
     grp(t('kb.layout')),
     card(
       'globe',
@@ -3314,6 +3315,7 @@ function settingsPage(v: AppView): HTMLElement[] {
     toggleCard('power', t('settings.startWithWindows'), s.startWithWindows, startWithWindows => save({ startWithWindows })),
     toggleCard('pause', t('settings.pause'), s.paused, paused => save({ paused }), t('settings.pauseNote')),
     toggleCard('panel-bottom', t('edge.setting'), s.edgePanel, edgePanel => save({ edgePanel }), t('edge.settingNote')),
+    toggleCard('text-cursor', t('bar.setting'), s.selectionBar, selectionBar => save({ selectionBar }), t('bar.settingNote')),
     // Keep the computer awake (awake.ts): how long and whether the screen stays on; turned on from the tray or the menu on one key.
     card(
       'clock',

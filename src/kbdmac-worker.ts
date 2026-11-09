@@ -136,6 +136,8 @@ port.on('message', (message: KbdIn) =>
     // 9: V's key code.
     if (message.type === 'paste') return tell({ c: 'press', keys: [{ k: 9, cmd: true }] })
     if (message.type === 'caret') return tell({ c: 'caret', n: message.n, pid: front.pid })
+    if (message.type === 'sel') return tell({ c: 'sel', n: message.n, pid: front.pid })
+    if (message.type === 'bar') return typist.barShown(message.on, message.rect)
     // A config before the helper said hello waits for its layouts.
     pending = message.config
     if (layouts.size) configure(message.config)
@@ -156,6 +158,7 @@ type HelperEvent =
   | { e: 'field'; secret: boolean | null }
   | { e: 'caret'; n: number; x?: number; y?: number; h?: number }
   | { e: 'full'; on: boolean; name: string }
+  | { e: 'sel'; n: number; ok?: boolean; secret?: boolean; x?: number; y?: number; h?: number }
 
 type Access = { listen: boolean; post: boolean; ax: boolean }
 // What macOS lets the helper do, into tyts.log once per change (no characters).
@@ -217,6 +220,10 @@ function onHelper(event: HelperEvent): void {
     case 'caret': {
       const caret = macCaret(event)
       return send({ type: 'caret', n: event.n, ...(caret ? { caret } : {}) })
+    }
+    case 'sel': {
+      const at = macCaret(event)
+      return send({ type: 'sel', n: event.n, ok: event.ok === true, ...(event.secret ? { secret: true } : {}), ...(at ? { at } : {}) })
     }
     case 'full':
       full = event.on

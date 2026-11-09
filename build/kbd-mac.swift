@@ -3,11 +3,12 @@
 // whether to keep a key from the program (the key that ends a word being fixed, a
 // key of Kryakl's). It types what Node asks (`press`), switches the input source
 // (`select`), says whether the focused field is a password (`field`), plays a
-// sound, says where the text cursor is (`caret`), turns Caps Lock over, says when
+// sound, says where the text cursor is (`caret`) and whether there is a selection (`sel`), turns Caps Lock over, says when
 // the program in front fills a screen (`full`). Never a letter typed goes anywhere
 // but this pipe: it logs nothing.
 // `kbd-mac layouts` prints the keyboard layouts and exits; `kbd-mac caret` prints
-// the text cursor's place in the program in front (try `sleep 3; kbd-mac caret`).
+// the text cursor's place in the program in front (try `sleep 3; kbd-mac caret`);
+// `kbd-mac sel` whether it has a selection and where (never the text).
 // npm run dist:mac builds it into vendor/kbd-mac.
 
 import AppKit
@@ -144,6 +145,38 @@ func caretOf(_ pid: Int32) -> [String: Any] {
   return ["x": Int(rect.minX.rounded()), "y": Int(rect.minY.rounded()), "h": max(1, Int(rect.height.rounded()))]
 }
 
+/**
+ * Whether the program `pid` has a selection, for the bar by a selection: {ok, secret, x, y, h} with x the selection end's
+ * right edge and y…y+h the selection's lines (points, as `caretOf`); ok false when it shows none by Accessibility.
+ * Only whether there is text is told: the text itself never leaves this function.
+ */
+func selectionOf(_ pid: Int32) -> [String: Any] {
+  guard pid > 0 else { return ["ok": false] }
+  let app = AXUIElementCreateApplication(pid)
+  AXUIElementSetMessagingTimeout(app, 0.05)
+  guard let focused = ax(app, kAXFocusedUIElementAttribute), CFGetTypeID(focused) == AXUIElementGetTypeID() else {
+    if woken.insert(pid).inserted { AXUIElementSetAttributeValue(app, "AXManualAccessibility" as CFString, kCFBooleanTrue) }
+    return ["ok": false]
+  }
+  let element = focused as! AXUIElement
+  if IsSecureEventInputEnabled() || (ax(element, kAXSubroleAttribute) as? String) == "AXSecureTextField" { return ["ok": false, "secret": true] }
+  var range = CFRange()
+  let ranged = axRect(ax(element, kAXSelectedTextRangeAttribute), .cfRange).map { AXValueGetValue($0, .cfRange, &range) } ?? false
+  let text = (ax(element, kAXSelectedTextAttribute) as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+  guard !text.isEmpty || (ranged && range.length > 0) else { return ["ok": false] }
+  var o: [String: Any] = ["ok": true]
+  guard ranged, range.length > 0 else { return o }
+  let end = boundsOf(element, range.location + range.length - 1, 1)
+  let all = boundsOf(element, range.location, range.length)
+  guard let anchor = end ?? all else { return o }
+  let top = min(anchor.minY, all?.minY ?? anchor.minY)
+  let bottom = max(anchor.maxY, all?.maxY ?? anchor.maxY)
+  o["x"] = Int(anchor.maxX.rounded())
+  o["y"] = Int(top.rounded())
+  o["h"] = max(1, Int((bottom - top).rounded()))
+  return o
+}
+
 /** Accessibility and the window list can keep a caller waiting: asked off the tap's thread, one at a time. */
 let axQueue = DispatchQueue(label: "caret")
 
@@ -176,6 +209,15 @@ func fillsScreen(_ pid: Int32) -> Bool {
 switch CommandLine.arguments.dropFirst().first {
 case "layouts":
   print(String(data: try! JSONSerialization.data(withJSONObject: layouts()), encoding: .utf8)!)
+  exit(0)
+case "sel":
+  let pid = NSWorkspace.shared.frontmostApplication?.processIdentifier ?? 0
+  let started = Date()
+  var sel = selectionOf(pid)
+  if (sel["ok"] as? Bool) != true, sel["secret"] == nil { sel = selectionOf(pid) }
+  sel["app"] = NSWorkspace.shared.frontmostApplication?.localizedName ?? ""
+  sel["ms"] = Int(Date().timeIntervalSince(started) * 1000)
+  print(String(data: try! JSONSerialization.data(withJSONObject: sel), encoding: .utf8)!)
   exit(0)
 case "caret":
   let pid = NSWorkspace.shared.frontmostApplication?.processIdentifier ?? 0
@@ -280,6 +322,17 @@ Thread {
         answered.signal()
       }
       answerLock.unlock()
+      continue
+    }
+    if command == "sel" {
+      let n = c["n"] as? Int ?? 0
+      let pid = Int32(c["pid"] as? Int ?? 0)
+      axQueue.async {
+        var o = selectionOf(pid)
+        o["e"] = "sel"
+        o["n"] = n
+        emit(o)
+      }
       continue
     }
     if command == "caret" {

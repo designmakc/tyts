@@ -91,6 +91,8 @@ const trayPanel = { ...card, entryPoints: ['src/webview/tray.ts'], outfile: 'med
 const dictation = { ...card, entryPoints: ['src/webview/dictation.ts'], outfile: 'media/dictation.js' }
 /** Kryakl's menu on one key, by the text cursor. */
 const menuWindow = { ...card, entryPoints: ['src/webview/menu.ts'], outfile: 'media/menu.js' }
+/** The bar by a selection. */
+const barWindow = { ...card, entryPoints: ['src/webview/bar.ts'], outfile: 'media/bar.js' }
 /** The call recording's panel: records the computer's sound and the microphone. */
 const captureWindow = { ...card, entryPoints: ['src/webview/capture.ts'], outfile: 'media/capture.js' }
 /** The talk window: the talk with the duck. */
@@ -102,7 +104,7 @@ const edgePanel = { ...card, entryPoints: ['src/webview/edge.ts'], outfile: 'med
 /** The badge's audio thread: the microphone as 16 kHz samples for the engine (an AudioWorklet, loaded by URL). */
 const pcmWorklet = { ...card, entryPoints: ['src/webview/pcm-worklet.ts'], outfile: 'media/pcm-worklet.js' }
 
-const all = [main, preload, voice, translator, keyboard, keyboardMac, field, card, appWindow, trayPanel, dictation, menuWindow, talkWindow, callsWindow, edgePanel, captureWindow, pcmWorklet]
+const all = [main, preload, voice, translator, keyboard, keyboardMac, field, card, appWindow, trayPanel, dictation, menuWindow, barWindow, talkWindow, callsWindow, edgePanel, captureWindow, pcmWorklet]
 if (watch) {
   const contexts = await Promise.all(all.map(o => context(o)))
   await Promise.all(contexts.map(c => c.watch()))

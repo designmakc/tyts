@@ -1,0 +1,114 @@
+/* The bar by a selection: a pill of icon buttons in a transparent window that
+   never takes the keyboard (barwindow.ts), its tooltip in a band beside it, on
+   the side away from the text. Colors and faces are theme.css's. */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: transparent;
+  overflow: hidden;
+  user-select: none;
+  cursor: default;
+  font: 400 var(--t-small) / 1.2 var(--font);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+.sb {
+  display: flex;
+  width: 100vw;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+}
+
+.sb.above {
+  flex-direction: column-reverse;
+}
+
+.sb.in {
+  animation: in 140ms ease-out forwards;
+}
+
+@keyframes in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb.in {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 36px;
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  white-space: nowrap;
+}
+
+.pill button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  min-width: 28px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--muted);
+  font: inherit;
+}
+
+.pill button:hover {
+  background: var(--hover);
+  color: var(--strong);
+}
+
+.pill button .lu {
+  width: 18px;
+  height: 18px;
+}
+
+.pill .sep {
+  width: 1px;
+  height: 18px;
+  margin: 0 2px;
+  background: var(--border);
+}
+
+.tip {
+  height: 26px;
+  display: flex;
+  align-items: center;
+}
+
+.tip span {
+  padding: 3px 8px;
+  border-radius: var(--r-sm);
+  background: var(--strong);
+  color: var(--surface);
+  white-space: nowrap;
+}
+
+.tip:empty {
+  visibility: hidden;
+}

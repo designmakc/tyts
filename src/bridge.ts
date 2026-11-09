@@ -9,9 +9,9 @@ import * as path from 'node:path'
 
 import type { HostCall, ToHost } from './protocol'
 
-export type Page = 'app' | 'calls' | 'edge' | 'card' | 'tray' | 'dictation' | 'talk' | 'menu' | 'capture' | 'other'
+export type Page = 'app' | 'calls' | 'edge' | 'card' | 'tray' | 'dictation' | 'talk' | 'menu' | 'bar' | 'capture' | 'other'
 
-const PAGES: Record<string, Page> = { 'app.html': 'app', 'calls.html': 'calls', 'edge.html': 'edge', 'card.html': 'card', 'tray.html': 'tray', 'dictation.html': 'dictation', 'talk.html': 'talk', 'menu.html': 'menu', 'capture.html': 'capture' }
+const PAGES: Record<string, Page> = { 'app.html': 'app', 'calls.html': 'calls', 'edge.html': 'edge', 'card.html': 'card', 'tray.html': 'tray', 'dictation.html': 'dictation', 'talk.html': 'talk', 'menu.html': 'menu', 'bar.html': 'bar', 'capture.html': 'capture' }
 
 /** The page a window shows, by its file (media/<page>.html, with or without a query); 'other' for anything else. */
 export function pageOf(url: string): Page {
@@ -91,6 +91,9 @@ const TALK_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>([
 /** Messages only the menu on one key sends, and the only ones it may: it is drawn over any program, so it asks for nothing but its own items. */
 const MENU_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>(['menuReady', 'menuHeight', 'menuHover', 'menuPick'])
 
+/** Messages only the bar by a selection sends, and the only ones it may: drawn over any program, it only says which button was clicked. */
+const BAR_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>(['barReady', 'barSize', 'barPick'])
+
 /** Messages only the panel at the top of the screen sends; it may also run the tray's commands and save its switches, nothing else. */
 const EDGE_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>(['edgeReady', 'edgeHeight', 'edgeAct'])
 
@@ -101,6 +104,8 @@ export function messageAllowed(page: Page, type: string): boolean {
   if (page === 'other') return false
   if (MENU_ONLY.has(type as ToHost['type'])) return page === 'menu'
   if (page === 'menu') return false
+  if (BAR_ONLY.has(type as ToHost['type'])) return page === 'bar'
+  if (page === 'bar') return false
   if (CAPTURE_ONLY.has(type as ToHost['type'])) return page === 'capture'
   if (page === 'capture') return false
   if (EDGE_ONLY.has(type as ToHost['type'])) return page === 'edge'

@@ -124,6 +124,17 @@ export function menuGroups(lang: UiLanguage, speech: boolean, clips = false): Me
     .filter(group => group.length > 0)
 }
 
+/** What a button of the bar by a selection does: the menu's actions on a selection (main.ts runMenu), and Copy. */
+export type BarAction = 'translate' | 'listen' | 'check' | 'rewrite' | 'copy' | RewriteStyle
+
+/** The bar's row, in order; Rewrite… opens its own row of the rewrite styles (`rewriteGroups`). */
+export const BAR_ROW: readonly BarAction[] = ['translate', 'listen', 'check', 'rewrite', 'copy']
+
+/** Whether a page's word names a button of the bar (its row or Rewrite…'s). */
+export function isBarAction(id: string, lang: UiLanguage): id is BarAction {
+  return (BAR_ROW as readonly string[]).includes(id) || REWRITE[lang].some(([style]) => style === id)
+}
+
 /** The keys the menu takes besides its letters: ↑ ↓ move, Enter picks, Esc closes. */
 export const MENU_MOVES: ReadonlySet<string> = new Set(['ArrowUp', 'ArrowDown', 'Enter', 'Escape'])
 

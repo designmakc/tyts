@@ -442,6 +442,8 @@ export type ToView =
   | { type: 'edge'; view: EdgeView }
   /** Kryakl's menu on one key: what it draws now. */
   | { type: 'menu'; view: MenuView }
+  /** The bar by a selection: what it draws now (`n` grows with each showing, which fades it in again). */
+  | { type: 'bar'; view: BarView }
   | { type: 'natural'; state: NaturalState }
   /** One sentence of reading `id` in the natural voice: 24 kHz audio and when each of its words is spoken. */
   | { type: 'naturalAudio'; id: number; index: number; samples: Float32Array; words: WordTime[] }
@@ -452,6 +454,9 @@ export type DictationMode = 'type' | 'english' | 'note' | 'check'
 
 /** The menu on one key: its groups of items by letter and name, the one lit, and the one just picked (-1 for none); both count through all the groups. */
 export type MenuView = { groups: { letter: string; label: string }[][]; lit: number; fired: number; foot?: string }
+
+/** The bar by a selection: its row of buttons (an icon each, its tooltip), Rewrite…'s row of words, the way back, and whether it is over the text (its tooltip then on top). */
+export type BarView = { row: { id: string; tip: string }[]; sub: { id: string; label: string }[]; back: string; above: boolean; n: number }
 
 export type ToHost =
   | { type: 'lookup'; word: string }
@@ -527,6 +532,10 @@ export type ToHost =
   | { type: 'menuHeight'; px: number }
   | { type: 'menuHover'; index: number }
   | { type: 'menuPick'; index: number }
+  // The bar by a selection (barwindow.ts): its page is ready; its pill is this big, in CSS pixels; a button was clicked.
+  | { type: 'barReady' }
+  | { type: 'barSize'; width: number; height: number }
+  | { type: 'barPick'; id: string }
   // The tray's panel.
   | { type: 'trayReady' }
   | { type: 'edgeReady' }

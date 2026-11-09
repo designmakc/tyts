@@ -105,3 +105,30 @@ export function badgeOffset(bounds: Rect, area: Rect): { dx: number; dy: number 
     dy: Math.round(bounds.y + bounds.height - (area.y + area.height - BADGE_GAP)),
   }
 }
+
+const BAR_GAP = 8
+
+/**
+ * The bar by a selection: its pill (`size`) centred on the selection's end (`at.x`),
+ * BAR_GAP above its lines (`top`), below them (`bottom`) where the work area has no room
+ * for the pill and its tooltip's `band`. The window is `wide` at least (a tooltip may be
+ * wider than the pill), the pill in its middle, the band on the side away from the text
+ * (`above`: the bar is over the text, its band on top). `pill`: the pill alone.
+ */
+export function placeBar(
+  at: { x: number; top: number; bottom: number },
+  size: { width: number; height: number },
+  band: number,
+  wide: number,
+  area: Rect,
+): { window: Rect; pill: Rect; above: boolean } {
+  const width = Math.min(Math.max(size.width, wide), area.width)
+  const height = size.height
+  const x = Math.round(Math.min(Math.max(at.x - width / 2, area.x), area.x + area.width - width))
+  const up = at.top - BAR_GAP - height
+  const above = up - band >= area.y
+  const y = Math.round(above ? up : Math.min(at.bottom + BAR_GAP, area.y + area.height - height - band))
+  const pillWidth = Math.min(size.width, width)
+  const pill = { x: Math.round(x + (width - pillWidth) / 2), y, width: pillWidth, height }
+  return { window: { x, y: above ? y - band : y, width, height: height + band }, pill, above }
+}

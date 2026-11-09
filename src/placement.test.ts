@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { badgeOffset, flightPoint, placeBadge, placeByTray, placeNear, resize } from './placement'
+import { badgeOffset, flightPoint, placeBadge, placeBar, placeByTray, placeNear, resize } from './placement'
 
 const area = { x: 0, y: 0, width: 1920, height: 1040 }
 const size = { width: 440, height: 200 }
@@ -82,5 +82,36 @@ describe('placeBadge', () => {
   })
   test('kept inside a smaller screen', () => {
     expect(placeBadge({ dx: 5000, dy: 300 }, badge, area)).toEqual({ x: 1560, y: 976, width: 360, height: 64 })
+  })
+})
+
+describe('placeBar', () => {
+  const pill = { width: 200, height: 36 }
+  test('centred on the selection end, 8 px above its lines, the tooltip band on top', () => {
+    expect(placeBar({ x: 500, top: 300, bottom: 340 }, pill, 26, 0, area)).toEqual({
+      window: { x: 400, y: 230, width: 200, height: 62 },
+      pill: { x: 400, y: 256, width: 200, height: 36 },
+      above: true,
+    })
+  })
+
+  test('below the lines when the top of the screen has no room, the band under it', () => {
+    expect(placeBar({ x: 500, top: 40, bottom: 60 }, pill, 26, 0, area)).toEqual({
+      window: { x: 400, y: 68, width: 200, height: 62 },
+      pill: { x: 400, y: 68, width: 200, height: 36 },
+      above: false,
+    })
+  })
+
+  test('a window wider than the pill for its tooltip keeps the pill in its middle', () => {
+    const r = placeBar({ x: 500, top: 300, bottom: 340 }, pill, 26, 300, area)
+    expect([r.window.x, r.window.width, r.pill.x, r.pill.width]).toEqual([350, 300, 400, 200])
+  })
+
+  test('kept inside the work area at its edges', () => {
+    const r = placeBar({ x: 1910, top: 1030, bottom: 1040 }, pill, 26, 0, area)
+    expect(r.pill.x).toBe(1720)
+    expect(r.above).toBe(true)
+    expect(placeBar({ x: 5, top: 30, bottom: 1035 }, pill, 26, 0, area).pill).toEqual({ x: 0, y: 978, width: 200, height: 36 })
   })
 })

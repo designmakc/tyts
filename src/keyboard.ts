@@ -71,6 +71,10 @@ export type KeyboardEvents = {
   menuKey(code: string): void
   /** Another key, a click elsewhere or another window closed the menu. */
   menuClosed(): void
+  /** A selection made with the mouse ended at this point (the hooks' pixels): the bar by a selection may show. */
+  selected(point: { x: number; y: number }): void
+  /** A key, a click elsewhere, the wheel or another window ended the bar by a selection. */
+  barGone(): void
   failed(message: string): void
 }
 
@@ -97,6 +101,9 @@ export class KeyboardHelper {
   private badgeTimer: NodeJS.Timeout | undefined
   /** A Mac: the badges waiting for the text cursor's place, by question; only the latest is shown (`badgeTurn`). */
   private carets = new Map<number, (caret?: Caret) => void>()
+  /** A Mac: the questions whether there is a selection, by number. */
+  private sels = new Map<number, (answer: { ok: boolean; secret?: boolean; at?: Caret }) => void>()
+  private selTurn = 0
   private badgeTurn = 0
   private shorts = new Map<string, string>()
   /** A part of the settings needs the thread; a key field waits for a key (and stops waiting by itself after RECORD_MS). */
@@ -160,7 +167,8 @@ export class KeyboardHelper {
     const on = !s.paused
     const layoutKeys = on && s.switchOn ? s.layoutKeys : {}
     const apps = Object.fromEntries(s.apps.map(a => [a.exe, { off: a.off, layout: a.layout }]))
-    const watched = on && (s.autoFix || s.layoutBadge || s.trayLayout || s.switchSound || Object.keys(layoutKeys).length > 0 || s.apps.some(a => a.layout))
+    const bar = on && s.selectionBar
+    const watched = on && (bar || s.autoFix || s.layoutBadge || s.trayLayout || s.switchSound || Object.keys(layoutKeys).length > 0 || s.apps.some(a => a.layout))
     this.needed = Object.keys(keys).length > 0 || watched
     if (!this.needed && !this.recording) return this.stop()
     const config: KbdConfig = {
@@ -185,6 +193,7 @@ export class KeyboardHelper {
       learn: on && s.learn,
       ...learned,
       quietFullScreen: s.quietFullScreen,
+      bar,
       words: Object.fromEntries(FIX_LANGUAGES.map(code => [code, path.join(this.wordsDir, `${code}.txt`)])),
     }
     // Kept for a key field alone: no part of it acts (nothing is fixed, so nothing is learned).
@@ -237,6 +246,25 @@ export class KeyboardHelper {
   /** The menu on one key opened or closed: while open the thread takes its keys (`codes`), and knows where it is on the screen (`rect`, physical pixels). */
   menu(on: boolean, codes: string[] = [], rect?: Rect): void {
     this.post(rect ? { type: 'menu', on, codes, rect } : { type: 'menu', on, codes })
+  }
+
+  /** The bar by a selection shown (`rect`, the hooks' pixels) or gone. */
+  bar(on: boolean, rect?: Rect): void {
+    this.post(rect ? { type: 'bar', on, rect } : { type: 'bar', on })
+  }
+
+  /** A Mac: whether the program in front has a selection and where (Accessibility, through the helper); none within `ms`, none. */
+  macSelection(ms = 400): Promise<{ ok: boolean; secret?: boolean; at?: Caret }> {
+    if (!this.worker) return Promise.resolve({ ok: false })
+    const n = ++this.selTurn
+    return new Promise(resolve => {
+      const done = (answer: { ok: boolean; secret?: boolean; at?: Caret }) => {
+        if (this.sels.delete(n)) resolve(answer)
+      }
+      this.sels.set(n, done)
+      this.post({ type: 'sel', n })
+      setTimeout(() => done({ ok: false }), ms)
+    })
   }
 
   /** The fix key's action, asked by the menu. */
@@ -353,6 +381,15 @@ export class KeyboardHelper {
         return
       case 'menuClosed':
         this.events.menuClosed()
+        return
+      case 'selected':
+        this.events.selected({ x: message.x, y: message.y })
+        return
+      case 'barGone':
+        this.events.barGone()
+        return
+      case 'sel':
+        this.sels.get(message.n)?.({ ok: message.ok, ...(message.secret ? { secret: true } : {}), ...(message.at ? { at: message.at } : {}) })
         return
       case 'note':
         console.warn(`Tyts keyboard: ${message.text}`)

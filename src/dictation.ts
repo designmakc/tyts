@@ -17,6 +17,7 @@ import * as path from 'node:path'
 import { BrowserWindow, globalShortcut, screen, shell } from 'electron'
 
 import { openable } from './bridge'
+import { applyCorrections, type Correction } from './corrections'
 import type { DictationLog } from './dictationlog'
 import { frameWindow } from './dwm'
 import { HoldToTalk } from './holdtalk'
@@ -57,6 +58,8 @@ export type DictationOptions = {
   edit: (text: string, signal: AbortSignal) => Promise<{ text: string; note?: string }>
   /** Whether a phrase goes through text editing now. */
   editing: () => boolean
+  /** The pairs learned from the person's fixes (corrections.ts), put right in a phrase before anything else. */
+  corrections: () => readonly Correction[]
   /** A phrase is starting: the model loads while it is spoken. */
   warm: () => void
   /** Practice: a phrase spoken in English, shown checked (Check my English) instead of typed. */
@@ -302,6 +305,8 @@ export class Dictation {
       this.over()
       return this.o.check(text)
     }
+    // Practice is left as said: a fix there would hide the person's own mistake.
+    text = applyCorrections(text, this.o.corrections())
     try {
       // Whisper unsure, or a model that does not say (Parakeet): the language by the text's letters and words.
       const spoken = language && sure >= 0.5 ? language : this.o.languageOf(text)

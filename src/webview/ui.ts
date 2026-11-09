@@ -518,7 +518,7 @@ export function wordChips(items: ChipItem[], sep = ''): HTMLElement {
 }
 
 /** A sentence of a list on one line: the text, what goes with it, quiet; a tap on it does `open`, its cross shows under the pointer and on focus. */
-export type LineItem = { text: string | HTMLElement; more?: string; title?: string; open?: () => void; remove?: () => void; removeLabel?: string }
+export type LineItem = { text: string | HTMLElement; more?: string; title?: string; open?: () => void; remove?: () => void; removeLabel?: string; edit?: () => void; editLabel?: string }
 
 export function lineList(items: LineItem[], cls = ''): HTMLElement {
   return el(
@@ -530,6 +530,7 @@ export function lineList(items: LineItem[], cls = ''): HTMLElement {
         { class: 'ln', title: x.title },
         x.open ? el('button', { class: 'la', onclick: x.open }, x.text) : el('span', { class: 'la' }, x.text),
         x.more ? el('span', { class: 'lb' }, x.more) : null,
+        x.edit ? el('button', { class: 'wdel', title: x.editLabel, 'aria-label': x.editLabel, onclick: x.edit }, lucide('pencil-line')) : null,
         x.remove ? el('button', { class: 'wdel', title: x.removeLabel ?? t('ui.forget'), 'aria-label': x.removeLabel ?? t('ui.forget'), onclick: x.remove }, lucide('x')) : null,
       ),
     ),

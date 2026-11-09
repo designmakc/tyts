@@ -3206,9 +3206,12 @@ function macOwnWrites(ms: number): void {
   ownClipboardUntil = Math.max(ownClipboardUntil, Date.now() + ms + OWN_CLIPBOARD_MS)
 }
 
+/** The physical keys of Cmd+C and Cmd+V (ANSI C and V). By key code, as `keystroke "c"` types nothing while a layout without Latin letters (Ukrainian, Russian) is on. */
+const MAC_KEY_CODES = { c: 8, v: 9 } as const
+
 /** A Cmd+letter sent to the program in front through System Events. */
-function macKeystroke(letter: string): Promise<void> {
-  return new Promise(resolve => execFile('osascript', ['-e', `tell application "System Events" to keystroke "${letter}" using command down`], () => resolve()))
+function macKeystroke(letter: keyof typeof MAC_KEY_CODES): Promise<void> {
+  return new Promise(resolve => execFile('osascript', ['-e', `tell application "System Events" to key code ${MAC_KEY_CODES[letter]} using command down`], () => resolve()))
 }
 
 /** How long the badge says there is nothing selected. */

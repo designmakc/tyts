@@ -1,4 +1,4 @@
-"""A rough draft of a call's words while it records (the owner, 2026-11-09, after comparing with Aissia).
+"""A rough draft of a call's words while it records (the owner, 2026-11-09, after comparing with a reference app).
 
 The call panel's chunks (MediaRecorder's WebM/Opus, 10 s slices, cut anywhere in
 the stream) go to disk as before and, when the recording asked for it, also into

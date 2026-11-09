@@ -1,4 +1,4 @@
-// Keep the computer awake (2026-11-09, as Aissia's "Keep Mac awake"): an
+// Keep the computer awake (2026-11-09, as in a reference app): an
 // Electron power save blocker for 1, 4 or 8 hours or until turned off, with
 // the screen let to turn off or kept on (settings awakeHours, awakeScreen).
 // Lives only for this run: a restart starts with the computer let to sleep.

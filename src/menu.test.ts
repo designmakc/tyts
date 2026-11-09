@@ -1,19 +1,28 @@
 import { describe, expect, test } from 'vitest'
 
-import { clipGroups, menuGroups, menuKeyOf } from './menu'
+import { clipGroups, menuGroups, menuKeyOf, rewriteGroups } from './menu'
 import { placeMenu } from './placement'
 
 describe('the items', () => {
   test('ten in five groups with the speech engine, the voice\'s group gone without it', () => {
     for (const lang of ['en', 'uk', 'ru'] as const) {
-      expect(menuGroups(lang, true).map(g => g.length)).toEqual([4, 2, 2, 1, 1])
-      expect(menuGroups(lang, false).map(g => g.length)).toEqual([4, 2, 1, 1])
+      expect(menuGroups(lang, true).map(g => g.length)).toEqual([4, 3, 2, 1, 1])
+      expect(menuGroups(lang, false).map(g => g.length)).toEqual([4, 3, 1, 1])
     }
   })
 
   test('in each language every letter is its own key', () => {
     for (const lang of ['en', 'uk', 'ru'] as const) {
       const items = menuGroups(lang, true).flat()
+      expect(new Set(items.map(i => i.code)).size).toBe(items.length)
+      expect(new Set(items.map(i => i.letter)).size).toBe(items.length)
+    }
+  })
+
+  test('Rewrite… has a list of its own, each letter its own key there too', () => {
+    for (const lang of ['en', 'uk', 'ru'] as const) {
+      const items = rewriteGroups(lang).flat()
+      expect(items.map(i => i.id)).toEqual(['shorten', 'polite', 'formal', 'natural', 'explain'])
       expect(new Set(items.map(i => i.code)).size).toBe(items.length)
       expect(new Set(items.map(i => i.letter)).size).toBe(items.length)
     }
@@ -54,12 +63,12 @@ describe('a key in the open menu', () => {
   const items = menuGroups('en', true).flat()
 
   test('a letter picks its item, wherever the light is', () => {
-    expect(menuKeyOf('KeyF', items, 0)).toEqual({ pick: 8 })
+    expect(menuKeyOf('KeyF', items, 0)).toEqual({ pick: 9 })
   })
 
   test('the arrows go round, Enter picks what is lit, Esc closes', () => {
-    expect(menuKeyOf('ArrowUp', items, 0)).toEqual({ lit: 9 })
-    expect(menuKeyOf('ArrowDown', items, 9)).toEqual({ lit: 0 })
+    expect(menuKeyOf('ArrowUp', items, 0)).toEqual({ lit: items.length - 1 })
+    expect(menuKeyOf('ArrowDown', items, items.length - 1)).toEqual({ lit: 0 })
     expect(menuKeyOf('Enter', items, 3)).toEqual({ pick: 3 })
     expect(menuKeyOf('Escape', items, 3)).toBe('close')
   })

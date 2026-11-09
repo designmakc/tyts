@@ -62,7 +62,7 @@ const SCHEMA = {
 
 const wordCount = (text: string) => text.split(/\s+/).filter(Boolean).length
 /** How much of a text's letters are Latin; 0.5 when it has none. */
-function latinShare(text: string): number {
+export function latinShare(text: string): number {
   const letters = text.match(/\p{L}/gu) ?? []
   return letters.length ? letters.filter(c => /[a-z]/i.test(c)).length / letters.length : 0.5
 }

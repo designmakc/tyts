@@ -6,9 +6,10 @@
 // prototype's table.
 
 import type { UiLanguage } from './i18n'
+import type { RewriteStyle } from './rewrite'
 
 /** What an item of the menu does (main.ts runMenu). */
-export type MenuAction = 'translate' | 'listen' | 'inPlace' | 'screen' | 'check' | 'talk' | 'dictate' | 'english' | 'fix' | 'awake' | 'clipboard'
+export type MenuAction = 'translate' | 'listen' | 'inPlace' | 'screen' | 'check' | 'talk' | 'rewrite' | 'dictate' | 'english' | 'fix' | 'awake' | 'clipboard' | RewriteStyle
 
 /** An item: what it does, the letter shown, and the key that picks it; `label` in place of the action's name (a clip of the clipboard history). */
 export type MenuItem = { id: MenuAction; letter: string; code: string; label?: string }
@@ -27,6 +28,7 @@ const MENU: Readonly<Record<UiLanguage, readonly (readonly Row[])[]>> = {
     [
       ['check', 'А', 'KeyF'],
       ['talk', 'Р', 'KeyH'],
+      ['rewrite', 'Е', 'KeyT'],
     ],
     [
       ['dictate', 'Г', 'KeyU'],
@@ -48,6 +50,7 @@ const MENU: Readonly<Record<UiLanguage, readonly (readonly Row[])[]>> = {
     [
       ['check', 'А', 'KeyF'],
       ['talk', 'Р', 'KeyH'],
+      ['rewrite', 'С', 'KeyC'],
     ],
     [
       ['dictate', 'Г', 'KeyU'],
@@ -69,6 +72,7 @@ const MENU: Readonly<Record<UiLanguage, readonly (readonly Row[])[]>> = {
     [
       ['check', 'C', 'KeyC'],
       ['talk', 'D', 'KeyD'],
+      ['rewrite', 'W', 'KeyW'],
     ],
     [
       ['dictate', 'V', 'KeyV'],
@@ -81,6 +85,34 @@ const MENU: Readonly<Record<UiLanguage, readonly (readonly Row[])[]>> = {
     [['awake', 'K', 'KeyK']],
   ],
 }
+
+/** Rewrite…'s own list, opened in the menu in place of its groups: what the local model does to the selection (rewrite.ts). */
+const REWRITE: Readonly<Record<UiLanguage, readonly Row[]>> = {
+  ru: [
+    ['shorten', 'С', 'KeyC'],
+    ['polite', 'В', 'KeyD'],
+    ['formal', 'О', 'KeyJ'],
+    ['natural', 'А', 'KeyF'],
+    ['explain', 'П', 'KeyG'],
+  ],
+  uk: [
+    ['shorten', 'С', 'KeyC'],
+    ['polite', 'В', 'KeyD'],
+    ['formal', 'О', 'KeyJ'],
+    ['natural', 'А', 'KeyF'],
+    ['explain', 'П', 'KeyG'],
+  ],
+  en: [
+    ['shorten', 'S', 'KeyS'],
+    ['polite', 'P', 'KeyP'],
+    ['formal', 'F', 'KeyF'],
+    ['natural', 'N', 'KeyN'],
+    ['explain', 'E', 'KeyE'],
+  ],
+}
+
+/** Rewrite…'s list for this language: the four that replace the selection, then Explain. */
+export const rewriteGroups = (lang: UiLanguage): MenuItem[][] => [REWRITE[lang].map(([id, letter, code]) => ({ id, letter, code }))]
 
 /** The voice's items, which need the speech engine. */
 const VOICE: ReadonlySet<MenuAction> = new Set(['dictate', 'english'])

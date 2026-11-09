@@ -27,6 +27,8 @@ import type { AppPart } from '../typist'
 // app.ts has a languageName of its own (a code's English name); the interface's is langName here.
 import { formatDate, languageName as langName, levelName, setUiLanguage, t, uiLanguage, type Key } from '../i18n'
 import { parseEntry } from '../vocabulary'
+import { menuGroups, rewriteGroups } from '../menu'
+import type { RewriteStyle } from '../rewrite'
 import { changesOf, wordDiff } from '../worddiff'
 import { addCorrection, findCorrection, type Found } from '../corrections'
 import { logo, tile } from './brand'
@@ -773,7 +775,7 @@ function finishMoment(): void {
 // was scrolled to, as a browser does.
 
 /** A page of a page: a long part of it, opened from a line with a chevron or a tile. */
-type SubId = 'card' | 'screen' | 'aboutYou' | 'talkWindow' | 'notes' | 'edit' | 'speakers' | 'fixing' | 'program' | 'languages' | 'forTranslate' | 'forCheck' | 'forDictate' | 'forTranscribe' | 'forVoice'
+type SubId = 'card' | 'screen' | 'aboutYou' | 'talkWindow' | 'rewrite' | 'notes' | 'edit' | 'speakers' | 'fixing' | 'program' | 'languages' | 'forTranslate' | 'forCheck' | 'forDictate' | 'forTranscribe' | 'forVoice'
 
 type Place = { name: Page; sub?: SubId }
 
@@ -878,6 +880,7 @@ const SUBS: Record<SubId, Sub> = {
   screen: { title: () => t('screen.how'), body: screenHowPage },
   aboutYou: { title: () => t('talkPage.aboutYou'), body: aboutYouPage },
   talkWindow: { title: () => t('act.talkWindow'), body: talkWindowPage },
+  rewrite: { title: () => t('rewrite.title'), body: rewritePage },
   notes: { title: () => t('dictate.notesFolder'), body: kbRows },
   edit: { title: () => t('edit.title'), body: editPage },
   speakers: { title: () => t('page.speakers'), body: speakerRows, valid: installed },
@@ -1062,6 +1065,7 @@ const SEARCHED: Place[] = [
   { name: 'translate', sub: 'screen' },
   { name: 'english', sub: 'aboutYou' },
   { name: 'english', sub: 'talkWindow' },
+  { name: 'english', sub: 'rewrite' },
   { name: 'voice', sub: 'notes' },
   { name: 'voice', sub: 'edit' },
   { name: 'layout', sub: 'fixing' },
@@ -2045,12 +2049,30 @@ function englishPage(v: AppView): HTMLElement[] {
     keyRow('typeCheckKey', t('check.typeKey'), t('check.typeKeyNote'), !v.keysOk.typeCheck),
     keyRow('practiceKey', t('act.say'), installed(v) ? t('act.sayNote') : t('talkPage.needsEngine'), !v.speech.keysOk.practice),
     aside('info', t('check.speechNote')),
+    navCard(null, t('rewrite.title'), t('rewrite.navNote'), null, () => openSub('rewrite'), 'rewrite'),
     grp(t('act.try')),
     tryIt(TRY_CHECK, how),
     enginePlate([
       { title: t('talkPage.model'), value: checkValue(v), open: () => go('models', 'forCheck') },
       { title: t('talkPage.voice'), value: voiceValue(v), open: () => go('models', 'forVoice') },
     ]),
+  ].filter((n): n is HTMLElement => n !== null)
+}
+
+/** English › Rewrite a selection: the menu's Rewrite… list (menu.ts, rewrite.ts), how to reach it, and its model. */
+function rewritePage(v: AppView): HTMLElement[] {
+  const s = v.settings
+  const letter = menuGroups(s.uiLanguage, true).flat().find(item => item.id === 'rewrite')?.letter ?? ''
+  const files = v.models[s.model]
+  return [
+    aside('info', s.menuKey ? t('rewrite.how', { keys: usage(s.menuKey), letter }) : t('rewrite.howNoKey', { letter })),
+    files.status === 'ready' ? null : aside('info', t('rewrite.needsModel', { name: levelName(s.model) })),
+    grp(t('rewrite.group')),
+    ...rewriteGroups(s.uiLanguage)
+      .flat()
+      .map(item => row(`${item.letter} · ${t(`menu.${item.id}`)}`, [t(`rewrite.${item.id as RewriteStyle}Note`)])),
+    aside('info', t('rewrite.keeps')),
+    enginePlate([{ title: t('rewrite.model'), value: checkValue(v), open: () => go('models', 'forCheck') }]),
   ].filter((n): n is HTMLElement => n !== null)
 }
 

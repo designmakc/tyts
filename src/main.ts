@@ -36,8 +36,9 @@ import * as path from 'node:path'
 
 import { execFile, execFileSync, spawn } from 'node:child_process'
 
-import { app, BrowserWindow, clipboard, desktopCapturer, dialog, globalShortcut, ipcMain, nativeImage, nativeTheme, Notification, powerMonitor, screen, session, shell, systemPreferences, Tray, type Rectangle } from 'electron'
+import { app, BrowserWindow, clipboard, desktopCapturer, dialog, globalShortcut, ipcMain, nativeImage, nativeTheme, Notification, powerMonitor, powerSaveBlocker, screen, session, shell, systemPreferences, Tray, type Rectangle } from 'electron'
 
+import { Awake } from './awake'
 import { backupSummary, makeBackup, readBackup, type BackupRead } from './backup'
 import { callAllowed, messageAllowed, openable, pageOf, patchAllowed, type Page } from './bridge'
 import { callApp, callTitle, runningProcessNames } from './callapps'
@@ -92,7 +93,7 @@ import { issueUrl, mailUrl, makeReport, namesHere, reportName, type ReportFacts 
 import { addKept, CARD_WIDTH, DEFAULTS, keptForm, LEVEL_NAMES, myLanguages, normalize, SUMMARY_OWN_MAX, TARGET, type LlmModel, type Settings, type TranslationLevel } from './settings'
 import { Speaker, listHostVoices } from './speech'
 import { SpeechHost } from './speechhost'
-import { MODELS as SPEECH_MODELS } from './speechplan'
+import { minutes as minutesText, MODELS as SPEECH_MODELS } from './speechplan'
 import { SPEECH_PORT } from './speechservice'
 import { recommendedModels } from './setup'
 import { cleanable, markAway, measureParts, partPackages, speechModelDir, splitSpeech, withUse, type Place, type UseContext } from './storage'
@@ -1938,6 +1939,10 @@ function onMessage(message: ToHost, page: Page): void {
     case 'captureOpenSettings':
       capture?.message(message)
       return
+    case 'captureCopyPhrase':
+      // Copied because the person asked, to paste into the call's chat: a plain copy, as the card's Copy.
+      clipboard.writeText(t('call.phrase'))
+      return
     case 'toggleCall':
       toggleCall()
       return
@@ -2045,8 +2050,9 @@ function onMessage(message: ToHost, page: Page): void {
       return
     }
     case 'tray':
-      hideTrayPanel()
       hideEdge()
+      // Keeping awake is a switch: the panel stays, as for Pause.
+      if (message.command !== 'awake') hideTrayPanel()
       runTrayCommand(message.command)
       return
   }
@@ -3123,6 +3129,9 @@ function runMenu(action: MenuAction): void {
       return dictation.press('english', via)
     case 'fix':
       return keyboard.fixNow()
+    case 'awake':
+      toggleAwake()
+      return keyboard.say(awake.on ? t('menu.awakeOn', { time: awakeLeft() || t('tray.awakeUntilOff') }) : t('menu.awakeOff'), NOTHING_SAY_MS)
   }
 }
 
@@ -3697,6 +3706,7 @@ function trayView(): TrayView {
     },
     speech: { installed: speech?.installed ?? false, recording: dictation?.state === 'recording', noteKey: settings.noteKey },
     call: capture?.busy ?? false,
+    awake: { on: awake.on, left: awakeLeft() },
     translator: activeTranslator().state(langCode(settings.native)).status,
     native: settings.native,
     version: app.getVersion(),
@@ -3912,7 +3922,7 @@ function tooltip(): string {
   if (settings.paused) return t('tray.tipPaused')
   const listen = settings.selectKey ? t('tray.tipListen', { keys: keyLabel(settings.selectKey) }) : ''
   const translate = settings.translateKey ? t('tray.tipTranslate', { key: keyLabel(settings.translateKey) }) : ''
-  return [t('app.name'), listen, translate].filter(Boolean).join(' · ')
+  return [t('app.name'), awake.on ? t('tray.tipAwake') : '', listen, translate].filter(Boolean).join(' · ')
 }
 
 /** The tray's pictures (scripts/icons.mjs): the duck for a light or a dark taskbar, faded while paused, and the red dot while recording. */
@@ -4075,7 +4085,26 @@ function runTrayCommand(command: TrayCommand): void {
     case 'quit':
       app.quit()
       return
+    case 'awake':
+      toggleAwake()
+      return
   }
+}
+
+/** Keep the computer awake (awake.ts), for this run only: from the tray's switch and the menu on one key. */
+const awake = new Awake(powerSaveBlocker, () => refreshTray())
+
+/** On for the hours chosen in Settings, or off. */
+function toggleAwake(): void {
+  if (awake.on) awake.stop()
+  else awake.start(settings.awakeHours, settings.awakeScreen)
+  log(`awake: ${awake.on ? `on, ${settings.awakeHours || 'until turned off'} h, screen ${settings.awakeScreen ? 'on' : 'may turn off'}` : 'off'}`)
+}
+
+/** How long it stays awake still, as the tray says it: empty until turned off. */
+function awakeLeft(): string {
+  const left = awake.left()
+  return left === null ? '' : minutesText(left)
 }
 
 /**

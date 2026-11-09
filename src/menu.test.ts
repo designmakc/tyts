@@ -4,10 +4,10 @@ import { menuGroups, menuKeyOf } from './menu'
 import { placeMenu } from './placement'
 
 describe('the items', () => {
-  test('nine in four groups with the speech engine, the voice\'s group gone without it', () => {
+  test('ten in five groups with the speech engine, the voice\'s group gone without it', () => {
     for (const lang of ['en', 'uk', 'ru'] as const) {
-      expect(menuGroups(lang, true).map(g => g.length)).toEqual([4, 2, 2, 1])
-      expect(menuGroups(lang, false).map(g => g.length)).toEqual([4, 2, 1])
+      expect(menuGroups(lang, true).map(g => g.length)).toEqual([4, 2, 2, 1, 1])
+      expect(menuGroups(lang, false).map(g => g.length)).toEqual([4, 2, 1, 1])
     }
   })
 
@@ -24,6 +24,7 @@ describe('the items', () => {
     expect(code('ru', 'translate')).toBe('KeyG')
     expect(code('ru', 'screen')).toBe('Quote')
     expect(code('uk', 'fix')).toBe('KeyD')
+    expect(code('ru', 'awake')).toBe('KeyY')
   })
 })
 
@@ -35,8 +36,8 @@ describe('a key in the open menu', () => {
   })
 
   test('the arrows go round, Enter picks what is lit, Esc closes', () => {
-    expect(menuKeyOf('ArrowUp', items, 0)).toEqual({ lit: 8 })
-    expect(menuKeyOf('ArrowDown', items, 8)).toEqual({ lit: 0 })
+    expect(menuKeyOf('ArrowUp', items, 0)).toEqual({ lit: 9 })
+    expect(menuKeyOf('ArrowDown', items, 9)).toEqual({ lit: 0 })
     expect(menuKeyOf('Enter', items, 3)).toEqual({ pick: 3 })
     expect(menuKeyOf('Escape', items, 3)).toBe('close')
   })

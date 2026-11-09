@@ -3,6 +3,7 @@
 // the word dictionaries are English ones.
 
 import { COPY_TWICE } from './hotkey'
+import { AWAKE_HOURS, type AwakeHours } from './awake'
 import { isUiLanguage, type UiLanguage } from './i18n'
 import { findLanguage, LANGUAGES } from './languages'
 import type { WordHintMode } from './protocol'
@@ -244,6 +245,10 @@ export type Settings = {
   introSeen: boolean
   /** Kryakl paused: all its keys and reactions off (Ctrl+C twice, the keyboard helper, dictation) until turned back on. */
   paused: boolean
+  /** Keep the computer awake (awake.ts): for how long when turned on from the tray or the menu, in hours, 0 until turned off; 1 by default. */
+  awakeHours: AwakeHours
+  /** While kept awake, the screen stays on too; off by default (the screen may turn off, the computer does not sleep). */
+  awakeScreen: boolean
   /** The settings file's keys are of this kind (`KEYS_VERSION`); an older file held Ctrl+C twice as a switch, `doubleCopy`. */
   keysVersion: number
   /**
@@ -343,6 +348,8 @@ export const DEFAULTS: Settings = {
   shareOfferSeen: [],
   introSeen: false,
   paused: false,
+  awakeHours: 1,
+  awakeScreen: false,
   keysVersion: 2,
   setupDone: true,
 }
@@ -558,6 +565,8 @@ export function normalize(raw: unknown, native = DEFAULTS.native): Settings {
     shareOfferSeen: strings(r.shareOfferSeen).filter((m): m is LlmModel => m === 'accurate' || m === 'most'),
     introSeen: flag(r.introSeen, DEFAULTS.introSeen),
     paused: flag(r.paused, DEFAULTS.paused),
+    awakeHours: AWAKE_HOURS.includes(r.awakeHours as AwakeHours) ? (r.awakeHours as AwakeHours) : DEFAULTS.awakeHours,
+    awakeScreen: flag(r.awakeScreen, DEFAULTS.awakeScreen),
     keysVersion: KEYS_VERSION,
   }
 }

@@ -343,6 +343,8 @@ export type TrayView = {
   speech: { installed: boolean; recording: boolean; noteKey: string }
   /** A call is being recorded: its row stops it. */
   call: boolean
+  /** Keep the computer awake (awake.ts): on, and for how long still ("3 h 20 min", or empty until turned off). */
+  awake: { on: boolean; left: string }
   /** The translator between English and the person's language (as `AppView.translator`). */
   translator: AppView['translator']
   native: string
@@ -373,7 +375,7 @@ export type EdgeView = {
 export type EdgeAct = { act: 'dictate' } | { act: 'again' } | { act: 'paste'; at: string } | { act: 'openCall'; id: string } | { act: 'setup' }
 
 /** What the tray's panel can do; each puts the panel away first. */
-export type TrayCommand = 'listenCopied' | 'translateCopied' | 'typeToTranslate' | 'checkEnglish' | 'talk' | 'listenScreen' | 'translateScreen' | 'note' | 'call' | 'transcripts' | 'transcribe' | 'vocabulary' | 'kept' | 'settings' | 'report' | 'open' | 'quit'
+export type TrayCommand = 'listenCopied' | 'translateCopied' | 'typeToTranslate' | 'checkEnglish' | 'talk' | 'listenScreen' | 'translateScreen' | 'note' | 'call' | 'transcripts' | 'transcribe' | 'vocabulary' | 'kept' | 'settings' | 'report' | 'open' | 'quit' | 'awake'
 
 /**
  * Why a word has no meanings: no dictionary exists for the person's language,
@@ -603,6 +605,8 @@ export type ToHost =
   | { type: 'captureOpenSettings' }
   /** The question "Record the call?" answered (callAuto 'ask'). */
   | { type: 'captureAnswer'; record: boolean }
+  /** "Copy a phrase for the chat": main puts its own sentence (call.phrase) on the clipboard; the page names no text. */
+  | { type: 'captureCopyPhrase' }
   /** From the app window's Recordings page: a call recording started, or stopped and saved. */
   | { type: 'toggleCall' }
   /** Makes (or makes again) a transcript's summary; main saves it in the engine. */

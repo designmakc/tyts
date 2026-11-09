@@ -94,6 +94,20 @@ function button(icon: Parameters<typeof lucide>[0], label: string, onclick: () =
 
 const link = (label: string, onclick: () => void) => el('button', { class: 'link', onclick }, label)
 
+/** "Copy a phrase for the chat" (main copies call.phrase), "Copied" for a moment after. */
+let copied: number | undefined
+function copyPhrase(): HTMLElement {
+  if (copied) return el('span', { class: 'link done', role: 'status' }, t('common.copied'))
+  return link(t('call.copyPhrase'), () => {
+    post({ type: 'captureCopyPhrase' })
+    copied = window.setTimeout(() => {
+      copied = undefined
+      draw()
+    }, 1500)
+    draw()
+  })
+}
+
 function answer(record: boolean): void {
   asking = null
   post({ type: 'captureAnswer', record })
@@ -133,8 +147,8 @@ function draw(): void {
       : micMissing
         ? el('div', { class: 'note warn' }, t('call.noMic'))
         : auto && state !== 'stopping'
-          ? el('div', { class: 'note' }, t('call.autoStarted'), link(t('call.dontRecord'), () => void discard()))
-          : el('div', { class: 'note' }, busy ? '' : t('call.allSound'))
+          ? el('div', { class: 'note' }, t('call.autoStarted'), link(t('call.dontRecord'), () => void discard()), copyPhrase())
+          : el('div', { class: 'note' }, busy ? '' : t('call.allSound'), busy ? null : copyPhrase())
   root.className = `panel ${state}`
   root.replaceChildren(head, note)
 }

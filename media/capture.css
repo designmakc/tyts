@@ -53,3 +53,4 @@ body { font: 400 var(--t-body) / 1.45 var(--font); color: var(--text); user-sele
 .note.warn::before { content: ''; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: var(--amber); }
 .note.error { color: var(--text); }
 .note .link { margin-left: 6px; padding: 0; border: 0; background: none; color: var(--accent-text); text-decoration: underline; text-decoration-color: var(--link-line); font: inherit; cursor: pointer; -webkit-app-region: no-drag; }
+.note .link.done { text-decoration: none; cursor: default; }

@@ -8,14 +8,14 @@
 import type { UiLanguage } from './i18n'
 
 /** What an item of the menu does (main.ts runMenu). */
-export type MenuAction = 'translate' | 'listen' | 'inPlace' | 'screen' | 'check' | 'talk' | 'dictate' | 'english' | 'fix'
+export type MenuAction = 'translate' | 'listen' | 'inPlace' | 'screen' | 'check' | 'talk' | 'dictate' | 'english' | 'fix' | 'awake'
 
 /** An item: what it does, the letter shown, and the key that picks it. */
 export type MenuItem = { id: MenuAction; letter: string; code: string }
 
 type Row = [MenuAction, string, string]
 
-/** The groups, each item's letter and key, per interface language: the translating, the English, the voice, the layout. */
+/** The groups, each item's letter and key, per interface language: the translating, the English, the voice, the layout, keeping the computer awake. */
 const MENU: Readonly<Record<UiLanguage, readonly (readonly Row[])[]>> = {
   ru: [
     [
@@ -33,6 +33,7 @@ const MENU: Readonly<Record<UiLanguage, readonly (readonly Row[])[]>> = {
       ['english', 'В', 'KeyD'],
     ],
     [['fix', 'И', 'KeyB']],
+    [['awake', 'Н', 'KeyY']],
   ],
   uk: [
     [
@@ -50,6 +51,7 @@ const MENU: Readonly<Record<UiLanguage, readonly (readonly Row[])[]>> = {
       ['english', 'К', 'KeyR'],
     ],
     [['fix', 'В', 'KeyD']],
+    [['awake', 'Н', 'KeyY']],
   ],
   en: [
     [
@@ -67,6 +69,7 @@ const MENU: Readonly<Record<UiLanguage, readonly (readonly Row[])[]>> = {
       ['english', 'E', 'KeyE'],
     ],
     [['fix', 'F', 'KeyF']],
+    [['awake', 'K', 'KeyK']],
   ],
 }
 

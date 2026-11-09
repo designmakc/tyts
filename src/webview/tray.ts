@@ -75,6 +75,19 @@ function toggle(id: Switch, icon: LucideName, label: string, on: boolean): HTMLE
   return row
 }
 
+/** Keep the computer awake: a switch like the others, run by main (the time it stays on is a setting), the time left beside it. */
+function awakeRow(v: TrayView): HTMLElement {
+  const { on, left } = v.awake
+  return el(
+    'button',
+    { class: 'cmd', 'data-nav': true, 'data-id': 'awake', role: 'switch', 'aria-checked': String(on), onclick: () => post({ type: 'tray', command: 'awake' }) },
+    lucide('clock', 's'),
+    el('span', { class: 'l' }, t('tray.awake')),
+    on ? el('span', { class: 'kt' }, left ? t('tray.awakeLeft', { time: left }) : t('tray.awakeUntilOff')) : null,
+    el('span', { class: on ? 'tg on' : 'tg' }),
+  )
+}
+
 // ---------------------------------------------------------------- Keep a word as typed
 
 /**
@@ -233,6 +246,7 @@ function render(v: TrayView): void {
       v.keys.switch ? toggle('switchOn', 'keyboard', t('tray.switchWith', { key: hotkeyLabel(v.keys.switch) }), v.switchOn) : null,
       toggle('layoutBadge', 'text-cursor', t('tray.layoutBadge'), v.layoutBadge),
       toggle('trayLayout', 'panel-bottom', t('tray.trayLayout'), v.trayLayout),
+      awakeRow(v),
     ),
     group(
       t('tray.yourWords'),

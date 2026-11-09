@@ -16,6 +16,7 @@
 // message, sent again whenever any of it changes; every change goes back as a
 // message.
 
+import { AWAKE_HOURS, type AwakeHours } from '../awake'
 import { NATURAL_PREFIX, NATURAL_VOICES, naturalLabel } from '../natural'
 import { DOUBLE_MS, HotkeyRecorder, hotkeyLabel, onMac, type Recorded } from '../hotkey'
 import type { AppTab, AppView, DiffPart, Feature, KeyboardLayout, MistakeEntry, SavedWord, Settings, StorageId, StoragePart, StorageView, ToView, TutorHost } from '../protocol'
@@ -3172,6 +3173,14 @@ function settingsPage(v: AppView): HTMLElement[] {
     toggleCard('power', t('settings.startWithWindows'), s.startWithWindows, startWithWindows => save({ startWithWindows })),
     toggleCard('pause', t('settings.pause'), s.paused, paused => save({ paused }), t('settings.pauseNote')),
     toggleCard('panel-bottom', t('edge.setting'), s.edgePanel, edgePanel => save({ edgePanel }), t('edge.settingNote')),
+    // Keep the computer awake (awake.ts): how long and whether the screen stays on; turned on from the tray or the menu on one key.
+    card(
+      'clock',
+      t('settings.awake'),
+      [t('settings.awakeNote')],
+      seg<AwakeHours>(s.awakeHours, AWAKE_HOURS.map(h => [h, h ? t('speech.h', { h }) : t('settings.awakeUntilOff')]), awakeHours => save({ awakeHours })),
+    ),
+    toggleCard('monitor', t('settings.awakeScreen'), s.awakeScreen, awakeScreen => save({ awakeScreen }), t('settings.awakeScreenNote')),
     // New versions are downloaded by hand from GitHub (the owner, 2026-10-30): nothing installs itself.
     card(
       'rotate-cw',

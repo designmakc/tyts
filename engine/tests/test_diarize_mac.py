@@ -59,6 +59,18 @@ print({json.dumps(TURNS)!r})
     assert called["args"][:4] == ["--models", str(models), "--speakers", "2"]
     assert called["size"] == 44 + 2 * 2 * RATE  # 16 kHz mono PCM16
     assert list(temp.iterdir()) == []
+    assert d.voices == {}  # a helper from before 2026-11-09 gives no voice prints
+
+
+def test_voice_prints_from_the_helper(mac, monkeypatch, tmp_path):
+    models, _ = mac
+    (models / "model.mlmodelc").mkdir()
+    out = {**TURNS, "embeddings": {"S1": [0.5, 0.5], "S2": [1.0, 0.0]}}
+    helper = fake_helper(tmp_path, f"print({json.dumps(out)!r})")
+    monkeypatch.setenv("TYTS_SPEAKERS_HELPER", str(helper))
+    d = diarize.Diarizer()
+    assert d.diarize(np.zeros(2 * RATE, dtype=np.float32), "") == [(0.0, 1.23, "S1"), (1.5, 3.0, "S2")]
+    assert d.voices == {"S1": [0.5, 0.5], "S2": [1.0, 0.0]}
 
 
 def test_missing_models_is_a_missing_part(mac, monkeypatch, tmp_path):

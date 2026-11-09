@@ -899,9 +899,10 @@ function speakersStrip(tr: Transcript): HTMLElement | null {
     strip.append(chipNode)
   }
   strip.append(el('small', {}, t('tr.tapRename')))
+  const voiceBox = voiceOffers(tr)
   // Names read off the screen (callNames): only offered; Apply renames as a tap on the chip does.
   const hints = Object.entries(tr.speakerHints ?? {}).filter(([key]) => tr.speakers[key])
-  if (hints.length === 0) return strip
+  if (hints.length === 0) return voiceBox ? el('div', {}, strip, voiceBox) : strip
   const offers = hints.map(([key, name]) => {
     const forget = () => {
       delete tr.speakerHints?.[key]
@@ -922,7 +923,35 @@ function speakersStrip(tr: Transcript): HTMLElement | null {
     return offer
   })
   const box = el('div', { class: 'namehints' }, ...offers, el('small', {}, t('tr.nameHintNote')))
-  return el('div', {}, strip, box)
+  return el('div', {}, strip, box, voiceBox)
+}
+
+/** Names recognised by voice from earlier meetings (engine/voices.py): offered, never applied by themselves. Accept names the speaker
+ * (which teaches the voice one meeting more); No is remembered for that speaker. */
+function voiceOffers(tr: Transcript): HTMLElement | null {
+  const hints = Object.entries(tr.voiceHints ?? {}).filter(([key]) => tr.speakers[key])
+  if (hints.length === 0) return null
+  const offers = hints.map(([key, hint]) => {
+    const forget = () => {
+      delete tr.voiceHints?.[key]
+      offer.remove()
+      if (!box.querySelector('.namehint')) box.remove()
+    }
+    const offer = el(
+      'div',
+      { class: 'namehint' },
+      el('span', {}, t('tr.voiceHint', { speaker: tr.speakers[key]!.name, name: hint.name })),
+      linkBtn(t('tr.acceptName'), () => {
+        tr.speakers[key]!.name = hint.name
+        forget()
+        void patch({ speakers: { [key]: hint.name } }).then(redrawPage)
+      }),
+      linkBtn(t('tr.notThem'), () => (forget(), void patch({ voiceRejected: { [key]: hint.name } }))),
+    )
+    return offer
+  })
+  const box = el('div', { class: 'namehints' }, ...offers, el('small', {}, t('tr.voiceHintNote')))
+  return box
 }
 
 function speakerMenu(tr: Transcript, i: number, label: HTMLElement): void {

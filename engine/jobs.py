@@ -31,6 +31,7 @@ import calls
 import merge
 import notes
 import vocab
+import voices
 from asr import CudaFailed, Parakeet, Transcriber
 from bench import Bench
 from diarize import Diarizer, NeedsPart, NeedsToken
@@ -590,6 +591,9 @@ class Worker:
                     u["speaker"] = merge.ME
 
         progress("save")
+        labels = [u["speaker"] for u in utterances]
+        speakers = merge.renumber(utterances)
+        prints = voices.keyed(self.diarizer.voices, labels, [u["speaker"] for u in utterances]) if turns else {}
         if not job.get("keepAudio"):
             audio.save_opus(audio.mix(list(tracks.values())), store.folder(id) / "audio.ogg", progress=lambda p: progress("save", p * 0.9))
         transcript = {
@@ -599,7 +603,7 @@ class Worker:
             "created": row["created"],
             "duration": round(duration, 2),
             "language": spoken,
-            "speakers": merge.renumber(utterances),
+            "speakers": speakers,
             "utterances": utterances,
             "words": kept,
             "audio": "audio.ogg",
@@ -634,6 +638,8 @@ class Worker:
             except OSError as error:
                 log.warning("transcripts folder: could not write the Markdown: %s", error)
         store.save(id, transcript)
+        # Each speaker's voice print, to be filed under the name the person gives (voices.py); none without speakers.
+        voices.known.keep(id, prints)
         # The sources go only now: a job that fails on the way can run again from them.
         for item in inputs:
             if item.get("temp"):
@@ -661,7 +667,11 @@ class Worker:
         progress("save")
         me = t.get("speakers", {}).get(merge.ME)
         t["utterances"] = merge.resplit(t, turns or [])
+        labels = [u["speaker"] for u in t["utterances"]]
         t["speakers"] = merge.renumber(t["utterances"])
+        # The speakers are new: their prints too, and what was rejected for the old ones goes.
+        voices.known.keep(id, voices.keyed(self.diarizer.voices, labels, [u["speaker"] for u in t["utterances"]]))
+        t.pop("voiceRejected", None)
         if me and merge.ME in t["speakers"]:
             t["speakers"][merge.ME] = me
         t["speakersStatus"] = "ok"

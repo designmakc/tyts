@@ -68,6 +68,7 @@ import export
 import notes
 import numpy as np
 import vocab
+import voices
 
 from bench import Calibrator
 from jobs import SHOT_NAME, Worker, finish_recording
@@ -509,6 +510,8 @@ def public(t: dict, id: str) -> dict:
     """A transcript as the window wants it: without the words (thousands of them), saying whether they are kept."""
     out = {k: v for k, v in t.items() if k != "words"}
     out["hasWords"] = bool(t.get("words"))
+    # Names offered by the sound of a voice from earlier meetings (voices.py): a suggestion, never a name by itself.
+    out["voiceHints"] = voices.known.suggest(id, t)
     out["audioPath"] = str(state.get_store().folder(id) / t.get("audio", "audio.ogg"))
     return out
 
@@ -534,11 +537,20 @@ def patch_transcript(id: str, changes: dict = Body(...)):
     """Title, speaker names, an utterance's text or speaker: {title?, speakers?: {key: name}, utterances?: {index: {text?, speaker?}}}.
 
     Kryakl's own marks, which are no edit of the text: shots: {file: {key: bool}} (a call's key screenshots), speakerHints:
-    {key: name | null} (names read off the call's screen, a suggestion until the person applies one); and the person's
-    notes beside the text, notes: str (NOTES_MAX characters at most, empty removes them)."""
+    {key: name | null} (names read off the call's screen, a suggestion until the person applies one), voiceRejected:
+    {key: name} (a name offered by voice the person said no to, never offered for that speaker again); and the person's
+    notes beside the text, notes: str (NOTES_MAX characters at most, empty removes them).
+
+    A speaker named here has their voice print filed under the name (voices.py)."""
     store = state.get_store()
     t = transcript_or_404(id)
-    marks = {k for k in ("shots", "speakerHints", "notes") if k in changes}
+    marks = {k for k in ("shots", "speakerHints", "voiceRejected", "notes") if k in changes}
+    rejected = t.get("voiceRejected") or {}
+    for key, name in (changes.get("voiceRejected") or {}).items():
+        if key in t["speakers"] and isinstance(name, str) and 0 < len(name) <= 200 and name not in rejected.get(key, []):
+            rejected.setdefault(key, []).append(name)
+    if rejected:
+        t["voiceRejected"] = rejected
     if isinstance(changes.get("notes"), str):
         if changes["notes"].strip():
             t["notes"] = changes["notes"][:NOTES_MAX]
@@ -569,6 +581,7 @@ def patch_transcript(id: str, changes: dict = Body(...)):
     for key, name in (changes.get("speakers") or {}).items():
         if key in t["speakers"] and isinstance(name, str) and name.strip():
             t["speakers"][key]["name"] = name.strip()
+            voices.known.learn(name, id, key)
     for index, edit in (changes.get("utterances") or {}).items():
         i = int(index)
         if 0 <= i < len(t["utterances"]):
@@ -660,6 +673,21 @@ def delete_transcript(id: str):
     if worker.current == id:
         raise HTTPException(409, "This recording is being transcribed right now")
     store.delete(id)
+    voices.known.drop_meeting(id)
+    return {"ok": True}
+
+
+@app.get("/voices")
+def list_voices():
+    """The voices recognised across meetings: [{name, meetings}] (the prints themselves never leave the engine)."""
+    return voices.known.list()
+
+
+@app.delete("/voices")
+def forget_voices(body: dict = Body(default={})):
+    """{name} forgets one name's voice print; no name, every print."""
+    name = body.get("name") if isinstance(body, dict) else None
+    voices.known.forget(name if isinstance(name, str) and name else None)
     return {"ok": True}
 
 

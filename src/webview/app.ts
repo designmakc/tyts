@@ -2524,8 +2524,27 @@ function recordingsPage(v: AppView): HTMLElement[] {
     grp(t('transcribe.setup')),
     speakersCard(v),
     libraryFolderCard(v),
+    running(v) ? knownVoices() : null,
     enginePlate([{ title: t('dictate.speechModel'), value: speechValue(v, 'transcripts'), open: () => go('models', 'forTranscribe') }]),
   ].filter((n): n is HTMLElement => n !== null)
+}
+
+/** Known voices (engine/voices.py): each name given to a speaker with its number of meetings, forgotten one by one or all. */
+function knownVoices(): HTMLElement {
+  const box = el('div', {})
+  const forget = (name?: string) => () => void api('DELETE', '/voices', name ? { name } : {}).then(fill, fault)
+  const fill = async () => {
+    const list = await api<{ name: string; meetings: number }[]>('GET', '/voices')
+    box.replaceChildren(
+      grp(t('voices.title')),
+      list.length
+        ? lineList(list.map(x => ({ text: x.name, more: t('voices.meetings', { n: x.meetings }), remove: forget(x.name), removeLabel: t('voices.forget', { name: x.name }) })))
+        : aside('info', t('voices.empty')),
+      ...(list.length ? [card('trash-2', t('voices.forgetAll'), [t('voices.forgetAllNote')], linkBtn(t('kb.forgetBtn'), forget()))] : []),
+    )
+  }
+  void fill().catch(() => box.remove())
+  return box
 }
 
 /** A call recorded: all of the computer's sound and the microphone, started and stopped here as by its key. */

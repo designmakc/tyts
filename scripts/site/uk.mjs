@@ -163,7 +163,7 @@ export default {
     [`<h3>Your talks with the duck</h3>`, `<h3>Ваші розмови з Тиць</h3>`],
     [`<p>The duck answers on your own graphics card. Talks are kept on this computer for 30 days, and what you write about yourself never leaves it.</p>`, `<p>Тиць відповідає на вашій власній відеокарті. Розмови зберігаються на цьому комп’ютері 30 днів, а те, що ви пишете про себе, ніколи його не покидає.</p>`],
     [`<h3>Your voice and transcripts</h3>`, `<h3>Ваш голос і транскрипти</h3>`],
-    [`<p>Recognized and edited on this computer. A compressed copy of the sound stays beside the transcript; the source file is never copied.</p>`, `<p>Розпізнаються й редагуються на цьому комп’ютері. Стиснута копія звуку лежить поруч із транскриптом; вихідний файл ніколи не копіюється.</p>`],
+    [`<p>Recognized and edited on this computer. A compressed copy of the sound stays beside the transcript; the source file is never copied. The voice prints of the speakers you name stay only in Tyts’s own folder, and you can forget them on the Recordings page.</p>`, `<p>Розпізнаються й редагуються на цьому комп’ютері. Стиснута копія звуку лежить поруч із транскриптом; вихідний файл ніколи не копіюється. Відбитки голосів мовців, яких ви назвали, лежать лише в теці Tyts, і їх можна забути на сторінці записів.</p>`],
     [`<h3>Your clipboard</h3>`, `<h3>Ваш буфер обміну</h3>`],
     [`</svg>As it was</span>`, `</svg>Як і був</span>`],
     [`<p>Every copy Tyts borrows is put back, and Windows' clipboard history never sees Tyts's own copies.</p>`, `<p>Усе, що Тиць позичає з буфера, повертається на місце, а журнал буфера Windows ніколи не бачить копій Тиць.</p>`],

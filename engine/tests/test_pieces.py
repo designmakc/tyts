@@ -45,6 +45,7 @@ def worker(model: str = "parakeet-tdt-0.6b-v3") -> Worker:
     out.bench = FakeBench()
     out.yield_to_dictation = lambda: None
     out._speakers = lambda id, samples, wanted, progress: ([(0, 10_000, "SPEAKER_00")], "ok")
+    out.diarizer = jobs.Diarizer()
     out.queue = queue.Queue()
     out.piecing, out.unpieced, out.activity = False, set(), 0
     return out

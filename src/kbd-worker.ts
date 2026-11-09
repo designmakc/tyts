@@ -160,7 +160,7 @@ function drainPort(): void {
     else if (message.type === 'record') typist.record(message.on, message.hwnd)
     else if (message.type === 'menu') typist.menu(message.on, message.codes, message.rect)
     else if (message.type === 'fix') typist.fixNow()
-    else if (message.type === 'paste') continue // a Mac's
+    else if (message.type === 'paste' || message.type === 'caret') continue // a Mac's
     else {
       const badgeWas = config?.badge || config?.trayLayout
       config = message.config

@@ -3,13 +3,17 @@
 // whether to keep a key from the program (the key that ends a word being fixed, a
 // key of Kryakl's). It types what Node asks (`press`), switches the input source
 // (`select`), says whether the focused field is a password (`field`), plays a
-// sound. Never a letter typed goes anywhere but this pipe: it logs nothing.
-// `kbd-mac layouts` prints the keyboard layouts and exits.
+// sound, says where the text cursor is (`caret`), turns Caps Lock over, says when
+// the program in front fills a screen (`full`). Never a letter typed goes anywhere
+// but this pipe: it logs nothing.
+// `kbd-mac layouts` prints the keyboard layouts and exits; `kbd-mac caret` prints
+// the text cursor's place in the program in front (try `sleep 3; kbd-mac caret`).
 // npm run dist:mac builds it into vendor/kbd-mac.
 
 import AppKit
 import ApplicationServices
 import Carbon
+import IOKit.hid
 
 /** Kryakl's own keys, and the person's keys pressed again after a fix (winkbd.ts OWN_KEYS, REPLAY_KEYS). */
 let OWN: Int64 = 0x2a7a
@@ -77,9 +81,114 @@ func select(_ id: String) {
   TISSelectInputSource(source)
 }
 
-if CommandLine.arguments.dropFirst().first == "layouts" {
+// ---------------------------------------------------------------- the text cursor
+
+func ax(_ element: AXUIElement, _ attribute: String) -> AnyObject? {
+  var value: AnyObject?
+  return AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success ? value : nil
+}
+
+func axRect(_ value: AnyObject?, _ type: AXValueType) -> AXValue? {
+  guard let value, CFGetTypeID(value) == AXValueGetTypeID(), AXValueGetType(value as! AXValue) == type else { return nil }
+  return (value as! AXValue)
+}
+
+/** Where a range of a field's text is drawn, in points from the main screen's top left (as Electron's screen counts); nil for none or an empty one. */
+func boundsOf(_ element: AXUIElement, _ location: Int, _ length: Int) -> CGRect? {
+  var range = CFRange(location: location, length: length)
+  guard let param = AXValueCreate(.cfRange, &range) else { return nil }
+  var out: AnyObject?
+  guard AXUIElementCopyParameterizedAttributeValue(element, kAXBoundsForRangeParameterizedAttribute as CFString, param, &out) == .success, let value = axRect(out, .cgRect) else { return nil }
+  var rect = CGRect.zero
+  guard AXValueGetValue(value, .cgRect, &rect), rect.height > 0, rect.origin != .zero else { return nil }
+  return rect
+}
+
+/** Programs whose page Accessibility was asked to describe (Electron's AXManualAccessibility), once each. */
+var woken = Set<Int32>()
+
+/**
+ * The text cursor of the program `pid` as {x, y, h} (its top left, its height), or {} when it shows none:
+ * the focused field's selection, drawn by AXBoundsForRange (the character before it when an empty range has no box),
+ * else a one-line field's own frame. An Electron app describes its page only once asked (AXManualAccessibility,
+ * which costs it little); AXEnhancedUserInterface, which Chrome would want, is not set: it upsets window managers.
+ */
+func caretOf(_ pid: Int32) -> [String: Any] {
+  guard pid > 0 else { return [:] }
+  let app = AXUIElementCreateApplication(pid)
+  // A program that does not answer is not waited for long (the default is 6 s).
+  AXUIElementSetMessagingTimeout(app, 0.05)
+  let focused = ax(app, kAXFocusedUIElementAttribute)
+  guard let focused, CFGetTypeID(focused) == AXUIElementGetTypeID() else {
+    if woken.insert(pid).inserted { AXUIElementSetAttributeValue(app, "AXManualAccessibility" as CFString, kCFBooleanTrue) }
+    return [:]
+  }
+  let element = focused as! AXUIElement
+  var rect: CGRect?
+  var range = CFRange()
+  if let value = axRect(ax(element, kAXSelectedTextRangeAttribute), .cfRange), AXValueGetValue(value, .cfRange, &range) {
+    rect = boundsOf(element, range.location, 0)
+    if rect == nil, range.location > 0, let before = boundsOf(element, range.location - 1, 1) {
+      rect = CGRect(x: before.maxX, y: before.minY, width: 0, height: before.height)
+    }
+  } else if woken.insert(pid).inserted {
+    AXUIElementSetAttributeValue(app, "AXManualAccessibility" as CFString, kCFBooleanTrue)
+  }
+  if rect == nil, let p = axRect(ax(element, kAXPositionAttribute), .cgPoint), let s = axRect(ax(element, kAXSizeAttribute), .cgSize) {
+    var point = CGPoint.zero
+    var size = CGSize.zero
+    // ponytail: a field of one line only; a page's frame would put the badge at its far bottom, the pointer is nearer.
+    if AXValueGetValue(p, .cgPoint, &point), AXValueGetValue(s, .cgSize, &size), size.height > 0, size.height < 80 { rect = CGRect(origin: point, size: size) }
+  }
+  guard let rect else { return [:] }
+  return ["x": Int(rect.minX.rounded()), "y": Int(rect.minY.rounded()), "h": max(1, Int(rect.height.rounded()))]
+}
+
+/** Accessibility and the window list can keep a caller waiting: asked off the tap's thread, one at a time. */
+let axQueue = DispatchQueue(label: "caret")
+
+/** Caps Lock turned over, as the Caps Lock key would (a posted Caps Lock key does not turn it on a Mac). */
+func toggleCaps() {
+  let service = IOServiceGetMatchingService(kIOMainPortDefault, IOServiceMatching(kIOHIDSystemClass))
+  defer { IOObjectRelease(service) }
+  var connect: io_connect_t = 0
+  guard IOServiceOpen(service, mach_task_self_, UInt32(kIOHIDParamConnectType), &connect) == KERN_SUCCESS else { return }
+  defer { IOServiceClose(connect) }
+  var on = false
+  IOHIDGetModifierLockState(connect, Int32(kIOHIDCapsLockState), &on)
+  IOHIDSetModifierLockState(connect, Int32(kIOHIDCapsLockState), !on)
+}
+
+/** Whether a window of the program `pid` covers a whole screen (a full-screen game, video, a program in its own full-screen space). */
+func fillsScreen(_ pid: Int32) -> Bool {
+  guard pid > 0, let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else { return false }
+  var ids = [CGDirectDisplayID](repeating: 0, count: 16)
+  var count: UInt32 = 0
+  CGGetActiveDisplayList(16, &ids, &count)
+  let screens = ids.prefix(Int(count)).map { CGDisplayBounds($0) }
+  return list.contains { w in
+    guard (w[kCGWindowOwnerPID as String] as? Int32) == pid, (w[kCGWindowLayer as String] as? Int) == 0,
+      let b = w[kCGWindowBounds as String] as? NSDictionary, let r = CGRect(dictionaryRepresentation: b) else { return false }
+    return screens.contains(r)
+  }
+}
+
+switch CommandLine.arguments.dropFirst().first {
+case "layouts":
   print(String(data: try! JSONSerialization.data(withJSONObject: layouts()), encoding: .utf8)!)
   exit(0)
+case "caret":
+  let pid = NSWorkspace.shared.frontmostApplication?.processIdentifier ?? 0
+  let started = Date()
+  var caret = caretOf(pid)
+  // An Electron app just asked to describe its page answers the second time.
+  if caret.isEmpty { caret = caretOf(pid) }
+  caret["app"] = NSWorkspace.shared.frontmostApplication?.localizedName ?? ""
+  caret["ms"] = Int(Date().timeIntervalSince(started) * 1000)
+  caret["full"] = fillsScreen(pid)
+  print(String(data: try! JSONSerialization.data(withJSONObject: caret), encoding: .utf8)!)
+  exit(0)
+default: break
 }
 
 // An app with no Dock icon and no menu: AppKit's connection keeps the program in front up to date.
@@ -145,6 +254,8 @@ func press(_ keys: [[String: Any]]) {
     } else if let code = key["r"] as? Int {
       // A key of the person's typed while a fix was on its way, pressed again as theirs, with the modifiers held now.
       post(code, !(key["u"] as? Bool ?? false), mark: REPLAY, flags: CGEventSource.flagsState(.hidSystemState))
+    } else if key["caps"] != nil {
+      toggleCaps()
     }
   }
 }
@@ -169,6 +280,17 @@ Thread {
         answered.signal()
       }
       answerLock.unlock()
+      continue
+    }
+    if command == "caret" {
+      let n = c["n"] as? Int ?? 0
+      let pid = Int32(c["pid"] as? Int ?? 0)
+      axQueue.async {
+        var o = caretOf(pid)
+        o["e"] = "caret"
+        o["n"] = n
+        emit(o)
+      }
       continue
     }
     DispatchQueue.main.async {
@@ -258,6 +380,7 @@ emit(["e": "hello", "dbl": Int(NSEvent.doubleClickInterval * 1000), "layouts": l
 // The program in front and the input source, looked at a few times a second; a change is told.
 var front: (Int32, String) = (0, "")
 var source = ""
+var full = false
 Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { _ in
   if let app = NSWorkspace.shared.frontmostApplication, app.processIdentifier != front.0 {
     front = (app.processIdentifier, (app.executableURL?.lastPathComponent ?? app.localizedName ?? "").lowercased())
@@ -267,6 +390,15 @@ Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { _ in
   if now != source {
     source = now
     emit(["e": "src", "id": now])
+  }
+  // Off the tap's thread: the window list's first asking takes about 100 ms.
+  let (pid, name) = front
+  axQueue.async {
+    let fills = fillsScreen(pid)
+    if fills != full {
+      full = fills
+      emit(["e": "full", "on": fills, "name": name])
+    }
   }
 }
 

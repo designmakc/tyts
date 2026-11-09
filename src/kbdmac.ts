@@ -7,6 +7,7 @@ import { execFileSync } from 'node:child_process'
 
 import { keyId, tableOf, type KeyTable } from './layoutfix'
 import type { KeyboardLayout } from './protocol'
+import type { Caret } from './typist'
 
 /** Mac key code → Windows virtual-key code; keys left out (the number pad, Fn) are no key to Kryakl. */
 export const MAC_TO_VK: Readonly<Record<number, number>> = {
@@ -67,4 +68,12 @@ export function macKeyboardLayouts(helper: string): KeyboardLayout[] {
   }
   cached = { at: Date.now(), list }
   return list
+}
+
+/** The helper's `caret` answer as the badge's place: points from the main screen's top left; none when it found none or a nonsense one. */
+export function macCaret(answer: { x?: unknown; y?: unknown; h?: unknown }): Caret | undefined {
+  const { x, y, h } = answer
+  if (typeof x !== 'number' || typeof y !== 'number' || typeof h !== 'number') return undefined
+  if (![x, y, h].every(Number.isFinite) || h <= 0 || h > 400) return undefined
+  return { x, y, h }
 }

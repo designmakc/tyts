@@ -1,4 +1,5 @@
 import time
+from pathlib import Path
 
 import pytest
 
@@ -254,6 +255,8 @@ def test_a_card_held_by_another_program_transcribes_on_the_processor_this_time(s
 
 def test_a_model_on_the_card_goes_after_three_idle_minutes(s, monkeypatch):
     class NoRecordings:
+        root = Path("nowhere")  # the housekeeping's scan of the transcripts folder (calls.py) finds no folder
+
         def rows(self, statuses):
             return []
 

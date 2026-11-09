@@ -20,7 +20,6 @@ import { ChunkRecorder, micTrouble } from './recorder'
 import {
   api,
   clock,
-  engineSettings,
   fault,
   fileName,
   installed,
@@ -32,7 +31,6 @@ import {
   problem,
   redrawPage,
   running,
-  saveEngine,
   showFile,
   SpeechError,
   size as speechSize,
@@ -311,13 +309,23 @@ export function transcriptsBody(v: AppView): HTMLElement[] {
 
 const pathNote = (path: string) => el('small', { class: 'path', title: path }, el('bdi', {}, path))
 
-/** The calls folder (engine/calls.py): chosen here, the engine imports what is in it and saves the calls recorded here into it. */
-async function pickCalls(): Promise<void> {
-  const folder = (await window.tutorHost.call({ call: 'pickFolder', title: t('tr.callsFolder'), current: engineSettings(hooks.view()!)?.callsDir ?? '' })) as string | null
-  if (folder && (await saveEngine({ callsDir: folder }))) {
-    toast(t('tr.callsSet', { folder }))
-    void loadRows()
+/** The library folder is the notebook (engine/calls.py): media put into it is transcribed, calls recorded here are saved into it.
+ *  Change moves the whole library where the person picks (POST /library/move); what is in that folder already stays and is read. */
+export function libraryFolderCard(v: AppView): HTMLElement | null {
+  const dataDir = v.speech.health?.dataDir
+  if (!dataDir) return null
+  const change = async () => {
+    const folder = (await window.tutorHost.call({ call: 'pickFolder', title: t('transcribe.keptIn'), current: dataDir })) as string | null
+    if (!folder || folder === dataDir) return
+    try {
+      await api('POST', '/library/move', { to: folder })
+      toast(t('tr.movedLib', { folder }))
+      void loadRows()
+    } catch (error) {
+      toast(problem(error), undefined, true)
+    }
   }
+  return card('folder', t('transcribe.keptIn'), [pathNote(dataDir), t('tr.folderNote')], linkBtn(t('tr.open'), () => post({ type: 'openPath', path: dataDir })), linkBtn(t('dictate.change'), () => void change()))
 }
 
 async function askCalls(question: string): Promise<void> {
@@ -383,7 +391,6 @@ function libraryPage(v: AppView): HTMLElement[] {
 /** The search, the questions to the calls and the folders: what the library has besides its list. */
 function transcriptsHome(v: AppView): HTMLElement[] {
   const kb = v.speech.health?.kbDir
-  const callsDir = engineSettings(v)?.callsDir
   return [
     el(
       'div',
@@ -406,7 +413,7 @@ function transcriptsHome(v: AppView): HTMLElement[] {
       btn([icon('add'), t('tr.new')], () => hooks.setup(), '', t('tr.newTitle')),
     ),
     ...askRows(),
-    card('folder', t('tr.callsFolder'), [callsDir ? pathNote(callsDir) : t('tr.callsFolderNote')], linkBtn(callsDir ? t('dictate.change') : t('dictate.choose'), () => void pickCalls())),
+    libraryFolderCard(v),
     kb === '' ? aside('book-open', t('tr.needKb'), ' ', linkBtn(t('tr.choose'), () => void pickKb())) : null,
     speakersMissing(v, () => hooks.setup()),
   ].filter((n): n is HTMLElement => n !== null)

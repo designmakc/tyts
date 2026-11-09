@@ -81,7 +81,6 @@ export type EngineSettings = {
   kbDir: string
   kbInbox: string
   /** The calls folder (engine/calls.py); empty: none. */
-  callsDir: string
 }
 
 export type Diarization = SpeechHealth['diarization']

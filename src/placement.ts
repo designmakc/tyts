@@ -126,9 +126,11 @@ export function placeBar(
   const height = size.height
   const x = Math.round(Math.min(Math.max(at.x - width / 2, area.x), area.x + area.width - width))
   const up = at.top - BAR_GAP - height
-  const above = up - band >= area.y
+  // Above whenever the pill itself fits there (so it never covers the next line); the tooltips' band may be cut by the screen's edge.
+  const above = up >= area.y
   const y = Math.round(above ? up : Math.min(at.bottom + BAR_GAP, area.y + area.height - height - band))
   const pillWidth = Math.min(size.width, width)
   const pill = { x: Math.round(x + (width - pillWidth) / 2), y, width: pillWidth, height }
-  return { window: { x, y: above ? y - band : y, width, height: height + band }, pill, above }
+  const top = above ? Math.max(area.y, y - band) : y
+  return { window: { x, y: top, width, height: height + (above ? y - top : band) }, pill, above }
 }

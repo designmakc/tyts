@@ -104,6 +104,12 @@ describe('placeBar', () => {
   })
 
   test('a window wider than the pill for its tooltip keeps the pill in its middle', () => {
+    // Near the top: above while the pill fits, the tooltips' band cut by the screen (never down over the next line).
+    expect(placeBar({ x: 500, top: 60, bottom: 80 }, pill, 26, 0, area)).toEqual({
+      window: { x: 400, y: 0, width: 200, height: 52 },
+      pill: { x: 400, y: 16, width: 200, height: 36 },
+      above: true,
+    })
     const r = placeBar({ x: 500, top: 300, bottom: 340 }, pill, 26, 300, area)
     expect([r.window.x, r.window.width, r.pill.x, r.pill.width]).toEqual([350, 300, 400, 200])
   })

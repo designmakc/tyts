@@ -1,0 +1,179 @@
+/* The lines of a talk with the duck (webview/turns.ts) in the talk window: the
+   duck's on the left by its tile, the person's on the right on the accent's
+   tint, their mistakes marked in place. */
+
+html {
+  --talk-sentence: color-mix(in srgb, var(--accent) 16%, transparent);
+  /* The person's lines: a cream tint of the duck's yellow on light; on dark a plain lighter grey, as a yellow tint there reads olive. */
+  --me-bg: color-mix(in srgb, var(--accent) 13%, var(--surface));
+  --me-border: color-mix(in srgb, var(--accent) 32%, var(--border));
+  --me-hover: color-mix(in srgb, var(--accent) 60%, var(--border));
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    --me-bg: var(--overlay);
+    --me-border: var(--overlay);
+    --me-hover: var(--border);
+  }
+}
+
+.turns {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.turns:empty {
+  display: none;
+}
+
+.turn {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.turn.me {
+  justify-content: flex-end;
+}
+
+.turn > svg.tile {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin-bottom: 2px;
+}
+
+.turn .bubble {
+  max-width: 82%;
+  padding: 9px 13px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--strong);
+  font: 400 15px / 1.5 var(--font);
+  text-align: left;
+  user-select: text;
+}
+
+.turn.duck .bubble {
+  border-bottom-left-radius: 4px;
+}
+
+.turn.duck span.s {
+  border-radius: 3px;
+}
+
+.turn.duck span.s.speaking {
+  background: var(--talk-sentence);
+}
+
+.turn.me .bubble {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-color: var(--me-border);
+  border-bottom-right-radius: 4px;
+  background: var(--me-bg);
+}
+
+.turn.me button.bubble:hover {
+  border-color: var(--me-hover);
+}
+
+.turn.me .bubble small {
+  color: var(--text);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.turn.me .bubble small.checking {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+/* The line being said: heard so far, not yet sent. */
+.turn.me.live .bubble {
+  border-style: dashed;
+  background: transparent;
+}
+
+.turn.me.live .said {
+  color: var(--text);
+}
+
+.turn.me.live .said.waiting {
+  color: var(--muted);
+}
+
+.turn .again {
+  align-self: center;
+  opacity: 0;
+}
+
+.turn.duck:hover .again,
+.turn .again:focus-visible {
+  opacity: 1;
+}
+
+.turn.typing .dots {
+  display: inline-flex;
+  gap: 4px;
+  padding: 7px 2px;
+}
+
+.turn.typing .dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  animation: talkdot 1.2s ease-in-out infinite;
+}
+
+.turn.typing .dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.turn.typing .dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes talkdot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: none;
+  }
+
+  40% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+.turn .lu.turning {
+  animation: spin 0.8s linear infinite;
+}
+
+/* A mistake as the check card marks it: the person's words struck out in red, the right ones in bold green. */
+.marks del {
+  color: var(--red);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--red) 75%, transparent);
+}
+
+.marks ins {
+  color: var(--green);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turn.typing .dots i {
+    animation: none;
+  }
+}

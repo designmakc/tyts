@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%2216%2016%20224%20224%22%3E%3Crect%20x=%2216%22%20y=%2216%22%20width=%22224%22%20height=%22224%22%20rx=%2256%22%20fill=%22%23FF5A36%22/%3E%3Ccircle%20cx=%22128%22%20cy=%22128%22%20r=%2234%22%20fill=%22%23fff%22/%3E%3Ccircle%20cx=%22128%22%20cy=%22128%22%20r=%2278%22%20fill=%22none%22%20stroke=%22%23fff%22%20stroke-width=%2226%22/%3E%3C/svg%3E">
+<title>Tyts — and done.</title>
+<meta name="description" content="Tyts fixes the keyboard layout, translates, reads English aloud, checks your English, types what you say and talks with you in English, on AI models that run on your own Windows computer: no cloud, no subscription.">
+<link rel="canonical" href="https://designmakc.github.io/tyts/">
+<link rel="alternate" hreflang="en" href="https://designmakc.github.io/tyts/">
+<link rel="alternate" hreflang="uk" href="https://designmakc.github.io/tyts/uk/">
+<link rel="alternate" hreflang="ru" href="https://designmakc.github.io/tyts/ru/">
+<link rel="alternate" hreflang="x-default" href="https://designmakc.github.io/tyts/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://designmakc.github.io/tyts/">
+<meta property="og:title" content="Tyts — and done.">
+<meta property="og:description" content="Tyts fixes the keyboard layout, translates, reads English aloud, checks your English, types what you say and talks with you in English, on AI models that run on your own Windows computer: no cloud, no subscription.">
+<meta property="og:site_name" content="Tyts">
+<!-- The link's picture in chats and feeds, one per language (1200×630); each page names its own. -->
+<meta property="og:image" content="https://designmakc.github.io/tyts/og-en.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Tyts, local AI for Windows: fixes the layout, translates, reads English aloud and checks it">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="tyts.css">
+</head>
+<body>
+<div class="float-layer" id="floatLayer"></div>
+<div class="toast" id="toast" role="status"></div>
+<header class="nav" id="nav">
+  <div class="wrap nav-in">
+    <a class="logo" href="#top" aria-label="Tyts, to the top">Tyts<span class="dot" aria-hidden="true"></span></a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#try">Try it</a>
+      <a href="#talk">Talk</a>
+      <a href="#keys">Keys</a>
+      <a href="#features">What it does</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#install">Install</a>
+    </nav>
+    <div class="nav-cta">
+      <nav class="langs" aria-label="Language"><a href="./" hreflang="en" lang="en" title="English" aria-current="page">EN</a><a href="uk/" hreflang="uk" lang="uk" title="Українська">UA</a><a href="ru/" hreflang="ru" lang="ru" title="Русский">RU</a></nav>
+      <a class="btn ghost sm" href="https://github.com/designmakc/tyts"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/> <path d="M10 14 21 3"/> <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>GitHub</a>
+      <a class="btn primary sm" href="https://github.com/designmakc/tyts/releases/latest"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/> <path d="m7 10 5 5 5-5"/></svg>Download</a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+<section class="hero wrap" aria-labelledby="hero-h">
+  <div class="hero-top">
+    <p class="eyebrow"><svg viewBox="16 16 224 224" aria-hidden="true"><rect x="16" y="16" width="224" height="224" rx="56" fill="#FF5A36"/><circle cx="128" cy="128" r="25" fill="#fff"/><circle cx="128" cy="128" r="57" fill="none" stroke="#fff" stroke-width="11"/><circle cx="128" cy="128" r="93" fill="none" stroke="#fff" stroke-width="11" opacity=".55"/></svg><span><b>Tyts</b> <span class="ipa" title="How Tyts is said">/tɪtsʲ/</span> <span class="beta">beta</span> · local AI for Windows and Mac</span></p>
+    <h1 class="display" id="hero-h">Tyts — and done<span class="dot" aria-hidden="true"></span></h1>
+    <div class="hero-row">
+      <div>
+      <p class="lead-for">For people who would rather run AI on their own computer than pay a cloud for it.</p>
+      <p class="lead">Tyts is a small tray app (about 12 GB with its models :) for every program. It fixes text typed in the wrong layout, translates, reads English aloud, checks your English and types what you say. When you want to practise, it talks with you in English. One app instead of a layout switcher, a translator tab and a grammar checker.</p>
+      </div>
+      <div>
+      <div class="ctas">
+        <a class="btn primary" data-os="win" href="https://github.com/designmakc/tyts/releases/latest"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/> <path d="m7 10 5 5 5-5"/></svg>Download for Windows</a>
+        <a class="btn primary" href="https://github.com/designmakc/tyts/releases/latest" data-os="mac"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/> <path d="m7 10 5 5 5-5"/></svg>Download for Mac</a>
+        <a class="btn ghost" href="https://github.com/designmakc/tyts"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/> <path d="M10 14 21 3"/> <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>Source on GitHub</a>
+      </div>
+      <p class="beta-note">Mac: Apple silicon, macOS 13 or later. Beta: some things may still break. Found one? Report a problem from Tyts.</p>
+      <ul class="proofs">
+        <li><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20v2"/> <path d="M12 2v2"/> <path d="M17 20v2"/> <path d="M17 2v2"/> <path d="M2 12h2"/> <path d="M2 17h2"/> <path d="M2 7h2"/> <path d="M20 12h2"/> <path d="M20 17h2"/> <path d="M20 7h2"/> <path d="M7 20v2"/> <path d="M7 2v2"/> <rect x="4" y="4" width="16" height="16" rx="2"/> <rect x="8" y="8" width="8" height="8" rx="1"/></svg>Gemma 4, Whisper and Parakeet on your graphics card or processor</li>
+        <li><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/> <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>No subscription, no pay per word, no account</li>
+        <li><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.94 5.274A7 7 0 0 1 15.71 10h1.79a4.5 4.5 0 0 1 4.222 6.057"/> <path d="M18.796 18.81A4.5 4.5 0 0 1 17.5 19H9A7 7 0 0 1 5.79 5.78"/> <path d="m2 2 20 20"/></svg>No cloud: your texts, voice and talks stay on your computer</li>
+        <li><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="m18 16 4-4-4-4"/> <path d="m6 8-4 4 4 4"/> <path d="m14.5 4-5 16"/></svg>Open source, MIT</li>
+        <li><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 14 4-4"/> <path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg><span>All of Tyts wants a decent PC: a graphics card with 4 GB of its own memory. <a href="#needs">What runs where</a></span></li>
+      </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage" id="stage" aria-label="One line through Tyts: typed in the wrong layout, fixed, translated and read aloud">
+    <div class="stage-head">
+      <span class="stage-note">One line typed in a chat, three keys later</span>
+      <button class="quiet" id="replay" type="button"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/> <path d="M3 3v5h5"/></svg><span>Replay with sound</span></button>
+    </div>
+    <div class="stage-body" aria-hidden="true">
+      <p class="line-main" id="lineMain"><span class="w">hello</span> <span class="w">world</span><span class="wave" id="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="caret"></span></p>
+      <p class="line-sub" id="lineSub">привіт світ</p>
+    </div>
+    <ol class="steps" id="steps">
+      <li class="step">
+        <span class="keys"><span class="eg">e.g.</span><kbd class="key">Pause</kbd></span>
+        <span><span class="step-name">Fix the layout</span><span class="step-ex">ghbdsn cdsn → привіт світ</span></span>
+      </li>
+      <li class="step">
+        <span class="keys"><span class="kslot" data-act="translate"><span class="eg">e.g.</span><kbd class="key">Shift</kbd><span class="x2">×2</span></span></span>
+        <span><span class="step-name">Translate</span><span class="step-ex">привіт світ → hello world</span></span>
+      </li>
+      <li class="step">
+        <span class="keys"><span class="eg">e.g.</span><kbd class="key">Ctrl</kbd><kbd class="key">C</kbd><span class="x2">×2</span></span>
+        <span><span class="step-name">Read aloud</span><span class="step-ex">hello world, read aloud</span></span>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section class="band" id="try" aria-labelledby="try-h">
+  <div class="wrap band-grid">
+    <div class="band-copy">
+      <div class="kicker"><span class="keys"><span class="eg">e.g.</span><kbd class="key">Ctrl</kbd><kbd class="key">C</kbd><span class="x2">×2</span></span>Translate and read aloud</div>
+      <h2 id="try-h">Try it on this page.</h2>
+      <p class="band-hint">Select a sentence below, then press <span class="keys" id="hintKeys"><kbd class="key" id="modKey">Ctrl</kbd><kbd class="key">C</kbd></span> twice.<span class="more" id="more">once more</span></p>
+      <div class="story" id="story"></div>
+      <div class="band-foot">
+        <button class="band-btn btn" id="tapTry" type="button"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>Show me on a sentence</button>
+        <p class="band-note">This page carries translations of the duck story only. Tyts translates any text, on your computer.</p>
+      </div>
+    </div>
+    <div class="card-slot" id="cardSlot"></div>
+  </div>
+</section>
+
+<section class="talk-sec" id="talk" aria-labelledby="tk-h">
+  <div class="wrap talk-grid">
+    <div class="ch-copy">
+      <div class="kicker"><span class="keys"><button class="key mine rec" type="button" data-act="talk">your key</button></span>Talk</div>
+      <h2 id="tk-h">Talk to the duck. It talks back.</h2>
+      <p>Press your Talk key and say a line in English; press it again to send. The duck answers aloud, like a friend with time to chat. Your mistakes are marked under your own lines, with a short note in your language. The duck never corrects you: it answers what you meant.</p>
+      <ul class="facts">
+        <li><b>Your level.</b> A2, B1 or B2. The duck keeps to it: about 7, 8.5 or 15 words a sentence, measured.</li>
+        <li><b>Topics with a plan.</b> Free talk, your day, a trip, a café, a job interview, your work. The interviewer asks one question at a time, then tells you how it went.</li>
+        <li><b>On your graphics card.</b> The model Accurate uses (Gemma 4 E4B, 5.2 GB) answers in about a second on an RTX 2080 SUPER. It needs a card with 4 GB of its own memory. Speaking needs Tyts's speech engine; typing works without it.</li>
+        <li><b>Your talks stay here.</b> Kept on this computer for 30 days. Go on with one, or delete it.</li>
+      </ul>
+    </div>
+    <figure class="desk talk-desk">
+      <div class="tk-ctrl">
+        <div class="seg" role="radiogroup" aria-label="Topic" id="tkTopics">
+          <button type="button" role="radio" aria-checked="true" data-t="free">Free talk</button>
+          <button type="button" role="radio" aria-checked="false" data-t="cafe">At a café</button>
+          <button type="button" role="radio" aria-checked="false" data-t="interview">Job interview</button>
+        </div>
+        <div class="seg" role="radiogroup" aria-label="Your English level" id="tkLevels">
+          <button type="button" role="radio" aria-checked="false" data-l="A2">A2</button>
+          <button type="button" role="radio" aria-checked="true" data-l="B1">B1</button>
+          <button type="button" role="radio" aria-checked="false" data-l="B2">B2</button>
+        </div>
+      </div>
+      <p class="seg-note" id="tkLevelNote"></p>
+      <div class="tk" aria-label="Tyts's talk window">
+        <div class="tk-head">
+          <svg class="tile" viewBox="16 16 224 224" aria-hidden="true"><rect x="16" y="16" width="224" height="224" rx="56" fill="#FF5A36"/><circle cx="128" cy="128" r="34" fill="#fff"/><circle cx="128" cy="128" r="78" fill="none" stroke="#fff" stroke-width="26"/></svg>
+          <b>Talk to the duck</b>
+          <span class="tk-chip" title="Gemma 4 E4B: the model Translate and Check my English use too">Accurate</span>
+        </div>
+        <div class="tk-feed" id="tkFeed" aria-live="polite"></div>
+        <div class="tk-comp">
+          <button class="tk-mic" id="tkMic" type="button"></button>
+          <div class="tk-main">
+            <div class="tk-status" id="tkStatus"></div>
+            <div class="tk-next" id="tkNext"></div>
+          </div>
+        </div>
+      </div>
+      <figcaption>Real answers of Tyts's duck, recorded on an RTX 2080 SUPER and played back here in your browser's voices: a woman's for your lines, a man's for the duck. In Tyts you say whatever you like.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="section wrap" id="keys" aria-labelledby="keys-h">
+  <div class="sec-head">
+    <h2 id="keys-h">Every action has a key.</h2>
+    <p class="sec-lead">Each one works in every program. A key can be a combination, a modifier tapped twice, Pause, or a mouse side button. You change any of them on the action's page.</p>
+  </div>
+  <div class="keymap">
+    <div class="kgroup">
+      <h3><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/> <path d="M16 9a5 5 0 0 1 0 6"/> <path d="M19.364 18.364a9 9 0 0 0 0-12.728"/></svg>Read</h3>
+      <ul>
+        <li class="krow"><span>Translate the selected text</span><span class="keys"><button class="key mine rec" type="button" data-act="translate">your key</button></span></li>
+        <li class="krow"><span>Translate and read aloud</span><span class="keys"><span class="eg">e.g.</span><kbd class="key">Ctrl</kbd><kbd class="key">C</kbd><span class="x2">×2</span></span></li>
+        <li class="krow"><span>Translate from the screen</span><span class="keys"><kbd class="key">Ctrl</kbd><kbd class="key">Alt</kbd><kbd class="key">T</kbd></span></li>
+        <li class="krow"><span>Translate and read aloud from the screen</span><span class="keys"><kbd class="key">Ctrl</kbd><kbd class="key">Alt</kbd><kbd class="key">S</kbd></span></li>
+      </ul>
+    </div>
+    <div class="kgroup">
+      <h3><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 8h.01"/> <path d="M12 12h.01"/> <path d="M14 8h.01"/> <path d="M16 12h.01"/> <path d="M18 8h.01"/> <path d="M6 8h.01"/> <path d="M7 16h10"/> <path d="M8 12h.01"/> <rect width="20" height="16" x="2" y="4" rx="2"/></svg>Write</h3>
+      <ul>
+        <li class="krow"><span>Fix the layout as I type</span><span class="auto">automatic</span></li>
+        <li class="krow"><span>Fix the last words or the selection</span><span class="keys"><span class="eg">e.g.</span><kbd class="key">Pause</kbd></span></li>
+        <li class="krow"><span>Replace with translation</span><span class="keys"><button class="key mine rec" type="button" data-act="inplace">your key</button></span></li>
+        <li class="krow"><span>Check my English</span><span class="keys"><button class="key mine rec" type="button" data-act="check">your key</button></span></li>
+      </ul>
+    </div>
+    <div class="kgroup">
+      <h3><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19v3"/> <path d="M19 10v2a7 7 0 0 1-14 0v-2"/> <rect x="9" y="2" width="6" height="13" rx="3"/></svg>Speak</h3>
+      <ul>
+        <li class="krow"><span>Talk to the duck</span><span class="keys"><button class="key mine rec" type="button" data-act="talk">your key</button></span></li>
+        <li class="krow"><span>Type by voice</span><span class="keys"><button class="key mine rec" type="button" data-act="dictate">your key</button></span></li>
+        <li class="krow"><span>Type by voice into English</span><span class="keys"><button class="key mine rec" type="button" data-act="english">your key</button></span></li>
+        <li class="krow"><span>Voice note</span><span class="keys"><button class="key mine rec" type="button" data-act="note">your key</button></span></li>
+        <li class="krow"><span>Record a call</span><span class="keys"><button class="key mine rec" type="button" data-act="meeting">your key</button></span></li>
+      </ul>
+    </div>
+  </div>
+  <p class="keynote"><kbd class="key mine">your key</kbd>Click one and press the key you want, as you would in Tyts: a combination, a modifier tapped twice, Pause or F-keys. Backspace clears it. The Translate and Talk keys you set work on this page.</p>
+  <div class="onekey">
+    <div class="ch-copy">
+      <div class="kicker"><span class="keys"><button class="key mine rec" type="button" data-act="menu">your key</button></span>Tyts menu</div>
+      <h3 class="onekey-h">Or one key for all of them.</h3>
+      <p>Press it in any program: Tyts's menu opens by the text cursor, and your selection stays. A letter picks the action, in any layout. Each action keeps its own key too.</p>
+    </div>
+    <figure class="desk">
+      <!-- English on every page, as Tyts's other windows here: class="mn-l" and the logo's attribute order keep the translations off it. -->
+      <div class="mn" aria-label="Tyts's menu">
+        <div class="mn-head"><span class="logo">Tyts<span class="dot" aria-hidden="true"></span></span></div>
+          <div class="mn-row on"><kbd class="key">T</kbd><span class="mn-l">Translate</span></div>
+          <div class="mn-row"><kbd class="key">R</kbd><span class="mn-l">Translate and read aloud</span></div>
+          <div class="mn-row"><kbd class="key">P</kbd><span class="mn-l">Replace with translation</span></div>
+          <div class="mn-row"><kbd class="key">S</kbd><span class="mn-l">Translate from the screen</span></div>
+          <div class="mn-rule"></div>
+          <div class="mn-row"><kbd class="key">C</kbd><span class="mn-l">Check my English</span></div>
+          <div class="mn-row"><kbd class="key">D</kbd><span class="mn-l">Talk to the duck</span></div>
+          <div class="mn-rule"></div>
+          <div class="mn-row"><kbd class="key">V</kbd><span class="mn-l">Type by voice</span></div>
+          <div class="mn-row"><kbd class="key">E</kbd><span class="mn-l">Type by voice into English</span></div>
+          <div class="mn-rule"></div>
+          <div class="mn-row"><kbd class="key">F</kbd><span class="mn-l">Fix the layout</span></div>
+        <div class="mn-foot">Letter to pick · Esc to close</div>
+      </div>
+      <figcaption>Tyts's menu, redrawn.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<div class="chapters wrap" id="features">
+
+  <section class="chapter wide" aria-labelledby="kb-h">
+    <div class="ch-copy">
+      <div class="kicker"><span class="keys"><span class="eg">e.g.</span><kbd class="key">Pause</kbd></span>Keyboard layout</div>
+      <div class="wide-head">
+        <h2 id="kb-h">Typed in the wrong layout? Keep typing.</h2>
+        <p>Tyts fixes a word typed in the wrong layout as soon as you finish it, and switches the layout for the next one. It reads the keys of the word you are typing, never the text around it.</p>
+      </div>
+    </div>
+    <figure class="desk">
+      <div class="km" aria-label="A message being typed: two words in the wrong layout are fixed">
+        <div class="km-head"><b>New message</b><span class="muted">Left Ctrl switches the layout</span></div>
+        <div class="km-field" id="kmField"><span class="lbadge" id="lbadge">EN</span><span class="fx">привіт</span> як справи, глянь <span class="fx">pull</span> request<span class="caret"></span></div>
+        <ul class="km-log" id="kmLog">
+          <li><span class="tag">fixed</span><span>ghbdsn → <span class="to">привіт</span></span><span>EN → UK</span></li>
+          <li><span class="tag">fixed</span><span>згдд → <span class="to">pull</span></span><span>UK → EN</span></li>
+        </ul>
+      </div>
+      <figcaption>A chat message typed without looking at the layout. The badge by the caret is Tyts's own.</figcaption>
+    </figure>
+    <ul class="facts cols">
+      <li><b>The fix key right after a fix</b> takes it back and keeps the word as typed.</li>
+      <li><b>The fix key</b> retypes the last words, or the selected text, in the layout that reads best. Again for the next one.</li>
+      <li><b>Learns as you go.</b> A word you fix by hand twice is fixed always; a word of yours typed three times becomes yours.</li>
+      <li><b>Stays out of the way</b> in password fields and full-screen games. NB and other abbreviations are left alone.</li>
+    </ul>
+  </section>
+
+  <section class="chapter" aria-labelledby="tr-h">
+    <div class="ch-copy">
+      <div class="kicker"><span class="keys"><span class="kslot" data-act="translate"><span class="eg">e.g.</span><kbd class="key">Shift</kbd><span class="x2">×2</span></span></span>Translate</div>
+      <h2 id="tr-h">Translate like DeepL. Paste it back.</h2>
+      <p>Select a text in any program and press your key. The text and its translation open together; edit the text and it is translated again. Enter pastes the translation over your selection, and your clipboard stays as it was.</p>
+      <ul class="facts">
+        <li><b>The direction is a rule.</b> Your language goes into English, any other language into yours. 32 languages.</li>
+        <li><b>Three levels.</b> Fast is Firefox's offline translator. Accurate and Most accurate run a Gemma 4 model on your own graphics card or processor.</li>
+        <li><b>Text on the screen.</b> Ctrl+Alt+T, draw a box over a picture, a video or a game, and its text opens ready to translate.</li>
+      </ul>
+    </div>
+    <figure class="desk">
+      <div class="seg" role="radiogroup" aria-label="Translation level" id="levels">
+        <button type="button" role="radio" aria-checked="false" data-l="fast">Fast</button>
+        <button type="button" role="radio" aria-checked="true" data-l="accurate">Accurate</button>
+        <button type="button" role="radio" aria-checked="false" data-l="most">Most accurate</button>
+      </div>
+      <p class="seg-note" id="levelNote"></p>
+      <div class="kcard" aria-label="Tyts's Translate card">
+        <div class="kc-head">
+          <span class="keys"><span class="kslot" data-act="translate" data-lit="1"><kbd class="key lit">Shift</kbd><span class="x2">×2</span></span></span>
+          <span class="kc-title">Translate</span>
+          <span class="kc-tools"><span class="kc-icon"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/> <path d="m6 6 12 12"/></svg></span></span>
+        </div>
+        <div class="tc-langs">
+          <span class="sel">Ukrainian<svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span><span class="sel arrow">→</span><span class="sel">English<svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
+          <span class="swap"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3 4 7l4 4"/> <path d="M4 7h16"/> <path d="m16 21 4-4-4-4"/> <path d="M20 17H4"/></svg>Swap</span>
+        </div>
+        <div class="tc-text">Збірка знову впала. Подивишся логи після обіду?</div>
+        <div class="kc-bar"><span class="kc-btn"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>Copy</span></div>
+        <div class="kc-lower">
+          <div class="kc-tr">The build crashed again. Will you look at the logs after lunch?</div>
+          <div class="kc-bar"><span class="kc-btn"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>Copy</span><span class="paste">Paste<kbd>Enter</kbd></span></div>
+        </div>
+        <div class="kc-foot"><span id="tcFoot">Translated · Accurate</span></div>
+      </div>
+      <figcaption>Tyts's Translate card, redrawn. Shift tapped twice is an example: you choose the key.</figcaption>
+    </figure>
+  </section>
+
+  <section class="chapter flip" aria-labelledby="ck-h">
+    <div class="ch-copy">
+      <div class="kicker"><span class="keys"><button class="key mine rec" type="button" data-act="check">your key</button></span>Check my English</div>
+      <h2 id="ck-h">Write in English. The duck checks it.</h2>
+      <p>Select what you wrote and press your Check key. Wrong words are struck out in red, the fix is in green, and one short note in your language explains the main mistake. A right text says so and stays as it is.</p>
+      <ul class="facts">
+        <li><b>Real mistakes only.</b> No rephrasing; code and names are left alone.</li>
+        <li><b>Measured on 44 texts,</b> it caught 31 of 32 mistakes and changed none of the 11 right ones.</li>
+        <li><b>Your mistakes, kept.</b> English › My mistakes shows the ones you repeat first.</li>
+      </ul>
+    </div>
+    <figure class="desk">
+      <div class="seg" role="radiogroup" aria-label="Example text" id="checks">
+        <button type="button" role="radio" aria-checked="true" data-c="wrong">Mistakes on purpose</button>
+        <button type="button" role="radio" aria-checked="false" data-c="right">A right text</button>
+      </div>
+      <div class="kcard" aria-label="Tyts's Check card">
+        <div class="kc-head">
+          <span class="kc-title">Check</span>
+          <span class="kc-tools"><span class="kc-icon"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/> <path d="m6 6 12 12"/></svg></span></span>
+        </div>
+        <div class="tc-text" id="ccField">Yesterday I have sent the report, but nobody answer me.</div>
+        <div class="cc-out" id="ccOut">Yesterday I <del>have</del> sent the report, but nobody <del>answer</del> <ins>answered</ins> me.</div>
+        <p class="cc-note" id="ccNote">have sent → sent: зі словом yesterday потрібен Past Simple, а не Present Perfect.</p>
+        <div class="kc-bar"><span class="remote"><span class="kc-btn"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>Copy</span><span class="kc-btn"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>Listen</span></span><span class="paste">Paste<kbd>Enter</kbd></span></div>
+        <div class="kc-foot"><span>Checked · Accurate</span><span id="ccLang">Note in Ukrainian</span></div>
+      </div>
+      <figcaption>The note follows the language picked in the card above.</figcaption>
+    </figure>
+  </section>
+
+  <section class="chapter wide" aria-labelledby="sp-h">
+    <div class="ch-copy">
+      <div class="kicker"><span class="keys"><button class="key mine rec" type="button" data-act="dictate">your key</button></span>Voice typing and recordings</div>
+      <div class="wide-head">
+        <h2 id="sp-h">Say it, and it's typed.</h2>
+        <p>Press a key and speak. Tyts types the phrase where the cursor is, in the language you spoke or straight in English. It recognizes while you talk, so the text is there a moment after the key.</p>
+      </div>
+    </div>
+    <figure class="desk duo">
+      <div class="dbadge" aria-label="Tyts's dictation panel">
+        <span class="db-fold" aria-hidden="true"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
+        <p class="db-text" id="dbText">Let's move the release to Friday and keep the old installer for now.</p>
+        <div class="db-status"><span class="rec-dot"></span><span class="db-name">Type by voice</span><span class="db-time" id="dbTime">0:05</span><canvas class="db-wave" id="dbWave" aria-hidden="true"></canvas></div>
+      </div>
+      <div class="ts" aria-label="A transcript of a call">
+        <div class="ts-head"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/> <rect x="2" y="6" width="14" height="12" rx="2"/></svg><b>Design review</b><span class="muted">Google Meet, 32 min</span></div>
+        <ol class="ts-lines">
+          <li><span class="t">00:12</span><span class="spk" style="--c: var(--sp1)">Me</span><p>Can everyone see the new tray menu?</p></li>
+          <li><span class="t">00:17</span><span class="spk" style="--c: var(--sp2)">Olena</span><p>Yes. The rows feel calmer now.</p></li>
+          <li><span class="t">00:24</span><span class="spk" style="--c: var(--sp3)">Speaker 3</span><p>Then let's ship it on Friday.</p></li>
+        </ol>
+      </div>
+      <figcaption>The dictation panel while you speak: drag it anywhere, or fold it into the tray and keep talking. And a call transcribed with who spoke when.</figcaption>
+    </figure>
+    <ul class="facts cols">
+      <li><b>Quick on an ordinary processor.</b> 22 seconds of speech were typed 0.2 s after the key (Parakeet, on an Intel i9).</li>
+      <li><b>Transcripts</b> of files, the microphone and calls from any program. Telling an hour's speakers apart takes about 2 minutes on an RTX card.</li>
+      <li><b>Names and terms.</b> They come out written your way, in dictation and in transcripts.</li>
+      <li><b>Text editing.</b> Off until you turn it on. Your local model cleans up a phrase before it is typed, or makes it a list, a business message or a task for an AI: about half a second on an RTX 2080 SUPER.</li>
+    </ul>
+  </section>
+
+  <section class="chapter flip" id="calls" aria-labelledby="cl-h">
+    <div class="ch-copy">
+      <div class="kicker"><span class="keys"><button class="key mine rec" type="button" data-act="meeting">your key</button></span>Calls</div>
+      <h2 id="cl-h">Record the call. Keep what was on the screen.</h2>
+      <p>Press your key in any call: Zoom, Teams, Telegram, Meet in a browser. Tyts records the computer's sound and your microphone, then writes a transcript and a summary. With screenshots on, it also keeps the screen, so "look here" in the transcript comes with the picture it meant.</p>
+      <ul class="facts">
+        <li><b>Any call program.</b> All of the computer's sound and your microphone as one recording, with who spoke when.</li>
+        <li><b>Screenshots for context.</b> Every 4 seconds when the screen changed, or on a key of their own. Kept beside the recording, deleted with it.</li>
+        <li><b>The picture at the right line.</b> When someone says "look here" or "as you can see", the transcript shows the screen of that moment.</li>
+        <li><b>A summary that saw the screen.</b> Decisions, tasks and questions by your local model; a topic about something shown links its screenshot.</li>
+      </ul>
+    </div>
+    <figure class="desk">
+      <div class="ts" aria-label="A transcript of a call with a screenshot">
+        <div class="ts-head"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/> <rect x="2" y="6" width="14" height="12" rx="2"/></svg><b>Sprint planning</b><span class="muted">Zoom, 41 min</span></div>
+        <ol class="ts-lines">
+          <li><span class="t">12:38</span><span class="spk" style="--c: var(--sp2)">Olena</span><p>Look here: the export button is gone from the toolbar.</p></li>
+          <li class="ts-shotline"><span class="t">12:38</span><div class="ts-shot" aria-label="Screenshot at 12:38"><i class="bar"></i><i class="side"></i><i class="row"></i><i class="row short"></i><i class="ring"></i></div></li>
+          <li><span class="t">12:44</span><span class="spk" style="--c: var(--sp1)">Me</span><p>Then I'll put it back today.</p></li>
+        </ol>
+        <div class="ts-sum"><b>Tasks</b><p>Me: put the export button back in the toolbar <span class="shotref">(screenshot 12:38)</span></p></div>
+      </div>
+      <figcaption>A call's transcript with the screenshot of the moment, and a task from its summary linked to it.</figcaption>
+    </figure>
+  </section>
+
+</div>
+
+<section class="section wrap" id="privacy" aria-labelledby="pv-h">
+  <div class="sec-head">
+    <h2 id="pv-h">Nothing you read leaves your computer.</h2>
+    <p class="sec-lead">Tyts has no account, no cloud and no telemetry. The models download once and then work offline.</p>
+  </div>
+  <div class="ledger">
+    <div class="lrow"><h3>The code</h3><span class="st you"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/> <path d="m9 12 2 2 4-4"/></svg>Open source</span><p>MIT license. Every line is on GitHub, so you can check what Tyts reads, keeps and sends. <a href="https://github.com/designmakc/tyts">Read the code</a></p></div>
+    <div class="lrow"><h3>The texts you select and translate</h3><span class="st here"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Stay here</span><p>Translated on this computer; the recent ones are kept only here.</p></div>
+    <div class="lrow"><h3>What you type</h3><span class="st here"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Stays here</span><p>Tyts reads the keys of the word being typed and keeps nothing else. Learned words stay on this computer, and nothing is learned in a password field.</p></div>
+    <div class="lrow"><h3>Your talks with the duck</h3><span class="st here"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Stay here</span><p>The duck answers on your own graphics card. Talks are kept on this computer for 30 days, and what you write about yourself never leaves it.</p></div>
+    <div class="lrow"><h3>Your voice and transcripts</h3><span class="st here"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Stay here</span><p>Recognized and edited on this computer. A compressed copy of the sound stays beside the transcript; the source file is never copied. The voice prints of the speakers you name stay only in Tyts’s own folder, and you can forget them on the Recordings page.</p></div>
+    <div class="lrow"><h3>Your clipboard</h3><span class="st here"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>As it was</span><p>Every copy Tyts borrows is put back, and Windows' clipboard history never sees Tyts's own copies.</p></div>
+    <div class="lrow"><h3>Models and voices</h3><span class="st once"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/> <path d="m7 10 5 5 5-5"/></svg>Once</span><p>Downloaded when you first need them, from Mozilla and Hugging Face, each checked by size and SHA-256.</p></div>
+    <div class="lrow"><h3>New versions</h3><span class="st you"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/> <path d="M10 14 21 3"/> <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>You decide</span><p>Tyts never updates itself. You download a new installer from GitHub when you want it.</p></div>
+  </div>
+</section>
+
+<section class="section wrap after" id="install" aria-labelledby="in-h">
+  <div class="sec-head">
+    <h2 id="in-h">Three steps to the tray.</h2>
+    <p class="sec-lead">Free, open source, about a minute to set up. It installs into its own folders and leaves the original app alone.</p>
+  </div>
+  <ol class="install">
+    <li class="istep"><kbd class="key">1</kbd><h3>Download the installer</h3><p>Get <b>Tyts-Setup.exe</b> for Windows or <b>Tyts-arm64.dmg</b> for Mac from the latest release on GitHub.</p></li>
+    <li class="istep"><kbd class="key">2</kbd><h3>Run it anyway</h3><p>The installer isn't signed, but its code is open on GitHub. Windows warns once: <b>More info → Run anyway</b>. On a Mac drag Tyts into Applications; the first time, <b>System Settings → Privacy &amp; Security → Open Anyway</b>, then allow <b>Accessibility</b> and <b>Input Monitoring</b>.</p></li>
+    <li class="istep"><kbd class="key">3</kbd><h3>Find Tyts in the tray</h3><p>Tyts starts with your computer. The first translation downloads your language pair once: about <b>58 MB</b> for Ukrainian ↔ English.</p></li>
+  </ol>
+  <div class="needs" id="needs">
+    <h3>What your computer needs</h3>
+    <ul class="facts cols three">
+      <li><b>Any PC with Windows 10 or 11, 64-bit, or a Mac with Apple silicon and macOS 13 or later.</b> Layout fixing, Fast translation, text from the screen and reading aloud in a Windows voice. The natural voice wants 4 processor cores.</li>
+      <li><b>All of Tyts: a graphics card with 4 GB of its own memory</b> and about 12 GB of disk with every model. Accurate translation, Check my English, text editing and the talk with the duck run on it; speech on the card needs NVIDIA. Dictation and transcripts run on the processor too; telling speakers apart on the card wants 6 GB.</li>
+      <li><b>Most accurate: a graphics card with 9 GB of its own memory</b> and 1.8 GB more of disk, about 14 GB in all.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="end wrap" aria-labelledby="end-h">
+  <div class="end-grid">
+    <button class="quack" id="quack" type="button" aria-label="Tyts!"><svg viewBox="16 16 224 224" aria-hidden="true"><rect x="16" y="16" width="224" height="224" rx="56" fill="#FF5A36"/><circle cx="128" cy="128" r="25" fill="#fff"/><circle cx="128" cy="128" r="57" fill="none" stroke="#fff" stroke-width="11"/><circle cx="128" cy="128" r="93" fill="none" stroke="#fff" stroke-width="11" opacity=".55"/></svg><span class="bubble" aria-hidden="true">кря!</span></button>
+    <div>
+      <h2 id="end-h">Talk to the duck.</h2>
+      <p>Give reading aloud a key, Ctrl+C twice if you like, and select any text. Or press your Talk key and say hello. The rest is a key away.</p>
+      <div class="ctas">
+        <a class="btn primary" data-os="win" href="https://github.com/designmakc/tyts/releases/latest"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/> <path d="m7 10 5 5 5-5"/></svg>Download for Windows</a>
+        <a class="btn primary" href="https://github.com/designmakc/tyts/releases/latest" data-os="mac"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/> <path d="m7 10 5 5 5-5"/></svg>Download for Mac</a>
+        <a class="btn ghost" href="https://github.com/designmakc/tyts"><svg class="lu" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/> <path d="M10 14 21 3"/> <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>Source on GitHub</a>
+      </div>
+      <p class="beta-note">Mac: Apple silicon, macOS 13 or later. Beta: some things may still break. Found one? Report a problem from Tyts.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap foot-in">
+    <a class="logo" href="#top" aria-label="Tyts, to the top">Tyts<span class="dot" aria-hidden="true"></span></a>
+    <p>Made by Mykola Onykiichuk · <a href="https://t.me/designmakc">Telegram</a><br>Based on the original project by Yevhen Peshynskyi. Open source under the MIT license.</p>
+    <nav class="foot-links" aria-label="Links">
+      <a href="https://github.com/designmakc/tyts">GitHub</a>
+      <a href="https://github.com/designmakc/tyts/releases">Releases</a>
+      <a href="https://github.com/designmakc/tyts#readme">README</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="tyts.js"></script>
+<script>if(/Mac/.test(navigator.platform))document.querySelectorAll('[data-os="win"]').forEach(a=>a.classList.replace('primary','ghost'));else document.querySelectorAll('[data-os="mac"]').forEach(a=>a.classList.replace('primary','ghost'))</script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+# A tag v<version> (matching package.json) builds the Windows installer and the
+# Mac dmg and puts them in a draft GitHub release; publishing the draft is the owner's step.
+# A tag with a dash (v1.2.0-beta.1) is a test version, marked a prerelease.
+# Nothing installs itself: people download the installer from the releases.
+#
+# The build and the tests run code from npm and PyPI, so they get a read-only
+# token; only the last job, which runs nothing but GitHub's own CLI, may write.
+# Third-party actions are pinned by commit, not by a tag that can be moved.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run typecheck
+      # The speech engine's tests, on its core part (no card, no speakers).
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          version: '0.13.0'
+      - run: uv sync --frozen --group dev
+        working-directory: engine
+      - run: npm run test:engine
+      - run: npm run dist -- --publish never
+      # The notes beside the installer: upload-artifact leaves out hidden folders such as .github.
+      - run: Copy-Item .github/release-notes.md release/release-notes.md
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release
+          path: |
+            release/Tyts-Setup-*.exe
+            release/release-notes.md
+          if-no-files-found: error
+          retention-days: 7
+
+  # The Mac version: the four Swift helpers, then the dmg (npm run dist:mac), on Apple silicon; ad-hoc signed as
+  # on a Mac at hand. The tests ran on Windows above; the vitest suite here would only repeat them.
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run dist:mac -- --publish never
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-mac
+          path: release/Tyts-*-arm64.dmg
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    needs: [build, build-mac]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release
+          path: out
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-mac
+          path: out
+      - name: Draft the release with the installer
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        # A job run again finds its release there and replaces the installer in it.
+        run: |
+          if gh release view "$TAG" --repo "$REPO" > /dev/null 2>&1; then
+            gh release upload "$TAG" out/Tyts-Setup-*.exe out/Tyts-*-arm64.dmg --repo "$REPO" --clobber
+            exit 0
+          fi
+          prerelease=""
+          case "$TAG" in *-*) prerelease="--prerelease" ;; esac
+          # Tyts is a beta while its version is 0.x: said in the title and on top of the notes, never as a
+          # prerelease, which /releases/latest (the landing's Download) would skip.
+          beta=""
+          case "$TAG" in v0.*)
+            beta=" (beta)"
+            { printf '> **Beta.** Tyts is a test version: some things may still break. Found a bug? Tyts › About Tyts › Report a problem, or open an issue.\n\n'; cat out/release-notes.md; } > out/notes.md
+            mv out/notes.md out/release-notes.md ;;
+          esac
+          gh release create "$TAG" out/Tyts-Setup-*.exe out/Tyts-*-arm64.dmg --repo "$REPO" --draft $prerelease \
+            --title "Tyts ${TAG#v}$beta" --notes-file out/release-notes.md

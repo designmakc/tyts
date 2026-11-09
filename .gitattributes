@@ -1,0 +1,7 @@
+# Text files keep LF on every checkout: the word list is read line by line,
+# and the build on GitHub's Windows runner packages the files as checked out.
+* text=auto eol=lf
+*.png binary
+*.ttf binary
+*.wasm binary
+*.exe binary

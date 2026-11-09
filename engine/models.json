@@ -1,0 +1,237 @@
+{
+  "about": "The speech models Tyts can use, read by the engine (asr.py) and by Tyts (src/speechplan.ts). rank: how accurate, higher is better. phrase: seconds to recognize a 7 s phrase as Dictate does; rtf: seconds per second of a long recording as Transcribe does (words with their times). Both are first guesses, measured on an i9-9900K (cpu, int8) and an RTX 2080 SUPER (cuda, float16) on 2026-10-28, until this computer is tested. Whisper pads every phrase to a 30 s window, so a phrase costs one window whatever its length; turbo's decoder is light, so on long recordings it is nearly as quick as small. ramMb: memory on the processor; vramMb: on the card, per compute type. Parakeet (NVIDIA's TDT 0.6B v3 through onnx-asr, int8, on the processor) costs what the sound lasts, not a window: a 7 s phrase in 0.3 s on the i9, Russian as good as turbo on the card in a test on a LibriVox reading; it dictates in its 25 languages. devices and features: where and for what a model is used. metal: Whisper turbo on a Mac's graphics (Apple silicon) through mlx-whisper, its MLX copy (mlx: repo and size, its weights.safetensors 1.61 GB); measured on an M1 with 8 GB on 2026-11-06, fp16: rtf 0.25 on a 118 s call warm (38 s its first run; the 4-bit copy no quicker and fewer words), a 6-7 s phrase 4-6 s (the language read in a 30 s window of its own, about 2 s, then greedy decoding; slower on a phrase it hears badly, as it falls back to higher temperatures), so Parakeet on the processor dictates sooner there. Parakeet transcribes calls on a Mac only (src/speechplan.ts): on an M1 with 8 GB on 2026-11-09, 10 minutes of a call in 39 s with its silences skipped, where turbo on Metal took a quarter of the sound's length. speakers: seconds per second of a call to tell its speakers apart, pyannote on the processor (cpu) or the card (cuda); mac: FluidAudio on a Mac's Neural Engine through vendor/speakers-mac, measured on an M1 with 8 GB on 2026-11-09, 10 minutes of a call in 7.5 s (pyannote there took 6-14 minutes).",
+  "speakers": {
+    "cpu": {
+      "rtf": 0.8
+    },
+    "cuda": {
+      "rtf": 0.03
+    },
+    "mac": {
+      "rtf": 0.0125
+    }
+  },
+  "models": [
+    {
+      "name": "tiny",
+      "label": "Whisper tiny",
+      "about": "fastest, rough",
+      "backend": "whisper",
+      "repo": "Systran/faster-whisper-tiny",
+      "bytes": 77000000,
+      "rank": 1,
+      "languages": "all",
+      "cpu": {
+        "phrase": 0.25,
+        "rtf": 0.05
+      },
+      "cuda": {
+        "phrase": 0.1,
+        "rtf": 0.02
+      },
+      "ramMb": 300,
+      "vramMb": {
+        "float16": 400,
+        "int8_float16": 300
+      },
+      "devices": [
+        "cpu",
+        "cuda"
+      ],
+      "features": [
+        "dictation",
+        "transcripts"
+      ]
+    },
+    {
+      "name": "base",
+      "label": "Whisper base",
+      "about": "fast, fair",
+      "backend": "whisper",
+      "repo": "Systran/faster-whisper-base",
+      "bytes": 147000000,
+      "rank": 2,
+      "languages": "all",
+      "cpu": {
+        "phrase": 0.45,
+        "rtf": 0.09
+      },
+      "cuda": {
+        "phrase": 0.12,
+        "rtf": 0.03
+      },
+      "ramMb": 450,
+      "vramMb": {
+        "float16": 500,
+        "int8_float16": 400
+      },
+      "devices": [
+        "cpu",
+        "cuda"
+      ],
+      "features": [
+        "dictation",
+        "transcripts"
+      ]
+    },
+    {
+      "name": "small",
+      "label": "Whisper small",
+      "about": "good",
+      "backend": "whisper",
+      "repo": "Systran/faster-whisper-small",
+      "bytes": 486000000,
+      "rank": 3,
+      "languages": "all",
+      "cpu": {
+        "phrase": 1.4,
+        "rtf": 0.2
+      },
+      "cuda": {
+        "phrase": 0.22,
+        "rtf": 0.055
+      },
+      "ramMb": 900,
+      "vramMb": {
+        "float16": 1000,
+        "int8_float16": 700
+      },
+      "devices": [
+        "cpu",
+        "cuda"
+      ],
+      "features": [
+        "dictation",
+        "transcripts"
+      ]
+    },
+    {
+      "name": "large-v3-turbo",
+      "label": "Whisper turbo",
+      "about": "very good",
+      "backend": "whisper",
+      "repo": "mobiuslabsgmbh/faster-whisper-large-v3-turbo",
+      "bytes": 1620000000,
+      "rank": 5,
+      "languages": "all",
+      "cpu": {
+        "phrase": 4.5,
+        "rtf": 0.25
+      },
+      "cuda": {
+        "phrase": 0.26,
+        "rtf": 0.025
+      },
+      "ramMb": 2000,
+      "vramMb": {
+        "float16": 2600,
+        "int8_float16": 1600
+      },
+      "devices": [
+        "cpu",
+        "cuda",
+        "metal"
+      ],
+      "features": [
+        "dictation",
+        "transcripts"
+      ],
+      "mlx": {
+        "repo": "mlx-community/whisper-large-v3-turbo",
+        "bytes": 1613977612
+      },
+      "metal": {
+        "phrase": 4.5,
+        "rtf": 0.25
+      }
+    },
+    {
+      "name": "large-v3",
+      "label": "Whisper large",
+      "about": "the most accurate, slow",
+      "backend": "whisper",
+      "repo": "Systran/faster-whisper-large-v3",
+      "bytes": 3090000000,
+      "rank": 6,
+      "languages": "all",
+      "cpu": {
+        "phrase": 9.0,
+        "rtf": 0.8
+      },
+      "cuda": {
+        "phrase": 0.5,
+        "rtf": 0.06
+      },
+      "ramMb": 3600,
+      "vramMb": {
+        "float16": 4600,
+        "int8_float16": 2700
+      },
+      "devices": [
+        "cpu",
+        "cuda"
+      ],
+      "features": [
+        "dictation",
+        "transcripts"
+      ]
+    },
+    {
+      "name": "parakeet-tdt-0.6b-v3",
+      "label": "Parakeet",
+      "about": "very good and quick · 25 European languages",
+      "backend": "parakeet",
+      "repo": "istupakov/parakeet-tdt-0.6b-v3-onnx",
+      "onnx": "nemo-parakeet-tdt-0.6b-v3",
+      "bytes": 670500000,
+      "rank": 5,
+      "languages": [
+        "bg",
+        "hr",
+        "cs",
+        "da",
+        "nl",
+        "en",
+        "et",
+        "fi",
+        "fr",
+        "de",
+        "el",
+        "hu",
+        "it",
+        "lv",
+        "lt",
+        "mt",
+        "pl",
+        "pt",
+        "ro",
+        "sk",
+        "sl",
+        "es",
+        "sv",
+        "ru",
+        "uk"
+      ],
+      "devices": [
+        "cpu"
+      ],
+      "features": [
+        "dictation",
+        "transcripts"
+      ],
+      "cpu": {
+        "phrase": 0.3,
+        "rtf": 0.035
+      },
+      "cuda": {
+        "phrase": 0.3,
+        "rtf": 0.035
+      },
+      "ramMb": 1200,
+      "vramMb": {
+        "float16": 0,
+        "int8_float16": 0
+      }
+    }
+  ]
+}

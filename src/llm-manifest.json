@@ -1,0 +1,64 @@
+{
+  "engine": {
+    "vulkan": {
+      "name": "llama.cpp b11929 (Vulkan)",
+      "files": [
+        {
+          "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11929/llama-b11929-bin-win-vulkan-x64.zip",
+          "size": 37156292,
+          "sha256": "5b0bfec979a97102e9d8cacbedc37444c5bb8d1b90b5ecdec92098776097b5bb"
+        }
+      ],
+      "mac": {
+        "name": "llama.cpp b11929 (Metal)",
+        "strip": 1,
+        "files": [
+          {
+            "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11929/llama-b11929-bin-macos-arm64.tar.gz",
+            "size": 16306378,
+            "sha256": "f5e74fddd486ef39565ef00fa718f68f5068665b8c403598efda7192a63cc741"
+          }
+        ]
+      }
+    },
+    "cuda": {
+      "name": "llama.cpp b11929 (CUDA 12.4)",
+      "files": [
+        {
+          "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11929/llama-b11929-bin-win-cuda-12.4-x64.zip",
+          "size": 279418899,
+          "sha256": "ca1782bdf0031d4605975a2e616f49fa64518d3c383927a6be4eb1c325120b1a"
+        },
+        {
+          "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11929/cudart-llama-bin-win-cuda-12.4-x64.zip",
+          "size": 391443627,
+          "sha256": "8c79a9b226de4b3cacfd1f83d24f962d0773be79f1e7b75c6af4ded7e32ae1d6"
+        }
+      ]
+    }
+  },
+  "models": {
+    "accurate": {
+      "name": "Gemma 4 E4B",
+      "file": "gemma-4-E4B_q4_0-it.gguf",
+      "url": "https://huggingface.co/google/gemma-4-E4B-it-qat-q4_0-gguf/resolve/4b4a2c1d584be7264f87aac328a1bc739ce81b6c/gemma-4-E4B_q4_0-it.gguf",
+      "size": 5154941280,
+      "sha256": "676c35070db6dbe52f93e9c864ee0fba4eddea94b9c875d9cb10daff453fbaee"
+    },
+    "most": {
+      "name": "Gemma 4 12B",
+      "file": "gemma-4-12b-it-qat-q4_0.gguf",
+      "url": "https://huggingface.co/google/gemma-4-12B-it-qat-q4_0-gguf/resolve/29d097773436b69ff9feafd636ab4cf873786537/gemma-4-12b-it-qat-q4_0.gguf",
+      "size": 6975879296,
+      "sha256": "93567e57a8fe10b23569b9d9ec38cd005deedf71e29477c421a4b83f418a538b"
+    }
+  },
+  "languages": {
+    "en": "English", "es": "Spanish", "de": "German", "fr": "French", "it": "Italian", "pt": "Portuguese",
+    "ru": "Russian", "uk": "Ukrainian", "pl": "Polish", "cs": "Czech", "nl": "Dutch", "sv": "Swedish",
+    "nb": "Norwegian Bokmål", "da": "Danish", "fi": "Finnish", "el": "Greek", "tr": "Turkish", "ro": "Romanian",
+    "hu": "Hungarian", "bg": "Bulgarian", "sr": "Serbian", "hr": "Croatian", "ka": "Georgian", "hy": "Armenian",
+    "kk": "Kazakh", "ar": "Arabic", "he": "Hebrew", "fa": "Persian", "hi": "Hindi", "zh": "Chinese",
+    "ja": "Japanese", "ko": "Korean", "vi": "Vietnamese", "th": "Thai", "id": "Indonesian"
+  }
+}

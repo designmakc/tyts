@@ -1,0 +1,25 @@
+/* The layout badge: the layout's short name by the text cursor, drawn inverted
+   (the strongest ink as the fill) so it reads on any program's background.
+   The window is exactly this size, transparent and click-through. */
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+}
+
+#badge {
+  box-sizing: border-box;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-pill);
+  background: var(--strong);
+  color: var(--bg);
+  font: 600 var(--t-caption) / 1 var(--mono);
+  letter-spacing: 0.04em;
+  user-select: none;
+}

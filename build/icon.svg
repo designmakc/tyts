@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <!-- Tyts: a tap and its ripple, white on a coral rounded tile (2026-11-06). From 32 px down one thicker ripple (scripts/icons.mjs). -->
+  <rect x="16" y="16" width="224" height="224" rx="56" fill="#FF5A36"/>
+  <circle cx="128" cy="128" r="25" fill="#FFFFFF"/>
+  <circle cx="128" cy="128" r="57" fill="none" stroke="#FFFFFF" stroke-width="11"/>
+  <circle cx="128" cy="128" r="93" fill="none" stroke="#FFFFFF" stroke-width="11" opacity="0.55"/>
+</svg>

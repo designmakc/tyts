@@ -1,0 +1,251 @@
+/* Tyts's materials, shared by every page (the app window, the card, the tray
+   panel, the badges): the neutral colors of standard settings (Windows 11's
+   grays) with Tyts's duck yellow for the accent (2026-10-30), picked by
+   `prefers-color-scheme` (which nativeTheme.themeSource sets from the theme
+   setting); Inter for all text and JetBrains Mono only for keys, times and
+   numbers, both bundled (fonts/, OFL); radii; the keycap every key is drawn
+   with; the logo. The --vscode-* names the card's styles first came with point
+   at the same colors. */
+
+@font-face { font-family: 'Inter'; src: url('fonts/inter-latin.woff2') format('woff2'); font-weight: 100 900; unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2190-21FF, U+2212, U+2215, U+2318, U+2325, U+2387, U+238B, U+23CE; }
+@font-face { font-family: 'Inter'; src: url('fonts/inter-cyrillic.woff2') format('woff2'); font-weight: 100 900; unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: 'JetBrains Mono'; src: url('fonts/jbmono-latin.woff2') format('woff2'); font-weight: 100 800; unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2190-21FF, U+2212, U+2215, U+2318, U+2325, U+2387, U+238B, U+23CE; }
+@font-face { font-family: 'JetBrains Mono'; src: url('fonts/jbmono-cyrillic.woff2') format('woff2'); font-weight: 100 800; unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+
+html {
+  color-scheme: light;
+  /* surfaces, back to front: the window, a card on it, a raised part, an overlay */
+  --bg: #f4f2f1;
+  --surface: #fbfaf9;
+  --raised: #f7f5f4;
+  --overlay: #eeeae8;
+  --selected: #e9e5e3;
+  --border: #e7e2df;
+  --border-soft: #efebe9;
+  /* text */
+  --text: #1a1614;
+  --strong: #0d0b0a;
+  --muted: #6b635e;
+  /* A translation, under or beside its text: a step quieter than the text, so the two never read as one. */
+  --translation: #4a4340;
+  /* A quick draft of a translation the accurate model is still replacing, and the soft light passing over it (card.css). */
+  --draft: #8f8f8f;
+  --shine: #474747;
+  /* The accent, duck yellow: a fill (a button, a switch, a bar) with dark ink
+     on it. Yellow cannot be text on a light ground, and a darker yellow reads
+     brown (the owner, 2026-10-30: no dirty colour on light), so on light the
+     accent never turns into text: where the accent is text (a lit key, a
+     pressed button, a live value) --accent-text is the ink, the yellow staying
+     as a fill, a border or a tint beside it; an inline link is the ink with
+     --link-line under it; a field's focus and the focus ring are the ink
+     (--focus), as Windows 11 draws focus in light; a mark that only has to be
+     seen (the dictation wave, a spinner, the word being read, a pulsing dot)
+     is --mark, the logo's duck. An action that must stand out is the yellow
+     fill with --on-accent. */
+  --accent: #ff5a36;
+  --accent-hover: #ff6f50;
+  --on-accent: #1d0b05;
+  --accent-text: #b5361a;
+  --link-line: #ff5a36;
+  --mark: #ff5a36;
+  /* The logo's duck (')>: marigold on light, a logo needs no text contrast. */
+  --duck: #ff5a36;
+  --green: #0f7b0f;
+  --red: #c42b1c;
+  /* Recording: the one red of a recorder's light, the tray's record dot's too (scripts/icons.mjs RECORD); --red stays for faults. */
+  --rec: #e81123;
+  /* Paused: a cool indigo, far from the warm accent, green and red (5.12:1 on --bg). */
+  --paused: #5a5fb0;
+  /* the speakers' colors and the card's few tints. Amber is a mark only (dictation's waiting dot,
+     Storage's old-folder notice), never text: a dark enough amber for text reads brown. Teal is speaker 4 (4.69:1 on --bg). */
+  --amber: #e8a000;
+  --teal: #0b7a70;
+  --blue: #0067c0;
+  --blue-deep: #005fb8;
+  --sky: #2f80d0;
+  --lilac: #7a5bc7;
+  --coral: #c7503a;
+  --coral-soft: #e0785f;
+  /* roles */
+  --focus: #b5361a;
+  --selection: rgba(255, 90, 54, 0.22);
+  --hover: rgba(0, 0, 0, 0.04);
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.14), 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+    --bg: #1a1817;
+    --surface: #242120;
+    --raised: #2a2625;
+    --overlay: #332e2c;
+    --selected: #302b29;
+    --border: #3b3633;
+    --border-soft: #2e2a28;
+    --text: #ece7e4;
+    --strong: #ffffff;
+    --muted: #a59d98;
+    --translation: #c2bab5;
+    --draft: #7a7a7a;
+    --shine: #cfcfcf;
+    /* On the dark ground the yellow is text, link, focus and mark as it is (11.54:1 on --bg); a link is underlined only under the pointer. */
+    --accent: #ff5a36;
+    --accent-hover: #ff7a5c;
+    --on-accent: #1d0b05;
+    --accent-text: #ff8466;
+    --link-line: transparent;
+    --mark: #ff7a5c;
+    --duck: #ff7a5c;
+    --green: #6ccb5f;
+    --red: #ff99a4;
+    --rec: #e81123;
+    --paused: #a9b1f5;
+    --amber: #f0b429;
+    --teal: #5ccfc3;
+    --blue: #4cc2ff;
+    --blue-deep: #60cdff;
+    --sky: #7cc4ff;
+    --lilac: #c4a7f5;
+    --coral: #f08a72;
+    --coral-soft: #f4a08c;
+    --focus: #ff8466;
+    --selection: rgba(255, 122, 92, 0.26);
+    --hover: rgba(255, 255, 255, 0.06);
+    --shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+}
+
+html {
+  --font: 'Inter', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --r-pill: 9999px;
+  --t-caption: 12px;
+  --t-small: 12.5px;
+  --t-body: 14px;
+  --t-lead: 16px;
+  --t-title: 22px;
+  --t-display: 34px;
+
+  /* The names the card's first styles used, pointing at the same colors. */
+  --vscode-font-family: var(--font);
+  --vscode-font-size: var(--t-body);
+  --vscode-editor-font-family: var(--mono);
+  --vscode-editor-font-size: 13px;
+  --vscode-foreground: var(--text);
+  --vscode-editor-foreground: var(--text);
+  --vscode-editor-background: var(--surface);
+  --vscode-descriptionForeground: var(--muted);
+  --vscode-focusBorder: var(--focus);
+  --vscode-textLink-foreground: var(--accent-text);
+  --vscode-widget-border: var(--border);
+  --vscode-panel-border: var(--border-soft);
+  --vscode-sideBar-background: var(--bg);
+  --vscode-sideBarSectionHeader-border: var(--border-soft);
+  --vscode-editorWidget-background: var(--surface);
+  --vscode-editorHoverWidget-background: var(--surface);
+  --vscode-editorHoverWidget-foreground: var(--text);
+  --vscode-editorHoverWidget-border: var(--border);
+  --vscode-input-background: var(--raised);
+  --vscode-input-border: var(--border);
+  --vscode-input-foreground: var(--text);
+  --vscode-list-hoverBackground: var(--hover);
+  --vscode-list-inactiveSelectionBackground: var(--overlay);
+  --vscode-button-background: var(--accent);
+  --vscode-button-foreground: var(--on-accent);
+  --vscode-button-hoverBackground: var(--accent-hover);
+  --vscode-button-border: transparent;
+  --vscode-toolbar-hoverBackground: var(--hover);
+  --vscode-widget-shadow: rgba(0, 0, 0, 0.25);
+  --vscode-textCodeBlock-background: var(--raised);
+  --vscode-editor-selectionBackground: var(--selection);
+  --vscode-errorForeground: var(--red);
+  --vscode-gitDecoration-addedResourceForeground: var(--green);
+  --vscode-gitDecoration-deletedResourceForeground: var(--red);
+}
+
+/* A key, drawn the same way everywhere one appears: the keyboard is the interface. */
+.key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: var(--r-sm);
+  background: var(--raised);
+  color: var(--strong);
+  font: 500 11.5px / 1 var(--mono);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* A key at work: the one that called a card, or the step of the chain that runs. */
+.key.lit {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, var(--raised));
+  color: var(--accent-text);
+}
+
+/* The logo, as text with no plate or frame (2026-11-06): "тиць" (Tyts in English) in
+   lower case, Inter 800, then a coral dot, the tap. Its size is the place's. */
+.logo {
+  display: inline-flex;
+  align-items: baseline;
+  white-space: nowrap;
+  font-family: var(--font);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--strong);
+}
+
+.logo .dot {
+  display: inline-block;
+  width: 0.26em;
+  height: 0.26em;
+  margin-left: 0.07em;
+  border-radius: 50%;
+  background: var(--duck);
+}
+
+/* An inline link: on light the ink over a duck-yellow line, on dark the yellow itself. */
+.link,
+a.link {
+  text-decoration: underline 1.5px var(--link-line);
+  text-underline-offset: 3px;
+}
+
+.link:hover {
+  text-decoration-color: currentColor;
+}
+
+/* The app icon (K3) drawn in a page: its own black, white and yellow in either theme. */
+svg.tile {
+  flex: none;
+  display: block;
+}
+
+/* A Lucide icon: an outline on the 24 grid, 20 px on a card, 16 px (`.s`) in a row or a button. */
+svg.lu {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+svg.lu.s {
+  width: 16px;
+  height: 16px;
+}

@@ -214,16 +214,8 @@ const LINKS = new Set([
   'https://github.com/designmakc/tyts/releases',
   'https://github.com/designmakc/tyts/blob/main/NOTICE',
   'mailto:designmakc@gmail.com',
-  'https://ikstro.com',
+  // Kryakl, the app Tyts is based on (About).
   'https://github.com/ikstro/kryakl',
-  'https://github.com/ikstro/kryakl/releases',
-  'https://github.com/ikstro/kryakl/blob/main/NOTICE',
-  // The author's own places, and a letter to him (About).
-  'https://github.com/ikstro',
-  'https://linkedin.com/in/ikstro',
-  'https://t.me/ikstrovert',
-  'https://behance.net/ikstro',
-  'mailto:hello@ikstro.com',
   // The steps to the speakers' model: an account, the model's terms, a Read token.
   'https://huggingface.co/join',
   'https://huggingface.co/pyannote/speaker-diarization-community-1',

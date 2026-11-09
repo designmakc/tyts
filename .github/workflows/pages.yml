@@ -1,6 +1,4 @@
-# The landing (site/) on GitHub Pages: https://ikstro.com/kryakl/.
-# ikstro.com is the user site's domain (ikstro/ikstro.github.io), so this
-# project's Pages are served under it at /kryakl/ with no DNS of their own.
+# The landing (site/) on GitHub Pages: https://designmakc.github.io/tyts/.
 # site/index.html is the English page as it is; the Ukrainian and Russian pages are made from it by
 # scripts/build-site.mjs (plain Node, no packages) before the upload.
 # Third-party actions are pinned by commit, not by a tag that can be moved.

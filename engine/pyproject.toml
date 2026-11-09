@@ -1,0 +1,58 @@
+# Kryakl's speech engine. Installed by the app in parts (src/speechpack.ts runs
+# `uv sync` with the extras of the parts chosen), into
+# %LOCALAPPDATA%\Kryakl\speech\env, outside the app's own folder:
+#   core          speech to text (faster-whisper on the CPU, and
+#                 Parakeet through onnx-asr on the same onnxruntime)  ~330 MB
+#   gpu           the same on an NVIDIA card (cuBLAS, cuDNN)          ~1.7 GB
+#   speakers      who spoke when (pyannote, torch for the CPU)        ~0.9 GB
+#   speakers-gpu  the same on an NVIDIA card; its torch also carries
+#                 the CUDA libraries, so it replaces gpu              ~4 GB
+#   mac           Whisper on a Mac's graphics (mlx-whisper, Apple
+#                 silicon only; src/speechpack.ts adds it to core)    ~800 MB (torch ~530, mlx 236, llvmlite 129; 2026-11-06)
+
+[project]
+name = "tyts-speech"
+version = "0.1.0"
+description = "Kryakl's local speech engine: Whisper for the words, pyannote for the speakers."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "faster-whisper>=1.2",
+  # Parakeet TDT for dictation on the processor (25 European languages); runs on
+  # the onnxruntime faster-whisper already brings, so it adds a few hundred KB.
+  "onnx-asr[hub]>=0.12",
+  "av>=14",
+  "numpy",
+  "fastapi>=0.115",
+  "uvicorn>=0.32",
+  "python-multipart",
+  "python-docx>=1.1",
+]
+
+[project.optional-dependencies]
+gpu = ["nvidia-cublas-cu12", "nvidia-cudnn-cu12>=9,<10"]
+speakers = ["pyannote.audio>=4.0", "torch>=2.8"]
+speakers-gpu = ["pyannote.audio>=4.0", "torch>=2.8"]
+mac = ["mlx-whisper>=0.4; sys_platform == 'darwin' and platform_machine == 'arm64'"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.uv]
+package = false
+conflicts = [[{ extra = "speakers" }, { extra = "speakers-gpu" }]]
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cpu", extra = "speakers" },
+  { index = "pytorch-cu128", extra = "speakers-gpu" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true

@@ -1,0 +1,78 @@
+# Windows installer: npm run dist → release/Tyts-Setup-<version>.exe
+# Tyts's own id (com.designmakc.tyts, 2026-11-06): a separate program from Kryakl, in its own folders.
+# An update keeps the folder the app was installed in (NSIS reads InstallLocation
+# from the registry key of this id); a new install goes to
+# Programs\tyts (package.json's name). The program is Tyts.exe.
+appId: com.designmakc.tyts
+productName: Tyts
+copyright: Copyright © 2026 Mykola Onykiichuk; based on Kryakl, Copyright © 2026 Yevhen Peshynskyi
+directories:
+  output: release
+  buildResources: build
+files:
+  - package.json
+  - LICENSE
+  - NOTICE
+  - dist/**
+  - "!dist/**/*.map"
+  - media/**
+  - vendor/**
+  # The speech engine's source (a few hundred KB): Python runs it from disk, from
+  # an environment installed outside the app (src/speechpack.ts).
+  - engine/*.py
+  - engine/models.json
+  - engine/calibration/**
+  - engine/pyproject.toml
+  - engine/uv.lock
+# The translator and the voice run as a thread and a process of their own and
+# read the engine from disk: they live outside the archive. So does the
+# keyboard thread, with koffi, which it loads from beside it.
+asarUnpack:
+  - dist/mt-worker.js
+  - dist/voice-worker.js
+  - dist/kbd-worker.js
+  - dist/kbdmac-worker.js
+  - dist/field-worker.js
+  - node_modules/koffi/**
+  - vendor/**
+  # Windows plays a sound from a file of its own, never from inside the archive.
+  - media/fix.wav
+  - media/switch/**
+  - engine/**
+# koffi ships prebuilt for Node-API; nothing to rebuild for Electron.
+npmRebuild: false
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: build/icon.ico
+nsis:
+  oneClick: true
+  perMachine: false
+  runAfterFinish: true
+  artifactName: Tyts-Setup-${version}.${ext}
+  # Uninstall asks whether the data goes too (build/installer.nsh); an update keeps it.
+  include: build/installer.nsh
+# No publish settings: the release workflow puts the installer in a GitHub release itself; Tyts finds a
+# new version there on its own (src/update.ts), no update files needed. The installer is not signed
+# (a free app): Windows warns at install.
+# Mac (npm run dist:mac → release/Tyts-<version>-arm64.dmg): ad-hoc signed only, so the first
+# start is right-click › Open. The Windows keyboard, clipboard and OCR parts are off there.
+mac:
+  target: dmg
+  # Ad-hoc signed ("-"), the whole bundle sealed: unsealed (Electron's linker signature alone),
+  # macOS' privacy lists cannot match the app, and Accessibility never takes. No Developer ID,
+  # so the signature changes with each build: the app is added to Accessibility again after a reinstall.
+  identity: "-"
+  hardenedRuntime: false
+  icon: build/icon.png
+  category: public.app-category.education
+  extendInfo:
+    LSUIElement: true
+    NSAppleEventsUsageDescription: Tyts copies the selected text to translate it.
+    NSMicrophoneUsageDescription: Tyts listens when you dictate, and records you in a call you record.
+    # A call's recording takes the computer's sound through a screen capture (its picture dropped at once).
+    NSScreenCaptureUsageDescription: Tyts records the computer's sound in a call you record; the picture is not kept.
+    NSAudioCaptureUsageDescription: Tyts records the computer's sound in a call you record.
+dmg:
+  artifactName: Tyts-${version}-${arch}.${ext}

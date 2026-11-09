@@ -1,0 +1,22 @@
+node_modules/
+dist/
+media/*.js
+media/codicon.*
+release/
+.cache/
+*.log
+docs/frames/
+engine/.venv/
+__pycache__/
+.pytest_cache/
+.playwright-mcp/
+
+# The landing's Ukrainian and Russian pages, made by scripts/build-site.mjs (the Pages workflow makes them before upload)
+site/uk/
+site/ru/
+vendor/ocr-mac
+vendor/clip-mac
+vendor/kbd-mac
+vendor/mic-mac
+vendor/speakers-mac
+build/speakers-mac/.build/

@@ -1,0 +1,85 @@
+/* The menu on one key: a small frameless window by the text cursor, which never
+   takes the keyboard. The window is as tall as the panel (menu.ts); Windows 11
+   draws its edge, shadow and corners (dwm.ts). Colors, faces and the keycap are
+   theme.css's; its rows are the owner's prototype of 2026-11-04. */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+/* Windows 11 draws the edge; the pixel stays, so the height holds. */
+html.dwm {
+  border-color: transparent;
+}
+
+body {
+  margin: 0;
+  font: 400 var(--t-body) / 1.3 var(--font);
+  color: var(--text);
+  background: var(--surface);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  cursor: default;
+}
+
+.km {
+  padding: 6px;
+}
+
+.kh {
+  padding: 4px 8px 6px;
+  font-size: 13px;
+}
+
+.ki {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: var(--r-sm);
+  white-space: nowrap;
+}
+
+.ki .l {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* A clip past the ninth has no digit: its place stays, so the lines start in one column. */
+.ki .key:empty {
+  visibility: hidden;
+}
+
+.ki.on {
+  background: var(--selected);
+  color: var(--strong);
+}
+
+/* The item just picked, a moment before the menu goes. */
+.ki.fire {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.kd {
+  height: 1px;
+  margin: 5px 6px;
+  background: var(--border);
+}
+
+.kf {
+  margin-top: 5px;
+  padding: 7px 8px 3px;
+  border-top: 1px solid var(--border);
+  font-size: var(--t-caption);
+  color: var(--muted);
+}

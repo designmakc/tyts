@@ -1,0 +1,67 @@
+/* The call recording's panel (capture.ts): a pill at the bottom of the screen,
+   as the dictation badge. The time and its buttons on top, the source or what
+   is wrong under them. All of it is the handle to move it by; the window is
+   see-through and the panel sits at its bottom, growing upward with its note. */
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; }
+body { font: 400 var(--t-body) / 1.45 var(--font); color: var(--text); user-select: none; cursor: default; -webkit-font-smoothing: antialiased; }
+
+.panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 9px 10px 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  -webkit-app-region: drag;
+}
+
+.line { display: flex; align-items: center; gap: 8px; min-height: 24px; font: 400 var(--t-small) / 1.45 var(--font); }
+.what { color: var(--strong); font-weight: 600; white-space: nowrap; }
+.time { font: 500 var(--t-small) / 1 var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.gap { flex: 1; }
+
+.dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--rec); animation: blink 1s step-end infinite; }
+.dot.still { animation: none; background: var(--muted); }
+.panel.recording .dot.still, .panel.starting .dot.still { background: var(--rec); }
+@keyframes blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
+
+.pb {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--muted);
+  -webkit-app-region: no-drag;
+}
+.pb:hover { background: var(--raised); color: var(--strong); }
+.pb.stop { color: var(--rec); }
+
+.note { font-size: var(--t-small); color: var(--muted); min-height: 1.45em; }
+.note.warn::before { content: ''; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: var(--amber); }
+.note.error { color: var(--text); }
+.note .link { margin-left: 6px; padding: 0; border: 0; background: none; color: var(--accent-text); text-decoration: underline; text-decoration-color: var(--link-line); font: inherit; cursor: pointer; -webkit-app-region: no-drag; }
+.note .link.done { text-decoration: none; cursor: default; }
+
+/* The draft of the words (callLive), open: the window is taller and the panel grows upward. */
+.pb.on { color: var(--strong); background: var(--raised); }
+.draft { display: flex; flex-direction: column; gap: 4px; -webkit-app-region: no-drag; }
+.draft .mark { font-size: var(--t-small); color: var(--muted); }
+.draft .rows { height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 4px; user-select: text; cursor: auto; }
+.draft .row { font-size: var(--t-small); line-height: 1.45; color: var(--text); }
+.draft .who { font-weight: 600; color: var(--strong); margin-right: 6px; }
+.draft .row.me .who { color: var(--muted); }
+.draft .at { font: 500 var(--t-small) / 1 var(--mono); color: var(--muted); margin-right: 6px; font-variant-numeric: tabular-nums; }
+.draft .empty { font-size: var(--t-small); color: var(--muted); }

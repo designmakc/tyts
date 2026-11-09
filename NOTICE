@@ -1,0 +1,47 @@
+Kryakl (formerly Altype and 2Talker)
+Code: MIT License (see LICENSE). Parts of it come from the Language Tutor panel
+(https://github.com/ikstro/cc-translator), MIT License, same author.
+
+Translator (vendor/bergamot, shipped; models downloaded on first use from Mozilla's servers)
+  Firefox Translations by Mozilla: the Bergamot translator built to WebAssembly
+  (https://github.com/mozilla/translations) and its loader from Firefox
+  (toolkit/components/translations, https://github.com/mozilla-firefox/firefox),
+  Mozilla Public License 2.0 (https://mozilla.org/MPL/2.0/). The files are shipped unmodified;
+  their source is at the links above. The translation models are Mozilla's, under the same license.
+
+Word dictionary (media/dict/*.json; other languages downloaded from the cc-translator dict-1 release)
+  Built from WikDict (https://www.wikdict.com) by Karl Bartel,
+  data from Wiktionary (https://www.wiktionary.org) via DBnary,
+  licensed under the Creative Commons Attribution-ShareAlike License
+  (https://creativecommons.org/licenses/by-sa/4.0/).
+  The dictionary files are a derived work and are shared under the same license.
+
+Icons: @vscode/codicons, Creative Commons Attribution 4.0 (fonts) / MIT (code).
+
+Layout switch sounds (media/switch): glass and pluck are glass_002 and pluck_002 of Interface Sounds
+by Kenney (https://kenney.nl/assets/interface-sounds), Creative Commons CC0 1.0 (public domain),
+made quieter and pitched lower for the other layouts; string and duck are Kryakl's own, synthesized.
+
+Common words (media/common-en.txt: the 3000 most frequent English words, for the dotted line under the others;
+media/layout/{en,ru,uk}.txt: the most frequent English, Russian and Ukrainian words, which tell the keyboard layout a word was meant for;
+media/lang-words.json: the 200 most frequent words of 25 languages, which tell the language of a text)
+  From FrequencyWords by Hermit Dave (https://github.com/hermitdave/FrequencyWords), counted over
+  the OpenSubtitles 2018 corpus (https://opus.nlpl.eu/OpenSubtitles.php), Creative Commons
+  Attribution-ShareAlike 4.0 (https://creativecommons.org/licenses/by-sa/4.0/). The lists are a
+  derived work and are shared under the same license.
+
+Natural voice (downloaded on request from the cc-translator voice-1 release, not shipped)
+  Kokoro-82M by hexgrad (https://huggingface.co/hexgrad/Kokoro-82M), Apache License 2.0;
+    ONNX export by onnx-community. Text rules in src/kokoro.ts follow kokoro-js (Apache License 2.0).
+  ONNX Runtime by Microsoft (https://onnxruntime.ai), MIT License; Kryakl bundles the
+    JavaScript of onnxruntime-node and downloads its native library.
+  phonemizer.js by Xenova (https://github.com/xenova/phonemizer.js), Apache License 2.0, which
+    contains eSpeak NG (https://github.com/espeak-ng/espeak-ng), GNU General Public License v3.0.
+    It runs as a separate file in the voice process; its source is at the links above.
+
+Electron (https://www.electronjs.org), MIT License; Chromium and Node.js under their own licenses
+(see LICENSES.chromium.html in the installed app). koffi by Niels Martignène, MIT License.
+
+Fonts (media/fonts, shipped): Inter by Rasmus Andersson (https://rsms.me/inter) and JetBrains Mono by
+JetBrains (https://www.jetbrains.com/lp/mono/), both under the SIL Open Font License 1.1
+(https://openfontlicense.org); the files are the Latin and Cyrillic subsets from Fontsource.

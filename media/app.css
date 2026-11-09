@@ -1,0 +1,3536 @@
+/* The app window: Home (the line, readiness, the six actions with their
+   keys), the moment that plays on the first opening, and the pages that grow
+   out of what was tapped. Colors, faces, radii and the keycap are theme.css's;
+   nothing else is used. */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+body {
+  font: 400 var(--t-body) / 1.5 var(--font);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* A text field draws its own focus, its border in the accent, never the ring a step away. */
+.field:focus-visible,
+.ttitle:focus-visible,
+.ut:focus-visible {
+  outline: none;
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 4px solid transparent;
+  border-radius: var(--r-pill);
+  background: var(--overlay) padding-box;
+}
+
+.pbody::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+.pbody:hover::-webkit-scrollbar-thumb {
+  background: var(--overlay) padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover,
+.pbody::-webkit-scrollbar-thumb:hover {
+  background: var(--border) padding-box;
+}
+
+/* ---------------------------------------------------------------- window
+   The sidebar on the left, the column of the bar and the content on the
+   right, both on the window's ground, a hairline between them (Claude's
+   settings are the reference). */
+
+.win {
+  /* The bar's height, and the sidebar's width. */
+  --bar: 52px;
+  --sw: 240px;
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--sw) minmax(0, 1fr);
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* ---- the sidebar: the logo, the search, every place in groups */
+.side {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0 10px 10px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  height: var(--bar);
+  padding: 0 8px;
+  -webkit-app-region: drag;
+}
+
+.brand .logo {
+  font-size: 17px;
+  line-height: 1;
+}
+
+/* The icon stands in for the logo only in a narrow sidebar. */
+.brand .tile {
+  display: none;
+}
+
+.find {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  height: 36px;
+  margin-bottom: 8px;
+  padding: 0 6px 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--raised);
+  color: var(--muted);
+  cursor: text;
+}
+
+.find:focus-within {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 1px var(--focus);
+}
+
+.find input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+}
+
+.find input::placeholder {
+  color: var(--muted);
+}
+
+.find .key {
+  height: 18px;
+  min-width: 0;
+  padding: 0 5px;
+  border-bottom-width: 1px;
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+.tree {
+  flex: 1;
+  min-height: 0;
+  margin: 0 -6px;
+  padding: 0 6px;
+  overflow: hidden auto;
+}
+
+.tree::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tree::-webkit-scrollbar-thumb {
+  border-width: 1px;
+}
+
+/* The sidebar's groups, split by hairlines. */
+.dv {
+  height: 1px;
+  margin: 7px 10px;
+  background: var(--border);
+}
+
+.it {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: var(--r-md);
+  color: var(--text);
+  font: 450 14px / 1 var(--font);
+  text-align: left;
+  white-space: nowrap;
+  transition: background-color 0.12s;
+}
+
+.it .lu {
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+}
+
+.it:hover {
+  background: var(--hover);
+}
+
+.it.on {
+  background: var(--selected);
+  color: var(--strong);
+  font-weight: 550;
+}
+
+.it.on .lu {
+  color: var(--strong);
+}
+
+.it .lb {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.it .v:empty {
+  display: none;
+}
+
+.it .v {
+  font: 500 11.5px / 1 var(--mono);
+  color: var(--muted);
+}
+
+/* A transcript being made: a pulsing dot and how far it is, by Transcripts. */
+.it .v.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent-text);
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mark);
+  animation: dot 1.6s ease-in-out infinite;
+}
+
+@keyframes dot {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* ---- the column: the bar, then Home or a page */
+.main {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  border-left: 1px solid var(--border-soft);
+  /* The content keeps to one column of 760 px however wide the window is. */
+  --side: max(32px, calc((100% - 760px) / 2));
+}
+
+/* The bar: where the person is, then the window's buttons;
+   dragged by its empty parts, a double click maximizes, as Windows does. */
+.top {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--bar);
+  padding: 0 10px 0 var(--side);
+  border-bottom: 1px solid var(--border-soft);
+  -webkit-app-region: drag;
+}
+
+.top button {
+  -webkit-app-region: no-drag;
+}
+
+.top .gap {
+  flex: 1;
+}
+
+
+.ptitle {
+  display: flex;
+  flex: none;
+  align-items: center;
+  font: 600 15px / 1 var(--font);
+  color: var(--strong);
+  white-space: nowrap;
+}
+
+/* On a second-level page the title is a crumb: the parent, quiet and a way back, then the page. */
+.pcrumb {
+  color: var(--muted);
+  font: inherit;
+  font-weight: 500;
+}
+
+.pcrumb:hover {
+  color: var(--text);
+}
+
+.psep {
+  margin: 0 8px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+
+/* Minimize, maximize and close: the card's header buttons. */
+.wbtns {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  color: var(--muted);
+}
+
+.icon-btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.icon-btn .lu {
+  width: 16px;
+  height: 16px;
+}
+
+/* Maximize is drawn a little smaller, as Windows draws it beside its neighbours. */
+.icon-btn.max .lu {
+  width: 13px;
+  height: 13px;
+  stroke-width: 1.8;
+}
+
+svg.glyph {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* A narrow window: the sidebar keeps its icons, each named in its tooltip. */
+@media (max-width: 760px) {
+  .win {
+    --sw: 84px;
+  }
+
+  .side {
+    align-items: center;
+    padding: 0 8px 10px;
+  }
+
+  .brand {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .brand .tile {
+    display: block;
+  }
+
+  /* The setup's bar keeps the logo: it has no sidebar to stand in for. */
+  .top .bb .logo {
+    display: inline-flex;
+  }
+
+  .brand .logo,
+  .find input,
+  .find .key,
+  .it .v:not(.live) {
+    display: none;
+  }
+
+  .find {
+    justify-content: center;
+    width: 40px;
+    padding: 0;
+  }
+
+  .dv {
+    width: 24px;
+    margin: 7px auto;
+  }
+
+  /* Narrow: each place keeps its name under its icon (the owner, 2026-11-06: icons alone say nothing). */
+  .it {
+    position: relative;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    width: 76px;
+    height: auto;
+    min-height: 48px;
+    padding: 6px 2px;
+  }
+
+  .it .lb {
+    font-size: 10.5px;
+    line-height: 1.15;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .it .v.live {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 0;
+  }
+}
+
+/* The setup: no sidebar and nothing in the bar but the window's buttons; the mark stands in the setup's head. */
+.win.setup {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.top .bb {
+  display: none;
+  padding: 0;
+}
+
+.win.setup .top .bb {
+  display: flex;
+}
+
+.win.setup .side,
+.win.setup .top > :not(.wbtns, .gap, .bb) {
+  display: none;
+}
+
+.win.setup .main {
+  border-left: 0;
+}
+
+.win.setup .top {
+  border-bottom: 0;
+}
+
+/* ---------------------------------------------------------------- home */
+
+.home {
+  position: absolute;
+  inset: var(--bar) 0 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden auto;
+}
+
+/* Home is a summary: how Kryakl stands, what is downloading, the keys set, the line that shows what it does. */
+.hsum {
+  margin: 0 var(--side);
+  padding: 20px 0 24px;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.sdot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.status.paused .sdot {
+  background: var(--paused);
+}
+
+.status .st {
+  flex: 1;
+  min-width: 0;
+  font: 500 14px / 1.3 var(--font);
+  color: var(--strong);
+}
+
+.status.paused .st {
+  color: var(--paused);
+}
+
+.status .st small {
+  display: block;
+  margin-top: 2px;
+  font: 400 var(--t-small) / 1.4 var(--font);
+  color: var(--muted);
+}
+
+.hsum > .warn {
+  margin: 10px 0 0;
+}
+
+/* Something on its way down: its name, how far it has got. */
+.dl {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 2px 0;
+  font: 400 13px / 1.3 var(--font);
+  color: var(--muted);
+}
+
+.dl > span:first-child {
+  flex: none;
+}
+
+.dl .bar {
+  flex: 1;
+  margin: 0;
+}
+
+/* A key set: what it does, where it lives, its caps; a tap opens that page with the line lit. */
+.hkey {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+  cursor: pointer;
+}
+
+.hkey + .hkey {
+  border-top: 1px solid var(--border-soft);
+}
+
+.hkey:hover .kn {
+  color: var(--strong);
+}
+
+.kn {
+  flex: none;
+  font: 500 14px / 1.3 var(--font);
+  color: var(--text);
+}
+
+.kw {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font: 400 13px / 1.3 var(--font);
+  color: var(--muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.kc {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+}
+
+.unset {
+  margin: 6px 0 0;
+  font: 400 13px / 1.4 var(--font);
+  color: var(--muted);
+}
+
+/* The line that shows what Kryakl does, at the foot; the opening moment lands on it. */
+.head {
+  margin-top: 26px;
+  padding: 10px 16px;
+  border: 1px dashed var(--border);
+  border-radius: var(--r-md);
+}
+
+.hline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  min-height: 28px;
+  white-space: nowrap;
+}
+
+.hs {
+  font: 500 14px / 28px var(--mono);
+}
+
+.h1 {
+  color: var(--muted);
+}
+
+.h2 {
+  color: var(--text);
+}
+
+.h3 {
+  color: var(--strong);
+}
+
+.arr {
+  margin: 0 10px;
+  color: var(--muted);
+  font: 400 14px / 28px var(--mono);
+}
+
+.replay {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  height: 28px;
+  margin-left: auto;
+  padding: 0 0 0 7px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--raised);
+  color: var(--strong);
+  font: 500 var(--t-caption) / 1 var(--mono);
+  white-space: nowrap;
+}
+
+.replay:hover {
+  background: var(--overlay);
+}
+
+.replay .codicon {
+  font-size: 12px;
+}
+
+.replay span {
+  padding-right: 11px;
+}
+
+/* An action page's first layer: the person's own lists as tiles. */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+  padding: 4px 0 6px;
+}
+
+.offer + .tiles {
+  margin-top: 10px;
+}
+
+.wchips + .row {
+  margin-top: 16px;
+}
+
+.tcell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  min-height: 76px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+}
+
+.tcell:hover {
+  border-color: var(--muted);
+}
+
+.tcell.flash {
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+}
+
+.tcell .tt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted);
+}
+
+.tcell .tt .lu {
+  width: 18px;
+  height: 18px;
+}
+
+.tcell .tc {
+  font: 500 13px / 1 var(--mono);
+  color: var(--muted);
+}
+
+.tcell .tn {
+  font: 600 14px / 1.3 var(--font);
+  color: var(--strong);
+}
+
+.tcell .ts {
+  margin-top: -4px;
+  overflow: hidden;
+  font: 400 12.5px / 1.3 var(--font);
+  color: var(--muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* An action page's last layer: the models it runs on, each line opening its choice on Models. */
+.engine {
+  margin-top: 26px;
+  padding: 4px 14px 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.engine .eh {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 2px;
+  font: 600 13px / 1.2 var(--font);
+  color: var(--muted);
+}
+
+.engine .eh .lu {
+  width: 15px;
+  height: 15px;
+}
+
+.eline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.eline + .eline {
+  border-top: 1px solid var(--border-soft);
+}
+
+.eline .el {
+  flex: 1;
+  min-width: 0;
+  font: 400 14px / 1.3 var(--font);
+  color: var(--text);
+}
+
+.eline .ev {
+  font: 500 14px / 1.3 var(--font);
+  color: var(--muted);
+}
+
+.eline:hover .ev,
+.eline:hover .chev {
+  color: var(--strong);
+}
+
+/* A list of single words: chips, the cross on each. */
+.wchips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 0 4px;
+}
+
+.wchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  height: 30px;
+  padding: 0 4px 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font: 500 13.5px / 1 var(--font);
+  color: var(--text);
+}
+
+.wchip .ww {
+  overflow: hidden;
+  color: inherit;
+  font: inherit;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.wchip button.ww {
+  cursor: pointer;
+}
+
+.wchip .wx {
+  overflow: hidden;
+  color: var(--muted);
+  font-weight: 400;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.wdel {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: var(--r-sm);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.wdel:hover {
+  background: var(--selected);
+  color: var(--strong);
+}
+
+.wdel .lu {
+  width: 13px;
+  height: 13px;
+}
+
+/* A list of sentences: one line each, the whole in its title, the cross under the pointer. */
+.lines {
+  padding: 2px 0;
+}
+
+.ln {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 36px;
+  font: 400 14px / 1.35 var(--font);
+}
+
+.ln + .ln {
+  border-top: 1px solid var(--border-soft);
+}
+
+.ln .la {
+  flex: 3 1 0;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ln button.la {
+  cursor: pointer;
+}
+
+.ln button.la:hover {
+  color: var(--strong);
+}
+
+.ln .lb {
+  flex: 2 1 0;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.lines.time .lb {
+  flex: 0 0 auto;
+  font: 500 12px / 1 var(--mono);
+}
+
+.ln .wdel {
+  opacity: 0;
+}
+
+.ln:hover .wdel,
+.ln .wdel:focus-visible {
+  opacity: 1;
+}
+
+.kg {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.x2 {
+  margin-left: 3px;
+  font: 500 var(--t-caption) / 1 var(--mono);
+  color: var(--muted);
+}
+
+.key.none {
+  border-style: dashed;
+  border-bottom-width: 1px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.chev {
+  color: var(--muted);
+}
+
+
+/* A key at work lights in the accent; a press sinks it one pixel. */
+.key.lit {
+  border-color: var(--accent);
+  color: var(--accent-text);
+  background: color-mix(in srgb, var(--accent) 16%, var(--raised));
+}
+
+.key.down {
+  transform: translateY(1px);
+  border-bottom-color: var(--accent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.kg.lit .x2 {
+  color: var(--accent-text);
+}
+
+/* ---------------------------------------------------------------- the moment */
+
+.win.playing .home,
+.win.playing .side,
+.win.playing .top {
+  pointer-events: none;
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.eyebrow {
+  position: absolute;
+  left: var(--side);
+  top: 196px;
+  font: 500 var(--t-caption) / 1 var(--font);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.trail {
+  position: absolute;
+  left: var(--side);
+  font: 650 18px / 24px var(--font);
+  letter-spacing: -0.022em;
+  white-space: nowrap;
+  transform-origin: 0 0;
+}
+
+.trail.t1 {
+  top: 232px;
+  color: var(--muted);
+}
+
+.trail.t2 {
+  top: 262px;
+  color: var(--text);
+}
+
+.big {
+  position: absolute;
+  left: var(--side);
+  top: 298px;
+  display: flex;
+  align-items: center;
+  height: 58px;
+  font: 650 48px / 58px var(--font);
+  letter-spacing: -0.022em;
+  color: var(--strong);
+  white-space: nowrap;
+  transform-origin: 0 0;
+}
+
+.cell {
+  position: relative;
+  display: inline-block;
+  height: 58px;
+  overflow: hidden;
+  vertical-align: top;
+}
+
+.cell span {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.caret {
+  display: inline-block;
+  width: 3px;
+  height: 44px;
+  margin-left: 4px;
+  border-radius: 2px;
+  background: var(--mark);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 22px;
+  margin-left: 10px;
+  border-radius: var(--r-pill);
+  background: var(--strong);
+  color: var(--bg);
+  font: 600 var(--t-caption) / 1 var(--mono);
+  letter-spacing: 0.04em;
+}
+
+.w {
+  margin: 0 -4px;
+  padding: 0 4px;
+  border-radius: 8px;
+}
+
+.w.on {
+  background: var(--selection);
+  box-shadow: inset 0 -3px 0 var(--mark);
+}
+
+.play {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--raised);
+  color: var(--strong);
+  transform-origin: 0 0;
+}
+
+.play.speaking {
+  border-color: var(--mark);
+  color: var(--accent-text);
+}
+
+.rail {
+  position: absolute;
+  left: var(--side);
+  top: 392px;
+  display: flex;
+  gap: 36px;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.step small {
+  font: 400 var(--t-caption) / 1 var(--font);
+  color: var(--muted);
+}
+
+.step small em {
+  margin-right: 6px;
+  font-style: normal;
+  opacity: 0.7;
+}
+
+/* ---------------------------------------------------------------- pages
+   A page under the bar, in Home's place: sections with a bold heading, lines
+   split by hairlines, each line's control on the right. */
+
+.pbody {
+  position: absolute;
+  inset: var(--bar) 0 0;
+  /* The scroll bar sits in the right margin: lines end where Home's do. */
+  padding: 22px calc(var(--side) - 12px) 40px var(--side);
+  overflow: hidden auto;
+  scrollbar-gutter: stable;
+  visibility: hidden;
+}
+
+.win.page-open .pbody {
+  visibility: visible;
+}
+
+.win.page-open .home {
+  visibility: hidden;
+}
+
+/* The ghost of the body that slides away when a second-level page opens or closes. */
+.pghost {
+  pointer-events: none;
+}
+
+/* A section's heading over its lines. */
+.grp {
+  margin: 34px 0 4px;
+  font: 600 16px / 1.3 var(--font);
+  color: var(--strong);
+}
+
+.grp:first-child {
+  margin-top: 0;
+}
+
+.grp .n {
+  margin-left: 8px;
+  font: 500 var(--t-caption) / 1 var(--mono);
+  color: var(--muted);
+}
+
+.grp .link {
+  float: right;
+  margin-top: 2px;
+}
+
+/* A line: what it is with a note under it, its control on the right; a hairline over the next one. */
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: calc(100% + 24px);
+  min-height: 56px;
+  margin: 0 -12px;
+  padding: 11px 12px;
+  border-radius: var(--r-md);
+  font-size: 14px;
+  color: var(--strong);
+  text-align: left;
+  transition: background-color 0.12s;
+}
+
+.row + .row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 12px;
+  right: 12px;
+  height: 1px;
+  background: var(--border-soft);
+  transition: opacity 0.12s;
+}
+
+/* The icons stay in the sidebar and on Home's actions; a line is its words. */
+.row > svg.lu:first-child:not(.chev) {
+  display: none;
+}
+
+.row .l {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+}
+
+.row .l small {
+  display: block;
+  margin-top: 2px;
+  font: 400 13px / 1.45 var(--font);
+  color: var(--muted);
+}
+
+/* A line found by the search, lit where it is. */
+.row.flash {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+mark {
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--accent) 26%, transparent);
+  color: inherit;
+}
+
+/* ---------------------------------------------------------------- the setup
+   A fresh install: four steps in Home's place, the pills of the bar put away
+   until it is over. The head and the foot stay; the steps' cards scroll. */
+
+.home.setup {
+  overflow: hidden;
+}
+
+.shead {
+  flex: none;
+  padding: 18px var(--side) 0;
+}
+
+.sprog {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  font: 500 var(--t-caption) / 1 var(--font);
+  color: var(--muted);
+}
+
+.sprog i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.sprog i.done {
+  background: var(--muted);
+}
+
+.sprog i.on {
+  background: var(--accent);
+}
+
+.sprog span {
+  margin-left: 6px;
+}
+
+.stitle-line {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.stitle {
+  font: 600 28px / 34px var(--font);
+  letter-spacing: -0.02em;
+  color: var(--strong);
+}
+
+.scap {
+  overflow: hidden;
+  font: 400 var(--t-small) / 1 var(--font);
+  color: var(--muted);
+  text-overflow: ellipsis;
+}
+
+.sline {
+  height: 1px;
+  margin: 12px 0 0;
+  background: var(--border-soft);
+}
+
+.sbody {
+  flex: 1;
+  min-height: 0;
+  padding: 6px calc(var(--side) - 12px) 16px var(--side);
+  overflow: hidden auto;
+  scrollbar-gutter: stable;
+}
+
+.sfoot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px var(--side) 14px;
+  border-top: 1px solid var(--border-soft);
+  background: var(--bg);
+}
+
+.sfoot .gap {
+  flex: 1;
+}
+
+/* The advice: a green chip after a card's title. */
+.chip.good {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  margin-left: 8px;
+  padding: 0 8px 0 6px;
+  border-color: color-mix(in srgb, var(--green) 40%, var(--border));
+  background: color-mix(in srgb, var(--green) 12%, var(--surface));
+  color: var(--green);
+  font: 600 11px / 1 var(--font);
+  vertical-align: 2px;
+}
+
+.chip.good .lu {
+  width: 12px;
+  height: 12px;
+  stroke-width: 2.5;
+}
+
+/* The two lines that stay framed: Home's notice and the setup's sum. */
+.row.notice,
+.row.total {
+  width: 100%;
+  margin: 8px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.row.notice::before,
+.row.total::before,
+.row.notice + .row::before,
+.row.total + .row::before {
+  display: none;
+}
+
+/* The sum of it all, and the verdict on this computer: a card on the accent's tint. */
+.row.total {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+.row.total.bad {
+  border-color: color-mix(in srgb, var(--red) 40%, var(--border));
+  background: color-mix(in srgb, var(--red) 7%, var(--surface));
+}
+
+/* Home's notice (Kryakl is paused): a card in the actions' column, above them. */
+.home > .row.notice {
+  width: auto;
+  flex: none;
+  margin: 12px var(--side) -4px;
+}
+
+/* Paused is indigo, wherever it shows. */
+.row.notice.paused {
+  border-color: color-mix(in srgb, var(--paused) 60%, var(--border));
+  background: color-mix(in srgb, var(--paused) 8%, var(--surface));
+}
+
+.row.notice.paused > .lu {
+  color: var(--paused);
+}
+
+/* A card's text that is itself a button (a word to change): laid out as the text is. */
+.row > button.l {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.row > button.l:hover {
+  color: var(--accent-text);
+}
+
+/* A card that opens a page of its own: its value on the right, then the chevron. */
+.row.navc {
+  cursor: pointer;
+}
+
+.row.navc:hover {
+  background: var(--hover);
+}
+
+.row:is(.navc, .trow):hover::before,
+.row:is(.navc, .trow):hover + .row::before {
+  opacity: 0;
+}
+
+.row .v {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 45%;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.row .v.ok {
+  color: var(--green);
+}
+
+.row .chev {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+}
+
+/* A card with its control under the text: an add field and its note. */
+.row.add {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  padding: 14px 12px;
+}
+
+.row.add .fields {
+  display: flex;
+  gap: 8px;
+}
+
+.row.add .fields .field {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+
+.row.add small {
+  font: 400 var(--t-caption) / 1.4 var(--font);
+  color: var(--muted);
+}
+
+.row.add small.bad {
+  color: var(--red);
+}
+
+.row .l small.bad,
+.warn {
+  color: var(--red);
+}
+
+
+/* A mistake as the check card marks it: the person's words struck out in red, the right ones in bold green. */
+.marks del {
+  color: var(--red);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--red) 75%, transparent);
+}
+
+.marks ins {
+  color: var(--green);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+
+/* A whole line that is a switch. */
+.trow {
+  cursor: pointer;
+}
+
+.trow:hover {
+  background: var(--hover);
+}
+
+.seg {
+  display: inline-flex;
+  flex: none;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg);
+}
+
+.seg button {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.seg button:hover {
+  color: var(--text);
+}
+
+/* The chosen one: flat, a step lighter, its own thin border. */
+.seg button.on {
+  background: var(--surface);
+  color: var(--strong);
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.seg.mono button {
+  padding: 0 9px;
+  font: 500 12px / 1 var(--mono);
+}
+
+/* A list to pick from (ui.ts select): a quiet button with the choice and a
+   chevron; its list (.sel-pop) is Kryakl's own, in the page's body. */
+.sel {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: min(300px, 45vw);
+  height: 36px;
+  padding: 0 8px 0 10px;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+  text-align: left;
+}
+
+.sel .sv {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sel svg.lu {
+  color: var(--muted);
+  transition: transform 0.12s ease;
+}
+
+.sel:hover,
+.sel[aria-expanded='true'] {
+  background: var(--hover);
+}
+
+.sel[aria-expanded='true'] svg.lu {
+  transform: rotate(180deg);
+}
+
+.sel-pop {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.sel-filter {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  margin-bottom: 4px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg);
+  color: var(--muted);
+  cursor: text;
+}
+
+.sel-filter:focus-within {
+  border-color: var(--focus);
+}
+
+.sel-filter input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: none;
+  color: var(--strong);
+  user-select: text;
+}
+
+.sel-filter input::placeholder {
+  color: var(--muted);
+}
+
+.sel-filter input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.sel-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  outline: none;
+}
+
+.sel-opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 10px 0 8px;
+  border-radius: 4px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.sel-opt[hidden] {
+  display: none;
+}
+
+.sel-opt > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sel-opt svg.lu {
+  visibility: hidden;
+  color: var(--strong);
+}
+
+.sel-opt.active {
+  background: var(--selected);
+}
+
+.sel-opt.on {
+  color: var(--strong);
+  font-weight: 500;
+}
+
+.sel-opt.on svg.lu {
+  visibility: visible;
+}
+
+.sel-empty {
+  padding: 6px 10px;
+  color: var(--muted);
+}
+
+.tg {
+  position: relative;
+  flex: none;
+  width: 36px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--overlay);
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.tg::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 0.25s cubic-bezier(0.3, 1.3, 0.5, 1), background-color 0.15s, width 0.15s, height 0.15s, top 0.15s;
+}
+
+.tg.on {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.tg.on::after {
+  top: 2px;
+  width: 14px;
+  height: 14px;
+  transform: translateX(15px);
+  background: var(--on-accent);
+}
+
+.link {
+  color: var(--accent-text);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.link:hover {
+  text-decoration-color: currentColor;
+}
+
+.link:disabled {
+  text-decoration-color: transparent;
+  color: var(--muted);
+  text-decoration: none;
+  opacity: 0.6;
+}
+
+.kchg {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+}
+
+.krec > .link {
+  margin-right: -2px;
+}
+
+.kg2 {
+  display: inline-flex;
+  gap: 8px;
+}
+
+/* The keys of an action, which a tap turns into a field that listens. */
+.krec {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 2px;
+  border-radius: var(--r-sm);
+}
+
+.krec:hover {
+  background: var(--hover);
+}
+
+.krec.recording {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  box-shadow: 0 0 0 1px var(--focus);
+}
+
+.key.rec {
+  border-style: dashed;
+  border-bottom-width: 1px;
+  border-color: var(--focus);
+  background: transparent;
+  color: var(--accent-text);
+  font-weight: 400;
+}
+
+.kx,
+.ib {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  color: var(--muted);
+}
+
+.kx {
+  margin: 0 -6px;
+}
+
+.kx .codicon,
+.ib .codicon {
+  font-size: 14px;
+}
+
+.ib .lu {
+  width: 16px;
+  height: 16px;
+}
+
+.kx:hover,
+.ib:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.ib:disabled {
+  opacity: 0.35;
+  background: none;
+}
+
+.chips,
+.chiprow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.chiprow {
+  margin-bottom: 4px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--raised);
+  color: var(--strong);
+  font: 500 12.5px / 1 var(--font);
+  white-space: nowrap;
+}
+
+.chip:has(.ib) {
+  padding-right: 2px;
+}
+
+.chip .ib {
+  width: 20px;
+  height: 20px;
+}
+
+/* A word to spell: the word as written, then what it may be heard as, quieter. */
+.chip.term {
+  max-width: 100%;
+}
+
+.chip.term b {
+  font-weight: 600;
+}
+
+.chip.term .heard {
+  overflow: hidden;
+  color: var(--muted);
+  font-weight: 400;
+  text-overflow: ellipsis;
+}
+
+button.chip:hover {
+  background: var(--overlay);
+}
+
+.chip.off {
+  border-style: dashed;
+  background: transparent;
+  color: var(--muted);
+}
+
+.chip.bad {
+  border-color: color-mix(in srgb, var(--red) 50%, var(--border));
+  color: var(--red);
+  background: transparent;
+}
+
+.chip.lit {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, var(--raised));
+  color: var(--accent-text);
+}
+
+.chipctl {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 6px;
+}
+
+.chipctl .link {
+  margin-left: 6px;
+}
+
+/* A text field: one plain border; focused, the border and a ring of one more pixel in the accent. */
+.field {
+  width: 170px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--strong);
+  font: 400 14px / 1 var(--font);
+  user-select: text;
+}
+
+.field::placeholder {
+  color: var(--muted);
+}
+
+.field:focus {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 1px var(--focus);
+}
+
+.bar {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  height: 4px;
+  margin: 8px 0 4px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--overlay);
+}
+
+.bar .fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.3s;
+}
+
+.pct {
+  font: 500 var(--t-caption) / 1 var(--mono);
+  color: var(--text);
+}
+
+.warn,
+.aside,
+.privacy {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 12px 2px 0;
+  font: 400 var(--t-small) / 1.5 var(--font);
+}
+
+.warn .lu,
+.aside .lu,
+.privacy .lu {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+}
+
+/* A calm line: who else is at the keyboard, not a fault. */
+.aside,
+.privacy {
+  color: var(--muted);
+}
+
+/* An offer answered once, Run or Not now: the speed test. */
+.offer {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 12px 0 2px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+.offer > .codicon,
+.offer > svg.lu {
+  flex: none;
+  margin-top: 1px;
+  font-size: 16px;
+  color: var(--accent-text);
+}
+
+.offer > svg.lu {
+  width: 16px;
+  height: 16px;
+}
+
+.offer .ot {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.offer b {
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--strong);
+}
+
+.offer small {
+  font: 400 var(--t-caption) / 1.5 var(--font);
+  color: var(--muted);
+}
+
+.offer .acts {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 6px;
+}
+
+/* A model that cannot run here: shown, with why, but quiet. */
+.row.dim .l {
+  opacity: 0.55;
+}
+
+/* One choice of a few (an action's model on Models): a ring before the line, filled in the one in use; the whole line picks it. */
+.row.radio {
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.row.radio:not(.on, .off):hover {
+  background: var(--hover);
+}
+
+.row.radio:not(.on, .off):hover::before,
+.row.radio:not(.on, .off):hover + .row::before {
+  opacity: 0;
+}
+
+.row.radio.on,
+.row.radio.off {
+  cursor: default;
+}
+
+.row.radio:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.row.radio > .ring {
+  flex: none;
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border: 1.5px solid var(--muted);
+  border-radius: 50%;
+  transition: border-color 0.12s, background-color 0.12s;
+}
+
+.row.radio:not(.on, .off):hover > .ring {
+  border-color: var(--strong);
+}
+
+.row.radio.on > .ring {
+  border-color: var(--accent);
+  background: radial-gradient(circle, var(--on-accent) 0 3px, var(--accent) 3.5px);
+}
+
+.row.radio.off > .ring {
+  border-style: dashed;
+  opacity: 0.6;
+}
+
+.row.radio > .pct,
+.row.radio > .link,
+.row.radio > .ib {
+  align-self: center;
+}
+
+/* A part nothing uses (Storage, Clean up): a quiet chip with an amber dot, as what waits for the person. */
+.chip.unused {
+  gap: 6px;
+  height: 20px;
+  margin-left: 8px;
+  padding: 0 8px;
+  background: transparent;
+  color: var(--muted);
+  font: 600 11px / 1 var(--font);
+  vertical-align: 2px;
+}
+
+.chip.unused::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--amber);
+}
+
+/* Use recommended's changes, one to a line. */
+.row.total .l small b {
+  font-weight: 600;
+  color: var(--strong);
+}
+
+.warn .codicon,
+.aside .codicon,
+.privacy .codicon {
+  flex: none;
+  font-size: 13px;
+  line-height: 17px;
+}
+
+.try {
+  margin-top: 8px;
+  padding: 14px 16px;
+  border: 1px dashed var(--muted);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+}
+
+.try p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--strong);
+  user-select: text;
+  cursor: text;
+}
+
+.try p::selection {
+  background: var(--selection);
+}
+
+.try small {
+  display: block;
+  margin-top: 8px;
+  font: 400 var(--t-caption) / 1.5 var(--font);
+  color: var(--muted);
+}
+
+/* ---------------------------------------------------------------- words */
+
+.tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 6px;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: text;
+}
+
+.search:focus-within {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 1px var(--focus);
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: none;
+  color: var(--strong);
+  font-size: 14px;
+  user-select: text;
+}
+
+.search input::placeholder {
+  color: var(--muted);
+}
+
+.search input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--strong);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.btn .codicon {
+  font-size: 14px;
+}
+
+.btn .lu {
+  width: 16px;
+  height: 16px;
+}
+
+.btn:hover {
+  background: var(--raised);
+}
+
+.btn:disabled {
+  color: var(--muted);
+  opacity: 0.6;
+  background: var(--surface);
+}
+
+/* ---------------------------------------------------------------- about */
+
+.hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 0 14px;
+}
+
+.hero .tile {
+  flex: none;
+  width: 48px;
+  height: 48px;
+}
+
+.hero .logo {
+  font-size: 24px;
+}
+
+.hero small {
+  display: block;
+  margin-top: 4px;
+  font: 400 var(--t-small) / 1.3 var(--font);
+  color: var(--muted);
+}
+
+.para {
+  max-width: 62ch;
+  margin: 6px 0 10px;
+  font: 400 14.5px / 1.6 var(--font);
+  color: var(--text);
+  user-select: text;
+}
+
+.para.credits {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 0 10px;
+}
+
+.lchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: 500 13px / 1 var(--font);
+  text-decoration: none;
+}
+
+.lchip:hover {
+  background: var(--selected);
+}
+
+.lchip .lu {
+  width: 14px;
+  height: 14px;
+  color: var(--muted);
+}
+
+.mail {
+  font: 400 13px / 1 var(--mono);
+  color: var(--text);
+  user-select: all;
+}
+
+/* ---------------------------------------------------------------- buttons, paths, states */
+
+.btn.primary {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.btn.primary:hover {
+  background: var(--accent-hover);
+}
+
+.btn.danger {
+  border-color: transparent;
+  background: var(--red);
+  color: #fff;
+}
+
+.row .btn {
+  height: 36px;
+  padding: 0 14px;
+}
+
+.btn.rec .dot {
+  background: var(--red);
+}
+
+.dot {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--red);
+}
+
+.dot.pulse {
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* A folder in a note: its end, the part that tells folders apart, stays in view. */
+.row .l small.path {
+  overflow: hidden;
+  direction: rtl;
+  text-align: left;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  user-select: text;
+}
+
+.field.wide {
+  width: 210px;
+}
+
+/* A word to spell and its heard forms: room for the example it shows. */
+.field.term {
+  width: 320px;
+  max-width: 45vw;
+}
+
+/* What happened, on Report a problem: a few lines, taller by a drag of its corner. */
+.field.report {
+  width: 100%;
+  height: auto;
+  min-height: 132px;
+  padding: 10px 12px;
+  font: 400 14px / 1.5 var(--font);
+  resize: vertical;
+}
+
+.aside > span,
+.warn > span {
+  min-width: 0;
+}
+
+.aside .link,
+.warn .link {
+  margin-right: 8px;
+  font: inherit;
+}
+
+.aside b {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* The Hugging Face key's state: checking, a fault, ready. */
+.row .l small.kstate {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.row .l small.kstate.ok,
+.row .l small.ok {
+  color: var(--green);
+}
+
+.row .l small.kstate.bad {
+  color: var(--red);
+}
+
+.row .l small.kstate.busy {
+  color: var(--accent-text);
+}
+
+.kstate .codicon {
+  font-size: 13px;
+  line-height: 16px;
+}
+
+.spin {
+  flex: none;
+  width: 11px;
+  height: 11px;
+  margin-top: 3px;
+  border: 2px solid var(--border);
+  border-top-color: var(--mark);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Steps to follow, numbered, under the line they serve. */
+.steps {
+  margin: 0 0 4px;
+  padding: 12px 16px 14px 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.steps li + li {
+  margin-top: 6px;
+}
+
+.steps li::marker {
+  font: 500 var(--t-caption) / 1 var(--font);
+  color: var(--muted);
+}
+
+.steps b {
+  font-weight: 600;
+  color: var(--strong);
+}
+
+.steps a {
+  color: var(--accent-text);
+  text-decoration: underline 1.5px var(--link-line);
+  text-underline-offset: 3px;
+}
+
+.steps a:hover {
+  text-decoration-color: currentColor;
+}
+
+.kline {
+  display: flex;
+  margin-top: 8px;
+}
+
+/* ---------------------------------------------------------------- transcribe */
+
+.zone {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 4px 0 6px;
+  padding: 16px 16px 16px 18px;
+  border: 1px dashed var(--muted);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.12s, background-color 0.12s;
+}
+
+.zone:hover {
+  border-color: var(--focus);
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+}
+
+.zone > .codicon {
+  flex: none;
+  font-size: 22px;
+  color: var(--muted);
+}
+
+.zt {
+  flex: 1;
+  min-width: 0;
+}
+
+.zt b {
+  display: block;
+  font: 600 14px / 1.4 var(--font);
+  color: var(--strong);
+}
+
+.zt small {
+  display: block;
+  margin-top: 2px;
+  font: 400 var(--t-caption) / 1.4 var(--font);
+  color: var(--muted);
+}
+
+/* The microphone while it records: the time and the level move on their own. */
+.row.live .l {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.livehead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--red);
+  font-weight: 500;
+}
+
+.mtime {
+  margin-left: 4px;
+  font: 600 15px / 1 var(--mono);
+  color: var(--strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.level {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--overlay);
+}
+
+.level i {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--green);
+  transition: width 80ms linear;
+}
+
+/* Files over the window: anywhere is a drop. */
+.drop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  pointer-events: none;
+}
+
+.drop.on {
+  display: flex;
+}
+
+.drop > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 36px 54px;
+  border: 1.5px dashed var(--focus);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--strong);
+  font-size: 16px;
+}
+
+.drop .codicon {
+  font-size: 30px;
+  color: var(--accent-text);
+}
+
+/* Short messages: the layout badge's inverted pill, at the bottom. */
+.toasts {
+  position: fixed;
+  left: 50%;
+  /* above a transcript's player */
+  bottom: 74px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 520px;
+  padding: 8px 16px;
+  border-radius: var(--r-pill);
+  background: var(--strong);
+  color: var(--bg);
+  font-size: 13px;
+  box-shadow: var(--shadow);
+  pointer-events: auto;
+  animation: rise 0.25s cubic-bezier(0.3, 1.3, 0.5, 1);
+}
+
+.toast span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toast.bad {
+  background: var(--red);
+  color: #fff;
+}
+
+.toast .link {
+  color: inherit;
+  text-decoration: underline;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* ---------------------------------------------------------------- transcripts */
+
+.tl {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.tl li {
+  position: relative;
+}
+
+.tl .empty {
+  padding: 40px 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.ti {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: calc(100% + 24px);
+  margin: 0 -12px;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  text-align: left;
+}
+
+li + li > .ti::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 12px;
+  right: 12px;
+  height: 1px;
+  background: var(--border-soft);
+}
+
+.ti:hover {
+  background: var(--hover);
+}
+
+.ti .src {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--raised);
+  color: var(--muted);
+}
+
+.ti .src .codicon {
+  font-size: 15px;
+}
+
+.tm {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.tm b {
+  overflow: hidden;
+  font: 600 14px / 1.4 var(--font);
+  color: var(--strong);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.tm small {
+  font: 400 var(--t-caption) / 1.5 var(--font);
+  color: var(--muted);
+}
+
+.snip {
+  display: -webkit-box;
+  margin-top: 3px;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.snip mark {
+  padding: 0 1px;
+  border-radius: 3px;
+  background: var(--selection);
+  color: var(--strong);
+}
+
+.chip.rec {
+  gap: 6px;
+  border-color: color-mix(in srgb, var(--red) 50%, var(--border));
+  background: transparent;
+  color: var(--red);
+}
+
+.tempty {
+  padding: 30px 4px;
+}
+
+.tempty b {
+  font: 650 16px / 1.4 var(--font);
+  color: var(--strong);
+}
+
+.tempty ul {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+}
+
+.tempty li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  font-size: 13.5px;
+  color: var(--text);
+}
+
+.tempty li .codicon {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.opening {
+  margin: 24px 0;
+  color: var(--muted);
+}
+
+/* A transcript: its name (renamed in place), then what can be done with it. */
+.thead {
+  margin: 2px 0 4px;
+}
+
+.ttitle {
+  margin: 0 -6px;
+  padding: 2px 6px;
+  border-radius: var(--r-md);
+  font: 650 20px / 1.35 var(--font);
+  letter-spacing: -0.015em;
+  color: var(--strong);
+  user-select: text;
+}
+
+.ttitle[contenteditable]:hover {
+  background: var(--hover);
+}
+
+.ttitle:focus {
+  background: var(--raised);
+  box-shadow: inset 0 0 0 1px var(--focus);
+}
+
+.tmeta {
+  display: block;
+  margin-top: 2px;
+  font: 400 var(--t-small) / 1.5 var(--font);
+  color: var(--muted);
+}
+
+.tacts {
+  flex-wrap: wrap;
+  margin: 10px 0 4px;
+}
+
+.tacts .btn {
+  height: 36px;
+  padding: 0 14px;
+}
+
+.tacts .gap {
+  flex: 1;
+}
+
+.confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.confirm small {
+  font: 400 var(--t-caption) / 1 var(--font);
+  color: var(--muted);
+}
+
+.ib.del {
+  width: 30px;
+  height: 30px;
+}
+
+.menuwrap {
+  position: relative;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.mi {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: var(--r-xs);
+  font-size: 13px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.mi:hover {
+  background: var(--hover);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+}
+
+.card > b {
+  font: 600 15px / 1.4 var(--font);
+  color: var(--strong);
+}
+
+.card > b .dot {
+  vertical-align: 1px;
+}
+
+.card small {
+  font: 400 var(--t-caption) / 1.5 var(--font);
+  color: var(--muted);
+}
+
+.card.bad > b {
+  color: var(--red);
+}
+
+.cardbtns {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.track {
+  position: relative;
+  display: block;
+  height: 4px;
+  margin: 8px 0 2px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--overlay);
+}
+
+.track i {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.4s ease;
+}
+
+/* A light runs over the bar while the engine works, so a stage without numbers yet still shows life. */
+.track.live::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 30%;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 55%, transparent), transparent);
+  animation: sweep 1.8s ease-in-out infinite;
+}
+
+@keyframes sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(340%);
+  }
+}
+
+.card small.pstat {
+  min-height: 1.5em;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.stages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin: 6px 0 4px;
+  padding: 0;
+  list-style: none;
+  font: 400 var(--t-caption) / 1.5 var(--font);
+  color: var(--muted);
+}
+
+.stages li.done {
+  color: var(--green);
+}
+
+.stages li.done::before {
+  content: '\2713\a0';
+}
+
+.stages li.now {
+  color: var(--strong);
+  font-weight: 600;
+}
+
+/* Speakers: one color each, the same in the strip and in the text. */
+.sp-me {
+  --sp: var(--green);
+}
+
+.sp-1 {
+  --sp: var(--blue);
+}
+
+.sp-2 {
+  --sp: var(--coral);
+}
+
+.sp-3 {
+  --sp: var(--lilac);
+}
+
+.sp-4 {
+  --sp: var(--teal);
+}
+
+.sp-5 {
+  --sp: var(--sky);
+}
+
+.sp-6 {
+  --sp: var(--red);
+}
+
+.sw {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sp, var(--muted));
+}
+
+.spk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0 4px;
+}
+
+.spk > small {
+  margin-left: 6px;
+  font: 400 var(--t-caption) / 1 var(--font);
+  color: var(--muted);
+}
+
+.chip.sp {
+  gap: 7px;
+  font: 500 12.5px / 1 var(--font);
+  cursor: text;
+}
+
+.spk .field {
+  width: 160px;
+  height: 26px;
+}
+
+/* Names read off a call's screen (callNames): offered, never applied by themselves. */
+.namehints {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 4px 0;
+}
+
+.namehint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 400 var(--t-body) / 1.4 var(--font);
+}
+
+.namehints > small {
+  font: 400 var(--t-caption) / 1.3 var(--font);
+  color: var(--muted);
+}
+
+.utts {
+  display: flex;
+  flex-direction: column;
+  margin: 4px -8px 0;
+}
+
+/* A call's screenshots between the lines, at their time; a click shows one large (.shotbig, Esc closes). */
+.shots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 8px 6px 72px;
+}
+
+.shot {
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--overlay);
+  cursor: zoom-in;
+}
+
+.shot img {
+  display: block;
+  height: 72px;
+  width: auto;
+}
+
+.shotbig {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(0 0 0 / 0.75);
+  cursor: zoom-out;
+}
+
+.shotbig img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: var(--r-sm);
+}
+
+.utt {
+  position: relative;
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  gap: 6px;
+  padding: 1px 8px;
+  border-radius: var(--r-md);
+  /* A line brought into view while it plays clears the player under it. */
+  scroll-margin: 12px 0 80px;
+}
+
+.utt.first {
+  margin-top: 12px;
+}
+
+.utt.now {
+  background: var(--selection);
+}
+
+/* The time sits on the text's first line, under the speaker's name. */
+.utt.first.has-who .at {
+  margin-top: 22px;
+}
+
+.at {
+  align-self: start;
+  padding-top: 4px;
+  font: 500 var(--t-caption) / 1.9 var(--mono);
+  color: var(--muted);
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+.at:hover {
+  color: var(--accent-text);
+}
+
+.ub {
+  position: relative;
+  min-width: 0;
+}
+
+.who {
+  display: block;
+  padding: 2px 0 0;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--sp, var(--strong));
+}
+
+.who:hover {
+  text-decoration: underline;
+}
+
+.whomenu {
+  top: 24px;
+}
+
+.ut {
+  margin-left: -5px;
+  padding: 3px 5px;
+  border-radius: var(--r-sm);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--strong);
+  white-space: pre-wrap;
+  user-select: text;
+}
+
+.ut:hover {
+  background: var(--hover);
+}
+
+.ut:focus {
+  background: var(--raised);
+  box-shadow: inset 0 0 0 1px var(--focus);
+}
+
+/* The sound under the text, held at the page's bottom edge. */
+.player {
+  position: sticky;
+  bottom: 12px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 0;
+  padding: 6px 10px 6px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.pp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.pp:hover {
+  background: var(--accent-hover);
+}
+
+.ptime {
+  flex: none;
+  font: 500 var(--t-caption) / 1 var(--mono);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.scrub {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--accent);
+}
+
+.speed {
+  flex: none;
+  min-width: 42px;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  font: 500 12px / 1 var(--mono);
+  color: var(--text);
+}
+
+.speed:hover {
+  background: var(--overlay);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tg::after,
+  .seg button,
+  .bar .fill,
+  .track i,
+  .level i {
+    transition: none;
+  }
+
+  .track.live::after,
+  .dot.pulse,
+  .spin,
+  .toast {
+    animation: none;
+  }
+}
+
+/* A size on the Storage page: a number, so mono. */
+.row .v.num {
+  max-width: none;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+/* ↺ beside × on a key: the pull to the edge is taken once. */
+.kx + .kx {
+  margin-left: 0;
+}
+
+/* Storage: parts still in the old folders, and Move to Kryakl. Amber, as what waits for the person. */
+.row.notice.old {
+  border-color: color-mix(in srgb, var(--amber) 55%, var(--border));
+  background: color-mix(in srgb, var(--amber) 8%, var(--surface));
+}
+
+.row.notice.old > .lu {
+  color: var(--amber);
+}
+
+/* ---------------------------------------------------------------- talk */
+
+/* What the person tells the duck about themselves: a few lines. */
+.field.report.about {
+  min-height: 84px;
+}
+
+/* ---------------------------------------------------------------- a transcript's summary */
+
+.sum {
+  margin: 16px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sumhead b {
+  font: 600 var(--t-body) / 1.2 var(--font);
+  color: var(--strong);
+}
+
+.sumrow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.sumrow .gap {
+  flex: 1;
+}
+
+.summine {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 400 var(--t-caption) / 1 var(--font);
+  color: var(--muted);
+}
+
+.sumrun {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.sumrun .bar {
+  align-self: stretch;
+}
+
+.sumstat,
+.sumneed small,
+.sumtools small {
+  font: 400 var(--t-caption) / 1.4 var(--font);
+  color: var(--muted);
+}
+
+.sumneed {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sumneed .l {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sumtext h4 {
+  margin: 12px 0 4px;
+  font: 600 var(--t-caption) / 1.3 var(--font);
+  color: var(--strong);
+}
+
+.sumtext h4:first-child {
+  margin-top: 0;
+}
+
+.sumtext .sp,
+.sumtext .sli {
+  font: 400 var(--t-body) / 1.5 var(--font);
+  color: var(--text);
+}
+
+.sumtext .sli {
+  padding-left: 16px;
+  position: relative;
+}
+
+.sumtext .sli::before {
+  content: '•';
+  position: absolute;
+  left: 4px;
+  color: var(--muted);
+}
+
+.sumtext .stamp {
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  font: 500 var(--t-caption) / 1.4 var(--mono);
+  color: var(--accent-text);
+  text-decoration: underline;
+  text-decoration-color: var(--link-line);
+  cursor: pointer;
+}
+
+.sumtools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.field.report.sumedit {
+  width: 100%;
+  min-height: 160px;
+}
+
+/* Settings › Keys: the keyboard with the keys Tyts holds (2026-11-06). */
+.kbmap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  overflow-x: auto;
+}
+.kbr {
+  display: flex;
+  gap: 4px;
+}
+.kbc {
+  flex: none;
+  width: 34px;
+  height: 32px;
+  padding: 3px 5px;
+  border: 1px solid var(--border);
+  border-bottom-width: 3px;
+  border-radius: 5px;
+  font: 500 10px/1 var(--mono);
+  color: var(--muted);
+  position: relative;
+}
+.kbc.w15 { width: 52px; }
+.kbc.w2 { width: 70px; }
+.kbc.w25 { width: 86px; }
+.kbc.sp { width: 200px; }
+.kbc.used {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent-text);
+}
+.kbc.used::after {
+  content: attr(data-n);
+  position: absolute;
+  right: 4px;
+  bottom: 2px;
+  font-weight: 700;
+}
+
+/* A question to the calls (transcripts.ts askRows): the field as the search, the answer under it with its citations. */
+.search.ask {
+  margin-bottom: 6px;
+}
+
+.answer {
+  margin: 4px 0 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--strong);
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  user-select: text;
+}
+
+.answer.muted {
+  color: var(--muted);
+}
+
+.cite {
+  display: inline-block;
+  min-width: 18px;
+  margin: 0 2px;
+  padding: 0 5px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font: 600 11px/18px var(--mono);
+  cursor: pointer;
+  vertical-align: 1px;
+}
+
+.sources {
+  margin: 0 0 10px;
+  padding: 0 4px;
+  list-style: none;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.sources li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+}
+
+/* ---- a transcript's tabs (Transcript · Notes · Summary) and its notes; the calls window too */
+.ttabs {
+  margin: 14px 0 10px;
+}
+
+.ttab .tdot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  vertical-align: middle;
+}
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.notes .tnotes {
+  width: 100%;
+  resize: vertical;
+}
+
+.sumown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}

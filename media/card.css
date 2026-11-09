@@ -1,0 +1,1151 @@
+/* The card: the Listen card and the translator, one frameless window by the
+   pointer. Colors, faces, radii and the keycap come from theme.css (GitHub
+   Light / Dark Dimmed by prefers-color-scheme). One accent per surface; mono
+   only for keys, captions and states. Targets are at least 24px for a pen. */
+
+:root {
+  /* The card's own tints of the accent: a sentence being read or marked, the word. */
+  --sentence: color-mix(in srgb, var(--accent) 9%, transparent);
+  --marked: color-mix(in srgb, var(--accent) 13%, transparent);
+  --tint: color-mix(in srgb, var(--accent) 10%, transparent);
+  /* Where the text starts: the margin the paragraphs' ▶ sits in, or none. */
+  --gutter: 4px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* A frameless window: the header is its handle, the border its edge. The
+   window is as tall as the body (card.ts), so the border sits on the page. */
+html {
+  height: 100%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  overflow-x: hidden;
+}
+
+/* Windows 11 draws the edge (dwm.ts); the pixel stays, so the height holds. */
+html.dwm {
+  border-color: transparent;
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  background: var(--surface);
+  font: 400 var(--t-body) / 1.55 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.grow {
+  flex: 1;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+/* A long text scrolls under the header: a thin rail, not Windows' gutter. */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: var(--r-pill);
+  background: var(--border) padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted) padding-box;
+}
+
+/* A caption: small mono, for states, sizes and what a key does. */
+.kl {
+  color: var(--muted);
+  font: 400 var(--t-caption) / 1.2 var(--mono);
+}
+
+/* ------------------------------------------------------------ controls */
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--muted);
+}
+
+.icon-btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.icon-btn[aria-pressed='true'] {
+  color: var(--accent-text);
+}
+
+/* Pinned: the pin stays lit, as the card stays. */
+.bar .icon-btn[aria-pressed='true'] {
+  background: var(--tint);
+}
+
+/* The card's glyphs (card.ts GLYPHS): 1.5 px strokes on a 16 px grid, drawn
+   as outlines, as the approved sketch shows them; play and stop share the line. */
+svg.glyph {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The one filled button of a surface: Download, Try again, Open settings. */
+.primary-btn {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  height: 30px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.primary-btn:hover {
+  background: var(--accent-hover);
+}
+
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-text);
+}
+
+.link:hover {
+  text-decoration-color: currentColor;
+}
+
+/* Copy: quiet, a word and its icon. */
+.quiet-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px 0 8px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.quiet-btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.quiet-btn .codicon {
+  font-size: 15px;
+}
+
+/* The translator's Listen: a quiet ▶ beside Copy, so the languages keep their line; reading, Stop in the accent. */
+.quiet-btn.icon-only {
+  width: 30px;
+  padding: 0;
+  justify-content: center;
+}
+
+.quiet-btn svg.glyph {
+  width: 13px;
+  height: 13px;
+}
+
+.quiet-btn.is-playing,
+.quiet-btn.is-playing:hover {
+  color: var(--accent-text);
+}
+
+.quiet-btn:disabled,
+.primary-btn:disabled,
+.swap-btn:disabled,
+.paste-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.quiet-btn:disabled:hover {
+  background: transparent;
+  color: var(--muted);
+}
+
+.primary-btn:disabled:hover {
+  background: var(--accent);
+}
+
+/* ------------------------------------------------------------ header */
+
+/* The key that called the card, lit, then the function's name: every surface
+   names the key that opened it. */
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 8px 0 14px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--surface);
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+.bar button {
+  -webkit-app-region: no-drag;
+}
+
+.card-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.via {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-right: 4px;
+}
+
+.x2 {
+  margin-left: 3px;
+  color: var(--accent-text);
+  font: 500 var(--t-caption) / 1 var(--mono);
+}
+
+.kind-name {
+  overflow: hidden;
+  color: var(--strong);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.kind-source {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* The person's language: pressed, the translation shows under the English. */
+.toggle {
+  flex: none;
+  height: 24px;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--muted);
+  font: 500 var(--t-caption) / 1 var(--mono);
+  letter-spacing: 0.02em;
+}
+
+.toggle:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.toggle[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+  background: var(--tint);
+  color: var(--accent-text);
+}
+
+/* ------------------------------------------------------------ states */
+
+.banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 12px 14px 0;
+  padding: 10px 8px 10px 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  background: var(--raised);
+}
+
+.banner-text {
+  flex: 1 1 180px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Fast translated it, the local model too slow just now: the amber dot a mark only, the words muted, the model offered framed. */
+.busy-banner .dot {
+  flex: none;
+  align-self: flex-start;
+  margin-top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--amber);
+}
+
+.busy-banner .quiet-btn {
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.text-view .busy-banner {
+  margin: 10px 0 0;
+}
+
+.lower .busy-banner {
+  margin: 8px 14px 0 var(--gutter);
+}
+
+.empty {
+  padding: 18px 18px 18px 18px;
+}
+
+.empty p {
+  margin: 0;
+}
+
+.empty p + p {
+  margin-top: 8px;
+}
+
+.empty-title {
+  color: var(--strong);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.empty-text {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* Rewrite…'s answer under the selection: plain text, to read or copy. */
+.explain-answer {
+  color: var(--strong);
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.empty .download {
+  padding: 0;
+}
+
+.status-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* First use: the translator comes once; how much is in, and what goes on meanwhile. */
+.download-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.download-head b {
+  color: var(--strong);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.download-head .kl {
+  margin-left: auto;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.progress {
+  height: 4px;
+  margin: 10px 0;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--overlay);
+}
+
+.progress i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 200ms ease-out;
+}
+
+.download p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* ------------------------------------------------------------ the Listen card */
+
+.list {
+  padding: 14px 18px 0 14px;
+}
+
+.msg {
+  min-width: 0;
+}
+
+/* Several paragraphs: the margin each one's ▶ sits in. */
+.list.paragraphs {
+  --gutter: 26px;
+}
+
+.body {
+  padding-left: var(--gutter);
+  color: var(--strong);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.body p {
+  position: relative;
+  margin: 0 0 8px;
+}
+
+.body > :last-child {
+  margin-bottom: 0;
+}
+
+/* A sentence, in English or translated: a click marks it and its other side. */
+span.s,
+span.t {
+  border-radius: var(--r-xs);
+  cursor: pointer;
+  transition: background-color 80ms ease-out;
+}
+
+span.s:hover,
+span.t:hover {
+  background: var(--hover);
+}
+
+/* One by one: the sentence Listen reads next. */
+span.s.at {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+span.s.speaking,
+span.s.speaking:hover,
+span.t.speaking,
+span.t.speaking:hover {
+  background: var(--sentence);
+}
+
+.pair,
+.pair:hover {
+  background: var(--marked);
+}
+
+/* The same in the translator's field, whose text is not cut into spans. */
+::highlight(pair) {
+  background-color: var(--marked);
+}
+
+::highlight(reading) {
+  background-color: var(--sentence);
+}
+
+/* The word being said: the theme's selection, underlined in the accent. */
+::highlight(tutor-word) {
+  background-color: var(--selection);
+  color: var(--strong);
+  text-decoration: underline solid var(--mark) 2px;
+  text-underline-offset: 4px;
+}
+
+/* The word whose card is open. */
+::highlight(tutor-hover) {
+  background-color: color-mix(in srgb, var(--accent) 26%, transparent);
+}
+
+/* A word outside the most common 3000: a hint of what to click. */
+::highlight(rare-word) {
+  text-decoration: underline dotted var(--muted) 1.5px;
+  text-underline-offset: 4px;
+}
+
+/* Each paragraph's ▶, in the margin, never on the words. */
+.para-play {
+  position: absolute;
+  top: 2px;
+  left: -26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--tint);
+  color: var(--accent-text);
+  opacity: 0;
+  transition: opacity 80ms ease-out;
+}
+
+.para-play svg.glyph {
+  width: 12px;
+  height: 12px;
+}
+
+.para-play:hover {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.body p:hover > .para-play,
+.para-play:focus-visible,
+.para-play.is-playing {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .para-play {
+    opacity: 0.6;
+  }
+}
+
+/* Under each half, in both cards: Copy (and the translator's Listen) on the
+   left, the half's function on the right. Copy's glyph lines up with the
+   text's edge. */
+.half-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.msg > .half-bar {
+  margin: 6px 0 0 calc(var(--gutter) - 8px);
+  padding-bottom: 12px;
+}
+
+/* The remote, on the right: Space's job, previous, Listen, next, one by one. */
+.remote {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+  margin-left: auto;
+}
+
+.listen {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 13px 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--raised);
+  color: var(--strong);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.listen svg.glyph {
+  width: 13px;
+  height: 13px;
+}
+
+.listen:hover {
+  background: var(--overlay);
+}
+
+/* Reading: Listen became Stop, in place, in the accent. */
+.listen.is-playing {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  color: var(--accent-text);
+}
+
+.chip {
+  height: 26px;
+  margin-left: 6px;
+  padding: 0 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--muted);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.chip:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.chip[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+  background: var(--tint);
+  color: var(--accent-text);
+}
+
+.space-hint {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  margin-right: 8px;
+}
+
+/* A card of the usual width or narrower keeps Copy and the remote on one line and drops the hint. */
+@media (max-width: 480px) {
+  .space-hint {
+    display: none;
+  }
+}
+
+body.no-voice [data-play] {
+  opacity: 0.45;
+}
+
+/* The translation: the lower half, quieter, under a rule, its text where the
+   English starts; its Copy under it, once it is in. */
+.lower {
+  padding: 12px 0 10px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.lower > .half-bar {
+  margin: 6px 0 0 calc(var(--gutter) - 8px);
+}
+
+.translation {
+  padding: 0 0 4px var(--gutter);
+  color: var(--translation);
+  font-size: var(--t-body);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.translation p {
+  margin: 0 0 6px;
+}
+
+.translation > :last-child {
+  margin-bottom: 0;
+}
+
+.translation .download {
+  padding-top: 2px;
+}
+
+body.no-translation .lower {
+  display: none;
+}
+
+/* With the translation hidden, the remote is the card's last line. */
+body.no-translation .msg > .half-bar {
+  padding-bottom: 14px;
+}
+
+/* Listen's note on its text (a long one translated in part), as the translator's foot. */
+.list > .card-foot {
+  margin: 0 -18px 0 -14px;
+  padding-left: calc(14px + var(--gutter));
+}
+
+/* ------------------------------------------------------------ the word card */
+
+/* A click on a word: its meanings above it, over lines already read. */
+.word-card {
+  position: fixed;
+  z-index: 45;
+  padding: 8px 8px 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--raised);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-size: 13.5px;
+  line-height: 1.45;
+  pointer-events: none;
+}
+
+/* Opened by a click, the card takes clicks itself: say the word, keep it. */
+.word-card.clicked {
+  pointer-events: auto;
+}
+
+.wc-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 8px;
+  min-height: 28px;
+}
+
+.wc-word {
+  color: var(--strong);
+  font-size: 15px;
+  font-weight: 650;
+  cursor: default;
+}
+
+.wc-ipa {
+  color: var(--muted);
+  font: 400 var(--t-caption) / 1 var(--mono);
+}
+
+/* "from constraints": on its own line under the word. */
+.wc-form {
+  order: 10;
+  flex-basis: 100%;
+  margin: -2px 0 3px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.wc-head .icon-btn {
+  width: 28px;
+  height: 28px;
+}
+
+.wc-head .icon-btn[aria-pressed='true'] {
+  color: var(--accent-text);
+}
+
+.wc-sense {
+  margin-top: 3px;
+  overflow-wrap: anywhere;
+}
+
+.wc-pos {
+  margin-right: 2px;
+  color: var(--muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.wc-note {
+  color: var(--muted);
+}
+
+.wc-also {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-soft);
+  color: var(--strong);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------ the translator */
+
+/* The text as it is (fixed by hand, as Windows misreads some letters), Copy,
+   the two languages and Swap; the translation under them with Copy and Paste. */
+.text-view {
+  padding: 14px 14px 0;
+}
+
+/* The text, live: edited in place, its English words dotted and clickable as
+   in Listen. As tall as its text, two lines at least, up to about fourteen;
+   then it scrolls. Its lines are the text's own. */
+.text-field {
+  display: block;
+  width: 100%;
+  min-height: 72px;
+  max-height: 320px;
+  margin: 0;
+  padding: 9px 12px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--raised);
+  color: var(--strong);
+  font-size: var(--t-body);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow-y: auto;
+  cursor: text;
+  transition: border-color 80ms ease-out, box-shadow 80ms ease-out;
+}
+
+/* Maximized: the page fills the window, and the field the height the rest
+   leaves; a longer text grows it on, the page scrolling. */
+body.maximized {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+body.maximized #root {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+
+body.maximized .list {
+  flex: 1 0 auto;
+}
+
+body.maximized .text-view {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+
+body.maximized .text-field {
+  flex: 1 0 auto;
+  max-height: none;
+  overflow-y: hidden;
+}
+
+.text-field:focus {
+  border-color: var(--focus);
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 14%, transparent);
+}
+
+.text-view .half-bar {
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.text-langs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.to {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* A list of languages as a framed pill, its arrow drawn over it. */
+.select-pill {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+}
+
+.select-pill select {
+  min-width: 0;
+  height: 30px;
+  padding: 0 28px 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--strong);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  /* As wide as the language picked, not the longest one in the list. */
+  field-sizing: content;
+  appearance: none;
+  cursor: pointer;
+}
+
+.select-pill select:hover {
+  background: var(--hover);
+}
+
+.select-pill select:focus-visible {
+  border-color: var(--focus);
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 14%, transparent);
+}
+
+/* The list opens in the card's colors. */
+.select-pill option {
+  background: var(--raised);
+  color: var(--text);
+}
+
+.select-pill .codicon {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* Swap: framed and raised, after the languages, where the eye goes after picking one. */
+.swap-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--raised);
+  color: var(--strong);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.swap-btn:hover:not(:disabled) {
+  background: var(--overlay);
+}
+
+.swap-btn .codicon {
+  font-size: 14px;
+}
+
+/* The narrowest cards: the languages and Swap keep one line, the lists giving way. */
+@media (max-width: 380px) {
+  .text-langs {
+    flex-wrap: nowrap;
+    min-width: 0;
+  }
+
+  .select-pill {
+    flex: 0 1 auto;
+  }
+}
+
+.text-result {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.text-result > p {
+  margin: 0;
+}
+
+.text-result > p + p,
+.text-result > .status-line + .text-out {
+  margin-top: 8px;
+}
+
+/* The translation: a paragraph per line, every sentence a span whose click marks its side in the field. */
+.text-out {
+  color: var(--translation);
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+/* Check my English writes the person's own text corrected, not a translation: full tone. */
+.text-out.check-out {
+  color: var(--strong);
+}
+
+.text-out p {
+  margin: 0 0 6px;
+}
+
+.text-out > :last-child {
+  margin-bottom: 0;
+}
+
+/* A quick draft (Fast's) the accurate model is replacing sentence by sentence
+   (sweep.ts): a quieter tone, and one soft light passing over every draft at
+   once (fixed to the window, so the drafts share it). No blur, no yellow. */
+span.t.draft {
+  color: var(--draft);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Not on one fading out: Chromium paints a text-clipped background as a solid bar while its opacity animates. */
+  span.t.draft:not(.fading) {
+    background-image: linear-gradient(100deg, var(--draft) 38%, var(--shine) 50%, var(--draft) 62%);
+    background-size: 60vw 100%;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-color: var(--draft);
+    background-clip: text;
+    color: transparent;
+    animation: draft-shine 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+}
+
+@keyframes draft-shine {
+  from {
+    background-position: -60vw 0;
+  }
+  to {
+    background-position: 100vw 0;
+  }
+}
+
+/* A word of a sentence being swept in keeps its spaces. */
+span.t > .w {
+  white-space: pre-wrap;
+}
+
+/* The last translation (or check), while a newer one comes. */
+.text-out.stale,
+.check-note.stale,
+.check-clean.stale {
+  opacity: 0.5;
+}
+
+/* An empty field says what goes in it (Check my English). */
+.text-field:empty::before {
+  content: attr(data-placeholder);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+/* Check my English: the person's words struck out in red, the right ones in
+   bold green after them, as the VS Code tutor marks them; then the main
+   mistake, one line in the person's own language. */
+.check-out {
+  white-space: pre-wrap;
+}
+
+.check-out del {
+  color: var(--red);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--red) 75%, transparent);
+}
+
+.check-out ins {
+  color: var(--green);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.text-result > .check-note {
+  margin-top: 10px;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.check-clean {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--green);
+  font-weight: 600;
+}
+
+.text-result > .status-line + .check-out,
+.text-result > .status-line + .check-clean {
+  margin-top: 8px;
+}
+
+.text-result .half-bar {
+  margin-top: 10px;
+}
+
+/* Paste: the one blue button, over the selection the text came from; Enter does the same. */
+.paste-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 6px 0 14px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.paste-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+/* Its key, on it: the .key cap in the button's own colors (not in its name). */
+.paste-btn::after {
+  content: 'Enter';
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 6px;
+  border: 1px solid color-mix(in srgb, var(--on-accent) 35%, transparent);
+  border-bottom-width: 2px;
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--on-accent) 14%, transparent);
+  font: 500 var(--t-caption) / 1 var(--mono);
+  letter-spacing: 0.02em;
+}
+
+.card-foot {
+  margin: 12px -14px 0;
+  padding: 9px 14px 11px;
+  border-top: 1px solid var(--border-soft);
+  color: var(--muted);
+  font: 400 var(--t-caption) / 1.4 var(--mono);
+}
+
+/* ------------------------------------------------------------ floating */
+
+.toast {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  left: 12px;
+  z-index: 40;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--raised);
+  box-shadow: var(--shadow);
+  font-size: 13px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation-duration: 0s !important;
+  }
+}

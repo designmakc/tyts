@@ -189,11 +189,15 @@ export type KbdIn =
   | { type: 'fix' }
   /** A Mac: Cmd+V pressed by the helper itself, marked as Kryakl's, so its tap lets it through. */
   | { type: 'paste' }
+  /** A Mac: where the text cursor is now, asked of the helper; answered by a `caret` of the same `n`. */
+  | { type: 'caret'; n: number }
   | { type: 'quit' }
 
 export type KbdOut =
   /** The thread to wake after posting: the first message. */
   | { type: 'thread'; tid: number }
+  /** A Mac: the text cursor's place (points, as Electron's screen counts), none when the program shows none. */
+  | { type: 'caret'; n: number; caret?: Caret }
   /** The layout in front changed, or Caps Lock did (the first look too, for the tray's icon); `badge`: show it by the text cursor, whose place in physical pixels comes when the program has a system one. */
   | { type: 'layout'; layout: string; caps: boolean; badge: boolean; caret?: Caret }
   /** A fix was taken back: the word, as typed, is kept from now on. */

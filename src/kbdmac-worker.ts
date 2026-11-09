@@ -13,7 +13,7 @@ import * as path from 'node:path'
 import { createInterface } from 'node:readline'
 import { workerData, type MessagePort } from 'node:worker_threads'
 
-import { MAC_TO_VK, macLang, macTable, VK_TO_MAC, type MacLayout } from './kbdmac'
+import { MAC_TO_VK, macCaret, macLang, macTable, VK_TO_MAC, type MacLayout } from './kbdmac'
 import { lexiconOf, type KeyTable, type Lexicon } from './layoutfix'
 import { Typist, type KbdConfig, type KbdIn, type KbdOut, type TypistEnv } from './typist'
 import type { Press } from './winkbd'
@@ -34,6 +34,7 @@ let front = { pid: 0, name: '' }
 const names = new Map<number, string>()
 let source = ''
 let caps = false
+let full = false
 const layouts = new Map<string, { lang: string; table: KeyTable }>()
 const lexicons: Record<string, Lexicon> = {}
 
@@ -51,8 +52,9 @@ function press(keys: readonly Press[]): void {
   for (const key of keys) {
     if ('char' in key) out.push({ t: key.char })
     else if ('again' in key) out.push({ r: key.again.scan, u: key.again.up })
-    // ponytail: Caps Lock posted by a program does not turn it on a Mac; the fix's text is typed as it should read anyway.
-    else if ('vk' in key && VK_TO_MAC[key.vk] !== undefined && key.vk !== 0x14) out.push({ k: VK_TO_MAC[key.vk] })
+    // Caps Lock posted as a key does not turn it on a Mac: the helper turns its state over (IOKit).
+    else if ('vk' in key && key.vk === 0x14) out.push({ caps: true })
+    else if ('vk' in key && VK_TO_MAC[key.vk] !== undefined) out.push({ k: VK_TO_MAC[key.vk] })
     // `release` is Windows' (an Alt or Win tap let go behind a key that types nothing).
   }
   if (out.length) tell({ c: 'press', keys: out })
@@ -75,11 +77,11 @@ const env: TypistEnv = {
   later: () => setImmediate(() => guarded(undefined, () => typist.typeFix())),
   mask: () => undefined,
   askField: () => tell({ c: 'field' }),
-  // ponytail: no full-screen check on a Mac yet; add with CGWindowList when games complain.
-  fullScreen: () => false,
+  // The helper says when a window of the program in front covers a whole screen.
+  fullScreen: () => full,
   click: () => sound(config?.clickFile),
   chime: note => sound(config?.switchFiles[note]),
-  // ponytail: the badge stands by the pointer; the text cursor's place needs Accessibility's AXBoundsForRange.
+  // The helper's answer comes later than this asks: keyboard.ts asks it itself (`caret`) for each badge.
   caretOf: () => undefined,
   capsOf: () => caps,
   send,
@@ -133,6 +135,7 @@ port.on('message', (message: KbdIn) =>
     if (message.type === 'fix') return typist.fixNow()
     // 9: V's key code.
     if (message.type === 'paste') return tell({ c: 'press', keys: [{ k: 9, cmd: true }] })
+    if (message.type === 'caret') return tell({ c: 'caret', n: message.n, pid: front.pid })
     // A config before the helper said hello waits for its layouts.
     pending = message.config
     if (layouts.size) configure(message.config)
@@ -151,6 +154,8 @@ type HelperEvent =
   | { e: 'k'; n?: number; w?: boolean; c: number; d: boolean; caps: boolean; f: boolean; src?: string }
   | { e: 'm'; t: Parameters<Typist['mouse']>[0]; x: number; y: number; time: number; b: number }
   | { e: 'field'; secret: boolean | null }
+  | { e: 'caret'; n: number; x?: number; y?: number; h?: number }
+  | { e: 'full'; on: boolean; name: string }
 
 type Access = { listen: boolean; post: boolean; ax: boolean }
 // What macOS lets the helper do, into tyts.log once per change (no characters).
@@ -208,6 +213,15 @@ function onHelper(event: HelperEvent): void {
       return
     case 'src':
       source = event.id
+      return
+    case 'caret': {
+      const caret = macCaret(event)
+      return send({ type: 'caret', n: event.n, ...(caret ? { caret } : {}) })
+    }
+    case 'full':
+      full = event.on
+      // As on Windows, tyts.log says when the quiet starts and ends (the program's name, nothing typed).
+      if (config?.quietFullScreen) send({ type: 'note', text: full ? `quiet: a window of ${event.name || '?'} fills its screen; the keys do nothing until it is gone` : 'quiet: over' })
       return
     case 'field':
       if (event.secret) seen.secret++

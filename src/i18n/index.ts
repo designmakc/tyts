@@ -12,7 +12,6 @@
 // phrase in a constant made before the settings are read.
 
 import { findLanguage } from '../languages'
-import type { BusyPart } from '../protocol'
 import type { TranslationLevel } from '../settings'
 import { en, type Key, type Phrase, type Plural } from './en'
 import { ru } from './ru'
@@ -103,9 +102,6 @@ export function languageName(nameOrCode: string): string {
 
 /** A translation level's name (Fast, Accurate, Most accurate), the local model's too. */
 export const levelName = (level: TranslationLevel): string => t(`level.${level}`)
-
-/** What kept the model slow, as a sentence names it: the graphics card or the processor. */
-export const busyPartName = (part: BusyPart): string => t(part === 'card' ? 'busy.card' : 'busy.processor')
 
 const numbers = new Map<string, Intl.NumberFormat>()
 

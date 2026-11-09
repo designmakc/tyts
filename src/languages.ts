@@ -83,16 +83,6 @@ export function defaultNative(locales: readonly (string | undefined)[], target: 
   return 'Russian'
 }
 
-/** Languages matching a query by English, native or Russian name, or code; word starts rank first. */
-export function searchLanguages(query: string): Language[] {
-  const q = query.trim().toLowerCase()
-  if (!q) return [...LANGUAGES]
-  const fields = (l: Language) => [l.name, l.native, l.ru, l.code].map(f => f.toLowerCase())
-  const starts = LANGUAGES.filter(l => fields(l).some(f => f.startsWith(q) || f.split(/[\s-]+/).some(w => w.startsWith(q))))
-  const contains = LANGUAGES.filter(l => !starts.includes(l) && fields(l).some(f => f.includes(q)))
-  return [...starts, ...contains]
-}
-
 export type Script =
   | 'Latin'
   | 'Cyrillic'

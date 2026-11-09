@@ -604,8 +604,6 @@ function macSpeakerRows(v: AppView): HTMLElement[] {
   return [...rows, grp(t('speech.installed')), card('circle-check', t('speech.installedMac'), [line], null)]
 }
 
-export const DEVICE_NAMES = { cuda: 'graphics card', cpu: 'processor' } as const
-
 /** Where who spoke when runs, as the person may choose it: the card (when it has room) or the processor, each with its size and its time here. */
 function speakersDeviceRows(v: AppView): HTMLElement[] {
   const s = v.speech

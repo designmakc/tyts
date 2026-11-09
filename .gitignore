@@ -1,6 +1,6 @@
 node_modules/
 dist/
-media/card.js
+media/*.js
 media/codicon.*
 release/
 .cache/

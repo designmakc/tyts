@@ -39,12 +39,6 @@ export type TalkLevel = 'A2' | 'B1' | 'B2'
 export const SUMMARY_TEMPLATES: readonly SummaryTemplate[] = ['general', 'standup', 'interview', 'lecture', 'own']
 export const SUMMARY_OWN_MAX = 500
 export const TALK_LEVELS: readonly TalkLevel[] = ['A2', 'B1', 'B2']
-/** Each level's name and what the duck does there, for the Talk page; the model's own rules are duck.ts LEVELS. */
-export const TALK_LEVEL_NAMES: Readonly<Record<TalkLevel, { name: string; note: string }>> = {
-  A2: { name: 'Elementary', note: 'short sentences of everyday words, simple tenses, no idioms' },
-  B1: { name: 'Intermediate', note: 'everyday words and common phrasal verbs; a rarer word explained' },
-  B2: { name: 'Upper-intermediate', note: 'natural speech: longer sentences, phrasal verbs, an idiom now and then' },
-}
 /** What the learner tells the duck about themselves, at most. */
 export const TALK_ABOUT_MAX = 500
 /** Text editing: how a dictated phrase is put right by the local model (dictedit.ts); `own` is the person's instruction. */

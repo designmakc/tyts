@@ -68,13 +68,6 @@ function clock(seconds: number): string {
   return h ? `${h}:${mm}:${ss}` : `${mm}:${ss}`
 }
 
-/** A topic's time in a summary line, "[12:34]" or "[1:02:03]"; its group 1 is the time. */
-export const TOPIC_TIME = /\[((?:\d+:)?\d{1,2}:\d{2})\]/
-
-export function topicSeconds(stamp: string): number {
-  return stamp.replace(/[[\]]/g, '').split(':').reduce((sum, n) => sum * 60 + Number(n), 0)
-}
-
 const lineText = (l: SummaryLine) => `[${clock(l.start)}] ${l.speaker}: ${l.text}`
 
 /** The lines in parts of about `partSeconds` and at most `partChars`; a line is never cut (a longer one is a part alone). */

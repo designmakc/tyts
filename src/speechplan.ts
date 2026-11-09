@@ -387,4 +387,3 @@ export function estimateText(feature: Feature, c: Choice): string {
   return feature === 'dictation' ? t('speech.perPhrase', { time: seconds(c.estimate) }) : t('speech.perHour', { time: minutes(c.estimate) })
 }
 
-export const BASIS_TEXT: Record<Basis, string> = { measured: 'measured here', scaled: 'from this computer’s test', guess: 'first guess' }

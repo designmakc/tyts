@@ -12,6 +12,9 @@ import pytest
 import diarize
 from audio import RATE
 
+# The helper is played by a script with a #! line, which Windows cannot run; the helper itself is a Mac's alone.
+pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="a Mac helper, played by a #! script")
+
 TURNS = {"turns": [[0.0, 1.234, "S1"], [1.5, 3.0, "S2"]], "speakers": 2}
 
 

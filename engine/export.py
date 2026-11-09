@@ -58,10 +58,22 @@ def summary_of(t: dict) -> str:
     return ((t.get("summary") or {}).get("text") or "").strip()
 
 
+def notes_of(t: dict) -> str:
+    """The person's own notes on the recording, or nothing."""
+    return (t.get("notes") or "").strip()
+
+
+def heads(t: dict) -> list[tuple[str, str]]:
+    """What goes before the transcript, by its heading: the summary, then the person's notes."""
+    return [(head, text) for head, text in (("Summary", summary_of(t)), ("Notes", notes_of(t))) if text]
+
+
 def to_txt(t: dict) -> str:
     lines = [t.get("title", ""), meta_line(t), ""]
-    if summary_of(t):
-        lines += ["Summary", "", summary_of(t), "", "Transcript", ""]
+    for head, text in heads(t):
+        lines += [head, "", text, ""]
+    if heads(t):
+        lines += ["Transcript", ""]
     lines += [f"[{clock(u['start'])}] {name(t, u['speaker'])}: {u['text']}" for u in t.get("utterances", [])]
     return "\n".join(lines) + "\n"
 
@@ -69,8 +81,10 @@ def to_txt(t: dict) -> str:
 def to_md(t: dict, heading: bool = True) -> str:
     out = [f"# {t.get('title', '')}", ""] if heading else []
     out += [f"*{meta_line(t)}*", ""]
-    if summary_of(t):
-        out += ["## Summary", "", summary_of(t), "", "## Transcript", ""]
+    for head, text in heads(t):
+        out += [f"## {head}", "", text, ""]
+    if heads(t):
+        out += ["## Transcript", ""]
     people = participants(t)
     if len(people) > 1:
         out += [f"**Speakers:** {', '.join(people)}", ""]
@@ -121,15 +135,16 @@ def to_docx(t: dict, path) -> None:
     doc.add_heading(t.get("title", ""), level=1)
     meta = doc.add_paragraph(meta_line(t))
     meta.runs[0].font.color.rgb = RGBColor(0x6E, 0x76, 0x81)
-    if summary_of(t):
-        doc.add_heading("Summary", level=2)
-        for line in summary_of(t).splitlines():
+    for head, text in heads(t):
+        doc.add_heading(head, level=2)
+        for line in text.splitlines():
             if line.startswith("#"):
                 doc.add_heading(line.lstrip("#").strip(), level=3)
             elif line.startswith("- "):
                 doc.add_paragraph(line[2:], style="List Bullet")
             elif line.strip():
                 doc.add_paragraph(line)
+    if heads(t):
         doc.add_heading("Transcript", level=2)
     people = participants(t)
     if len(people) > 1:

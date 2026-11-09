@@ -1,0 +1,51 @@
+/* The calls window (calls.html): app.css's sidebar and column, the list of
+   recordings in the sidebar's place. */
+
+.win.calls {
+  --sw: 300px;
+}
+
+.calls .brand {
+  padding: 0 8px;
+}
+
+.ctitle {
+  font: 600 15px / 1 var(--font);
+  color: var(--strong);
+}
+
+/* The list scrolls on its own; the search stays on top. */
+.clist {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.clist .tools {
+  flex: none;
+}
+
+.clist .tools .search {
+  flex: 1;
+}
+
+.clist .tl,
+.clist .tempty {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden auto;
+  padding: 0 12px;
+  margin-left: -12px;
+  margin-right: -12px;
+}
+
+.clist .ti .src {
+  display: none;
+}
+
+/* The recording open on the right. */
+.ti.on,
+.ti.on:hover {
+  background: var(--selected);
+}

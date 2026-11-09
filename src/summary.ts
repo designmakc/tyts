@@ -7,13 +7,14 @@
 // never to invent; checkSummary drops what it made up anyway. Never logged.
 
 import { LLM_LANGUAGES, type LlmFiles, type LlmModel } from './llmfiles'
-import { SHOT_WORD } from './summaryflow'
+import { NOTES_CHARS, SHOT_WORD } from './summaryflow'
 
 export type SummaryTemplate = 'general' | 'standup' | 'interview' | 'lecture' | 'own'
 /** One utterance; `speaker` is the name the page shows. */
 export interface SummaryLine { speaker: string; start: number; text: string }
 /** `shots`: the text read off the call's key and the person's screenshots (main's OCR), by their time; context for the model, never its own lines. */
-export interface SummaryInput { title: string; lines: SummaryLine[]; duration: number; language: string | null; lost?: number; shots?: ScreenText[] }
+/** `notes`: the person's own notes on the recording (NOTES_CHARS at most), given with every part as what they find important. */
+export interface SummaryInput { title: string; lines: SummaryLine[]; duration: number; language: string | null; lost?: number; shots?: ScreenText[]; notes?: string }
 export interface ScreenText { at: number; text: string }
 /** `native`: the person's own language by its English name ("Russian"), used when `mine`. */
 export interface SummaryOptions { template: SummaryTemplate; own?: string; mine: boolean; native: string }
@@ -203,7 +204,7 @@ const KINDS: Record<SummaryTemplate, string> = {
 }
 
 /** The instructions: the rules first, around everything else, the person's own instruction too. */
-export function summaryPrompt(options: SummaryOptions, language: string | null, step: 'whole' | 'part' | 'join', screen = false): string {
+export function summaryPrompt(options: SummaryOptions, language: string | null, step: 'whole' | 'part' | 'join', screen = false, notes = false): string {
   const meeting = language && LLM_LANGUAGES[language] ? LLM_LANGUAGES[language] : null
   const writeIn = options.mine
     ? `Write every text in ${options.native}, whatever language the meeting is in.`
@@ -229,6 +230,9 @@ export function summaryPrompt(options: SummaryOptions, language: string | null, 
     (screen
       ? '\nLines "Text on screen at [mm:ss]" are what the screen showed then, read by text recognition: use them only to understand and name what was shown, never as something said. ' +
         'A topic about what was shown may have "shot", the seconds of that screen text\'s time; leave "shot" out otherwise.'
+      : '') +
+    (notes
+      ? '\nThe <notes> are what the person who recorded it wrote down: stress what they mark as important, but never put in the summary anything that was not said.'
       : '') +
     own
   )
@@ -295,21 +299,22 @@ export function createSummarizer(o: { files: LlmFiles; model: () => LlmModel; fe
       const shots = input.shots ?? []
       const screen = shots.length > 0
       // Room for the screen's text: a part's transcript is that much shorter.
-      const parts = splitParts(input.lines, PART_SECONDS, screen ? PART_CHARS - SCREEN_CHARS : PART_CHARS)
+      const notes = input.notes ? `\n<notes>\n${input.notes.slice(0, NOTES_CHARS)}\n</notes>` : ''
+      const parts = splitParts(input.lines, PART_SECONDS, (screen ? PART_CHARS - SCREEN_CHARS : PART_CHARS) - notes.length)
       const screenFor = (i: number) => (screen ? screenOf(shots, i === 0 ? -Infinity : parts[i]![0]!.start, i + 1 < parts.length ? parts[i + 1]![0]!.start : Infinity) : '')
       onProgress({ part: 0, parts: parts.length })
       const job = files.server.run(files.target(o.model()), async base => {
         const ask = asker(base, signal)
         const transcript = (i: number) =>
-          `<transcript title="${input.title.replace(/"/g, "'")}">\n${parts[i]!.map(lineText).join('\n')}\n</transcript>${screenFor(i)}`
+          `<transcript title="${input.title.replace(/"/g, "'")}">\n${parts[i]!.map(lineText).join('\n')}\n</transcript>${screenFor(i)}${notes}`
         if (parts.length === 1) {
-          const whole = await ask(summaryPrompt(options, input.language, 'whole', screen), transcript(0))
+          const whole = await ask(summaryPrompt(options, input.language, 'whole', screen, !!notes), transcript(0))
           onProgress({ part: 1, parts: 1 })
           return whole
         }
         const summaries: SummaryJson[] = []
         for (const i of parts.keys()) {
-          summaries.push(await ask(summaryPrompt(options, input.language, 'part', screen), transcript(i)))
+          summaries.push(await ask(summaryPrompt(options, input.language, 'part', screen, !!notes), transcript(i)))
           onProgress({ part: i + 1, parts: parts.length })
         }
         onProgress({ part: parts.length + 1, parts: parts.length })

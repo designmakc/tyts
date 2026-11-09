@@ -62,6 +62,8 @@ export type Transcript = {
   shots?: Shot[]
   /** Names read off the call's screen (callNames), by speaker: offered until applied or dismissed. */
   speakerHints?: Record<string, string>
+  /** The person's own notes on the recording (the calls window's Notes). */
+  notes?: string
 }
 
 /** A summary as the engine keeps it (PUT /transcripts/{id}/summary): Markdown with `[mm:ss]` topics. */

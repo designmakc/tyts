@@ -146,7 +146,8 @@ class Store:
         tmp.write_text(json.dumps(transcript, ensure_ascii=False, indent=1), "utf-8")
         tmp.replace(folder / "transcript.json")
         summary = (transcript.get("summary") or {}).get("text", "")
-        body = "\n".join([u["text"] for u in transcript.get("utterances", [])] + ([summary] if summary else []))
+        notes = transcript.get("notes") or ""
+        body = "\n".join([u["text"] for u in transcript.get("utterances", [])] + [x for x in (summary, notes) if x])
         with self._lock, self._db:
             self._db.execute("delete from search where id=?", (id,))
             self._db.execute("insert into search(id, title, body) values(?,?,?)", (id, transcript.get("title", ""), body))

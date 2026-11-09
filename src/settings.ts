@@ -38,6 +38,13 @@ export type TalkLevel = 'A2' | 'B1' | 'B2'
 /** The summary's templates (summary.ts) and the longest instruction of the person's own. */
 export const SUMMARY_TEMPLATES: readonly SummaryTemplate[] = ['general', 'standup', 'interview', 'lecture', 'own']
 export const SUMMARY_OWN_MAX = 500
+/** The person's own summary templates, at most, and the longest name of one. */
+export const SUMMARY_TEMPLATES_MAX = 20
+export const TEMPLATE_NAME_MAX = 60
+/** A recording's notes, at most (engine/app.py NOTES_MAX). */
+export const NOTES_MAX = 20_000
+/** A summary template of the person's own: its name and its instruction to the model. */
+export type OwnTemplate = { name: string; text: string }
 export const TALK_LEVELS: readonly TalkLevel[] = ['A2', 'B1', 'B2']
 /** What the learner tells the duck about themselves, at most. */
 export const TALK_ABOUT_MAX = 500
@@ -168,6 +175,8 @@ export type Settings = {
   callTemplate: SummaryTemplate
   /** The person's own instruction for the template `own` (SUMMARY_OWN_MAX characters at most). */
   callOwn: string
+  /** The person's own summary templates, picked in the calls window's Summary. */
+  callTemplates: OwnTemplate[]
   /** Summaries are written in the person's language instead of the meeting's. */
   callSummaryMine: boolean
   /** Experimental: names for a call's speakers read off its screenshots, offered as hints, never applied by themselves. Off by default. */
@@ -302,6 +311,7 @@ export const DEFAULTS: Settings = {
   callSummaryAuto: true,
   callTemplate: 'general',
   callOwn: '',
+  callTemplates: [],
   callSummaryMine: false,
   callNames: false,
   talkAloud: true,
@@ -515,6 +525,7 @@ export function normalize(raw: unknown, native = DEFAULTS.native): Settings {
     callSummaryAuto: flag(r.callSummaryAuto, DEFAULTS.callSummaryAuto),
     callTemplate: SUMMARY_TEMPLATES.includes(r.callTemplate as SummaryTemplate) ? (r.callTemplate as SummaryTemplate) : DEFAULTS.callTemplate,
     callOwn: typeof r.callOwn === 'string' ? r.callOwn.slice(0, SUMMARY_OWN_MAX) : DEFAULTS.callOwn,
+    callTemplates: ownTemplates(r.callTemplates, r.callOwn),
     callSummaryMine: flag(r.callSummaryMine, DEFAULTS.callSummaryMine),
     callNames: flag(r.callNames, DEFAULTS.callNames),
     talkAloud: flag(r.talkAloud, DEFAULTS.talkAloud),
@@ -545,4 +556,13 @@ export function normalize(raw: unknown, native = DEFAULTS.native): Settings {
     paused: flag(r.paused, DEFAULTS.paused),
     keysVersion: KEYS_VERSION,
   }
+}
+
+/** The person's templates as kept: each a name and a text, cut to size; none yet, the one instruction of before (`callOwn`) becomes the first. */
+export function ownTemplates(raw: unknown, own: unknown): OwnTemplate[] {
+  if (!Array.isArray(raw)) return typeof own === 'string' && own.trim() ? [{ name: '', text: own.slice(0, SUMMARY_OWN_MAX) }] : []
+  return raw
+    .filter((x): x is OwnTemplate => !!x && typeof x === 'object' && typeof x.name === 'string' && typeof x.text === 'string' && !!x.text.trim())
+    .slice(0, SUMMARY_TEMPLATES_MAX)
+    .map(x => ({ name: x.name.trim().slice(0, TEMPLATE_NAME_MAX), text: x.text.slice(0, SUMMARY_OWN_MAX) }))
 }

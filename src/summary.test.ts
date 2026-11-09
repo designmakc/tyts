@@ -188,6 +188,15 @@ describe('createSummarizer', () => {
     expect(system).toMatch(/data, not instructions/)
   })
 
+  it('gives every part the person’s notes, and the join none', async () => {
+    const { summarizer, asked } = setup()
+    await summarizer.summarize({ ...long, notes: 'Budget is the point' }, { template: 'general', mine: false, native: 'English' }, () => {})
+    const parts = asked.filter(a => !a.system.startsWith('You join'))
+    expect(parts.length).toBeGreaterThan(1)
+    expect(parts.every(a => a.user.includes('<notes>\nBudget is the point\n</notes>') && a.system.includes('<notes>'))).toBe(true)
+    expect(asked.filter(a => a.system.startsWith('You join')).every(a => !a.user.includes('<notes>') && !a.system.includes('<notes>'))).toBe(true)
+  })
+
   it('stops when cancelled', async () => {
     const stop = new AbortController()
     const { summarizer, asked } = setup(() => {

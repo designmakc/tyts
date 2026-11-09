@@ -295,6 +295,10 @@ let hostVoices: HostVoice[] | undefined
 const copies = new DoubleCopy()
 let appWin: BrowserWindow | undefined
 let appReady = false
+/** The calls window (media/calls.html): the Transcripts page in a window of its own. */
+let callsWin: BrowserWindow | undefined
+let callsReady = false
+let pendingCall: string | undefined
 let quitting = false
 let keysOk = { snip: true, select: true, translate: true, text: true, inPlace: true, check: true, type: true, typeCheck: true, pause: true, window: true }
 let speechKeysOk = { dictate: true, note: true, english: true, again: true, practice: true, talk: true, meeting: true, shot: true }
@@ -360,8 +364,6 @@ let maximizedFrom: Rectangle | undefined
 let pinnedBefore = false
 /** The tab the app window opens on, once its page is ready. */
 let pendingTab: AppTab | undefined
-/** The transcript it shows then (a note left in Transcripts, from its balloon). */
-let pendingTranscript: string | undefined
 /** The Talk key was pressed before the talk window's page was ready: it listens once it is. */
 let pendingTalk = false
 /** The talk with the duck (talk.ts), the duck's answers (duck.ts), and the talks kept on disk (talks.ts). */
@@ -555,6 +557,10 @@ function applyUiLanguage(): void {
     talkReady = false
     void talkWin.loadFile(media('talk.html'), pageOptions())
   }
+  if (callsWin && !callsWin.isDestroyed()) {
+    callsReady = false
+    void callsWin.loadFile(media('calls.html'), pageOptions())
+  }
   if (trayPanel && !trayPanel.isDestroyed()) {
     trayReady = false
     void trayPanel.loadFile(media('tray.html'), pageOptions())
@@ -575,9 +581,10 @@ function applyColors(): void {
     card.setBackgroundColor(cardColor())
     frameWindow(card, { corner: 'round', border: borderColor() })
   }
-  if (appWin && !appWin.isDestroyed()) {
-    appWin.setBackgroundColor(appColor())
-    frameWindow(appWin, { corner: 'default', border: borderColor() })
+  for (const win of [appWin, callsWin]) {
+    if (!win || win.isDestroyed()) continue
+    win.setBackgroundColor(appColor())
+    frameWindow(win, { corner: 'default', border: borderColor() })
   }
   if (trayPanel && !trayPanel.isDestroyed()) {
     trayPanel.setBackgroundColor(appColor())
@@ -1372,7 +1379,13 @@ function appView(): AppView {
 }
 
 function postApp(): void {
-  if (appWin && appReady && !appWin.isDestroyed()) appWin.webContents.send('to-view', { type: 'app', view: appView() } satisfies ToView)
+  const appOpen = appWin && appReady && !appWin.isDestroyed()
+  const callsOpen = callsWin && callsReady && !callsWin.isDestroyed()
+  if (appOpen || callsOpen) {
+    const message = { type: 'app', view: appView() } satisfies ToView
+    if (appOpen) appWin!.webContents.send('to-view', message)
+    if (callsOpen) callsWin!.webContents.send('to-view', message)
+  }
   postTalk()
 }
 
@@ -1442,12 +1455,73 @@ function openApp(tab?: AppTab): void {
   appWin.focus()
 }
 
-/** The app window on one transcript. */
+/** The calls window on one transcript. */
 function openTranscript(id: string): void {
-  openApp('transcripts')
-  if (appReady) appWin?.webContents.send('to-view', { type: 'openTranscript', id } satisfies ToView)
-  else pendingTranscript = id
+  openCalls(id)
 }
+
+// ---------------------------------------------------------------- the calls window
+// The Transcripts page in a window of its own (media/calls.html, webview/calls.ts):
+// every recording on the left, one on the right with its transcript, notes and
+// summary. It sends what the app window sends (bridge.ts `full`). Closing hides it.
+
+function createCallsWindow(): BrowserWindow {
+  const area = screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea
+  const win = new BrowserWindow({
+    width: Math.min(1080, area.width),
+    height: Math.min(720, area.height),
+    minWidth: 640,
+    minHeight: 440,
+    show: false,
+    frame: false,
+    title: t('calls.title'),
+    icon: path.join(app.getAppPath(), 'media', 'icon.png'),
+    backgroundColor: appColor(),
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      sandbox: true,
+      nodeIntegration: false,
+      spellcheck: false,
+    },
+  })
+  frameWindow(win, { corner: 'default', border: borderColor() })
+  win.removeMenu()
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+  win.webContents.on('will-navigate', event => event.preventDefault())
+  const state = () => {
+    if (callsReady && !win.isDestroyed()) win.webContents.send('to-view', { type: 'appWindow', maximized: win.isMaximized() } satisfies ToView)
+  }
+  win.on('maximize', state)
+  win.on('unmaximize', state)
+  logPageErrors(win, 'calls window')
+  win.on('close', event => {
+    if (quitting) return
+    event.preventDefault()
+    win.hide()
+  })
+  win.on('closed', () => {
+    callsWin = undefined
+    callsReady = false
+  })
+  void win.loadFile(path.join(app.getAppPath(), 'media', 'calls.html'), pageOptions())
+  return win
+}
+
+/** Shows the calls window, on one recording when `id` is given. */
+function openCalls(id?: string): void {
+  if (!callsWin || callsWin.isDestroyed()) callsWin = createCallsWindow()
+  if (id) {
+    if (callsReady) callsWin.webContents.send('to-view', { type: 'openTranscript', id } satisfies ToView)
+    else pendingCall = id
+  }
+  if (callsWin.isMinimized()) callsWin.restore()
+  callsWin.show()
+  callsWin.focus()
+}
+
+/** The window a dialog belongs to: the one in front (the calls window or the app window). */
+const dialogOwner = () => BrowserWindow.getFocusedWindow() ?? appWin
 
 function postCard(): void {
   if (!shown) return
@@ -1777,6 +1851,14 @@ function onMessage(message: ToHost, page: Page): void {
       unsaveWord(message.word)
       return
     case 'appReady':
+      if (page === 'calls') {
+        callsReady = true
+        postApp()
+        callsWin?.webContents.send('to-view', { type: 'appWindow', maximized: callsWin.isMaximized() } satisfies ToView)
+        if (pendingCall) callsWin?.webContents.send('to-view', { type: 'openTranscript', id: pendingCall } satisfies ToView)
+        pendingCall = undefined
+        return
+      }
       appReady = true
       // A page loaded afresh records nothing.
       if (micRecording) {
@@ -1786,9 +1868,7 @@ function onMessage(message: ToHost, page: Page): void {
       postApp()
       postAppWindow()
       if (pendingTab) appWin?.webContents.send('to-view', { type: 'appTab', tab: pendingTab } satisfies ToView)
-      if (pendingTranscript) appWin?.webContents.send('to-view', { type: 'openTranscript', id: pendingTranscript } satisfies ToView)
       pendingTab = undefined
-      pendingTranscript = undefined
       return
     case 'saveSettings':
       saveSettings(message.patch)
@@ -1825,13 +1905,15 @@ function onMessage(message: ToHost, page: Page): void {
         console.warn('Tyts: the keyboard thread could not read the keys for a key field', error)
       }
       return
-    case 'window':
-      if (message.action === 'minimize') appWin?.minimize()
+    case 'window': {
+      const win = page === 'calls' ? callsWin : appWin
+      if (message.action === 'minimize') win?.minimize()
       else if (message.action === 'maximize') {
-        if (appWin?.isMaximized()) appWin.unmaximize()
-        else appWin?.maximize()
-      } else appWin?.hide()
+        if (win?.isMaximized()) win.unmaximize()
+        else win?.maximize()
+      } else win?.hide()
       return
+    }
     case 'micRecording':
       micRecording = message.on
       refreshTray()
@@ -3831,7 +3913,10 @@ function runTrayCommand(command: TrayCommand): void {
       toggleCall()
       return
     case 'transcripts':
-      openApp('transcripts')
+      openCalls()
+      return
+    case 'transcribe':
+      openApp('recordings')
       return
     case 'vocabulary':
       openApp('vocabulary')
@@ -3857,7 +3942,7 @@ function runTrayCommand(command: TrayCommand): void {
 /**
  * For a mouse button or a launcher: `Kryakl --clipboard` listens to the
  * copied text and `--translate` translates it; `--snip` snips to listen,
- * `--text` to translate. True when the arguments held one.
+ * `--text` to translate; `--calls` opens the calls window. True when the arguments held one.
  */
 function runCommand(argv: readonly string[]): boolean {
   if (argv.includes('--clipboard')) {
@@ -3874,6 +3959,11 @@ function runCommand(argv: readonly string[]): boolean {
   }
   if (argv.includes('--text')) {
     snip('translate')
+    return true
+  }
+  // A launcher's (or a Dock menu's) way to the calls window.
+  if (argv.includes('--calls')) {
+    openCalls()
     return true
   }
   // Started again by Move to Kryakl: back on the Storage page, measured anew.
@@ -3958,7 +4048,7 @@ function setUpSpeechEngine(): void {
   // main adds the engine's key to that window's requests to the engine, and to no other window's.
   // Any port: the engine moves to the next free one when its own is taken (speechservice.ts freePort).
   session.defaultSession.webRequest.onBeforeSendHeaders({ urls: ['http://127.0.0.1:*/*'] }, (details, done) => {
-    const fromApp = !!appWin && !appWin.isDestroyed() && details.webContentsId === appWin.webContents.id
+    const fromApp = [appWin, callsWin].some(win => !!win && !win.isDestroyed() && details.webContentsId === win.webContents.id)
       && new URL(details.url).port === String(speech.port)
     const key = fromApp ? speech.token : undefined
     done({ requestHeaders: key ? { ...details.requestHeaders, 'X-Tyts-Token': key } : details.requestHeaders })
@@ -3996,7 +4086,8 @@ async function hostCall(request: HostCall): Promise<unknown> {
     }
     case 'pickFolder': {
       const options: Electron.OpenDialogOptions = { title: request.title, defaultPath: request.current || app.getPath('documents'), properties: ['openDirectory', 'createDirectory'] }
-      const { canceled, filePaths } = appWin ? await dialog.showOpenDialog(appWin, options) : await dialog.showOpenDialog(options)
+      const owner = dialogOwner()
+      const { canceled, filePaths } = owner ? await dialog.showOpenDialog(owner, options) : await dialog.showOpenDialog(options)
       return canceled ? null : (filePaths[0] ?? null)
     }
     case 'exportTranscript': {
@@ -4007,7 +4098,8 @@ async function hostCall(request: HostCall): Promise<unknown> {
         defaultPath: path.join(app.getPath('documents'), `${safe}.${request.format}`),
         filters: [{ name: request.format.toUpperCase(), extensions: [request.format] }],
       }
-      const { canceled, filePath } = appWin ? await dialog.showSaveDialog(appWin, options) : await dialog.showSaveDialog(options)
+      const owner = dialogOwner()
+      const { canceled, filePath } = owner ? await dialog.showSaveDialog(owner, options) : await dialog.showSaveDialog(options)
       if (canceled || !filePath) return null
       // The engine gives the bytes; Kryakl writes them where the person chose (the engine writes no file a caller names).
       fs.writeFileSync(filePath, await speech.bytes(`/transcripts/${encodeURIComponent(request.id)}/file?format=${request.format}`))

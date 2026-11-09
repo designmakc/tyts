@@ -21,6 +21,15 @@ describe('a page that shows text from outside opens, removes and exports nothing
   test('the app window may', () => {
     for (const type of dangerous) expect(messageAllowed('app', type), type).toBe(true)
   })
+  test('the calls window is the app window\'s Transcripts page: it may what the app window may', () => {
+    expect(pageOf(at('calls.html'))).toBe('calls')
+    for (const type of dangerous) expect(messageAllowed('calls', type), type).toBe(true)
+    expect(patchAllowed('calls', { callTemplates: [] })).toBe(true)
+    expect(callAllowed('calls', { call: 'speech', method: 'GET', route: '/transcripts' } as never)).toBe(true)
+    // ...and nothing that is another page's alone.
+    expect(messageAllowed('calls', 'talkSay')).toBe(false)
+    expect(messageAllowed('calls', 'menuPick')).toBe(false)
+  })
   test('each page keeps what it does', () => {
     for (const type of ['ready', 'speak', 'speakNatural', 'stop', 'close', 'pin', 'maximize', 'height', 'copyText', 'pasteText', 'translateText', 'checkText', 'lookup', 'saveWord', 'unsaveWord', 'saveSettings', 'downloadNatural', 'openSpeechSettings']) expect(messageAllowed('card', type), type).toBe(true)
     for (const type of ['trayReady', 'trayHeight', 'trayClose', 'tray', 'keepWord', 'saveSettings']) expect(messageAllowed('tray', type), type).toBe(true)

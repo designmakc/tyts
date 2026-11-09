@@ -27,6 +27,12 @@ describe('normalize', () => {
     const odd = normalize({ callTemplate: 'weekly', callOwn: 'x'.repeat(900), callSummaryAuto: false })
     expect([odd.callTemplate, odd.callOwn.length, odd.callSummaryAuto]).toEqual(['general', 500, false])
     expect(normalize({ callTemplate: 'lecture' }).callTemplate).toBe('lecture')
+    // The person's templates: the one instruction of before becomes the first; odd entries go, long ones are cut.
+    expect(normalize({ callOwn: 'Only the tasks' }).callTemplates).toEqual([{ name: '', text: 'Only the tasks' }])
+    expect(normalize({}).callTemplates).toEqual([])
+    const kept = normalize({ callOwn: 'old', callTemplates: [{ name: ' Weekly ', text: 'Tasks by owner' }, { name: 'x', text: '  ' }, 'odd', { name: 'n'.repeat(99), text: 't'.repeat(900) }] }).callTemplates
+    expect(kept.map(x => [x.name.length, x.text.length])).toEqual([[6, 14], [60, 500]])
+    expect(kept[0]!.name).toBe('Weekly')
   })
 
   test('keeps text editing off until it is turned on, with a known style and a short own instruction', () => {

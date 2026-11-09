@@ -499,15 +499,25 @@ def get_transcript(id: str):
 
 
 
+# The person's notes on a recording, at most (src/settings.ts NOTES_MAX).
+NOTES_MAX = 20_000
+
+
 @app.patch("/transcripts/{id}")
 def patch_transcript(id: str, changes: dict = Body(...)):
     """Title, speaker names, an utterance's text or speaker: {title?, speakers?: {key: name}, utterances?: {index: {text?, speaker?}}}.
 
     Kryakl's own marks, which are no edit of the text: shots: {file: {key: bool}} (a call's key screenshots), speakerHints:
-    {key: name | null} (names read off the call's screen, a suggestion until the person applies one)."""
+    {key: name | null} (names read off the call's screen, a suggestion until the person applies one); and the person's
+    notes beside the text, notes: str (NOTES_MAX characters at most, empty removes them)."""
     store = state.get_store()
     t = transcript_or_404(id)
-    marks = {k for k in ("shots", "speakerHints") if k in changes}
+    marks = {k for k in ("shots", "speakerHints", "notes") if k in changes}
+    if isinstance(changes.get("notes"), str):
+        if changes["notes"].strip():
+            t["notes"] = changes["notes"][:NOTES_MAX]
+        else:
+            t.pop("notes", None)
     for shot in t.get("shots") or []:
         mark = (changes.get("shots") or {}).get(shot["file"])
         if SHOT_NAME.fullmatch(shot["file"]) and isinstance(mark, dict) and isinstance(mark.get("key"), bool):

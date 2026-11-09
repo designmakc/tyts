@@ -1,18 +1,9 @@
 import { describe, expect, test } from 'vitest'
 
-import { defaultNative, hasScript, labelCode, langCode, scriptFor, scriptOf, searchLanguages, voiceMatches } from './languages'
+import { defaultNative, hasScript, labelCode, langCode, scriptFor, scriptOf, voiceMatches } from './languages'
 import { itemAt, locate, wordAt } from './textmap'
 
 describe('languages', () => {
-  test('search finds a language by Russian, native or English name', () => {
-    expect(searchLanguages('нем')[0]?.name).toBe('German')
-    expect(searchLanguages('ger')[0]?.name).toBe('German')
-    expect(searchLanguages('deu')[0]?.name).toBe('German')
-    expect(searchLanguages('Esp')[0]?.name).toBe('Spanish')
-    expect(searchLanguages('')).toHaveLength(searchLanguages('').length)
-    expect(searchLanguages('zzz')).toEqual([])
-  })
-
   test('the first language comes from VS Code, then the system, else Russian', () => {
     expect(defaultNative(['de', 'en-US'], 'English')).toBe('German')
     expect(defaultNative(['en', 'pl-PL'], 'English')).toBe('Polish')

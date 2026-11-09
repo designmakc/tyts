@@ -24,7 +24,7 @@ export const LOGS = ['tyts.log', 'speech.log', 'translate.log'] as const
 /** The end of each log: the lines before a problem, not the whole history. */
 const TAIL = 512_000
 /** The settings that are the person's own lists: counted, never copied. */
-const OWN_LISTS = ['keepWords', 'vocabulary', 'apps'] as const
+const OWN_LISTS = ['keepWords', 'vocabulary', 'corrections', 'apps'] as const
 /** How long a link may be: a mailto Windows hands over whole, a GitHub address GitHub takes. */
 const MAIL_MOST = 1800
 const ISSUE_MOST = 6000

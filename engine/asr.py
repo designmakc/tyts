@@ -222,6 +222,93 @@ def _speech_only(samples: np.ndarray) -> np.ndarray | None:
     return speech if len(speech) >= RATE // 4 else None
 
 
+# A long recording on a Mac goes to its model piece by piece, its silences cut out (2026-11-09: a call of
+# two hours given to mlx-whisper whole kept the bar at 10% for as long as it ran, and Whisper read the
+# silences too). A span is where someone speaks, 30 s at most; a batch is the spans joined up to so many
+# seconds of speech: Whisper's long enough for its text to run on, Parakeet's one window of its own.
+SPAN_LONGEST = 30
+BATCH_SPEECH = {"whisper": 300, "parakeet": 30}
+
+
+def speech_spans(samples: np.ndarray) -> list[tuple[int, int]]:
+    """Where someone speaks, as (start, end) in samples (Silero VAD, inside faster-whisper)."""
+    from faster_whisper.vad import VadOptions, get_speech_timestamps
+
+    chunks = get_speech_timestamps(samples, VadOptions(min_silence_duration_ms=500, speech_pad_ms=300, max_speech_duration_s=SPAN_LONGEST))
+    return [(c["start"], c["end"]) for c in chunks]
+
+
+# The microphone hearing the speakers (a call without headphones): its speech that follows the computer's
+# sound this closely and is no louder than it is the others' voices, not the person's. Measured 2026-11-09 on
+# 10 minutes of a call on a MacBook's speakers: such echo followed at 0.96 (30 ms behind) and as loud (0.95);
+# the spans the rule kept were the person speaking or both at once. Read as words, the echo came out
+# as English nonsense ("so um", "the price" for "приз") that merge.drop_echo could not match.
+ECHO_FOLLOWS = 0.9
+ECHO_LOUDEST = 1.1
+ECHO_LAG = 0.6  # seconds the speakers' sound may take to reach the microphone
+
+
+def _loudness(x: np.ndarray) -> np.ndarray:
+    """The sound's loudness 100 times a second, as a logarithm."""
+    step = RATE // 100
+    n = len(x) // step
+    return np.log(np.sqrt((x[: n * step].reshape(n, step) ** 2).mean(1)) + 1e-5)
+
+
+def mute_echo(mine: np.ndarray, theirs: np.ndarray) -> float:
+    """Silences, in place, the microphone's speech that is only the speakers' echo of `theirs` (the same clock),
+    so it is never read; the seconds silenced. The person's own speech, alone or over the others, stays."""
+    muted = 0
+    lags = int(ECHO_LAG * 100)
+    for a, b in speech_spans(mine):
+        lead = min(a, lags * (RATE // 100))
+        m = _loudness(mine[a:b])
+        s = _loudness(theirs[a - lead:b])
+        if len(m) < 20 or len(s) < len(m):
+            continue
+        follows = 0.0
+        for lag in range(0, lead // (RATE // 100) + 1):
+            o = len(s) - len(m) - lag
+            c = np.corrcoef(m, s[o:o + len(m)])[0, 1]
+            if np.isfinite(c):
+                follows = max(follows, float(c))
+        louder = float(np.exp(np.median(m) - np.median(s[-len(m):])))
+        if follows >= ECHO_FOLLOWS and louder <= ECHO_LOUDEST:
+            mine[a:b] = 0.0
+            muted += b - a
+    return muted / RATE
+
+
+def batches(spans: list[tuple[int, int]], speech: float) -> list[list[tuple[int, int]]]:
+    """The spans in order, joined while their speech stays within `speech` seconds (a longer span alone)."""
+    out: list[list[tuple[int, int]]] = []
+    total = 0
+    for span in spans:
+        length = span[1] - span[0]
+        if out and total + length <= speech * RATE:
+            out[-1].append(span)
+            total += length
+        else:
+            out.append([span])
+            total = length
+    return out
+
+
+class Joined:
+    """A batch's spans played one after another: its sound, and a time in it put back on the recording's."""
+
+    def __init__(self, samples: np.ndarray, spans: list[tuple[int, int]]):
+        self.sound = np.concatenate([samples[a:b] for a, b in spans])
+        self.spans = spans
+        self.starts = np.cumsum([0] + [b - a for a, b in spans[:-1]])
+
+    def at(self, seconds: float) -> float:
+        n = int(seconds * RATE)
+        i = max(int(np.searchsorted(self.starts, n, side="right")) - 1, 0)
+        a, b = self.spans[i]
+        return round(min(a + n - int(self.starts[i]), b) / RATE, 2)
+
+
 def pick_language(probs: dict[str, float], expected: tuple[str, ...] | list[str], strict: bool = False) -> str:
     """Whisper's likeliest language, unless it is an unexpected one it is not sure of: then the likelier expected one.
 
@@ -517,31 +604,41 @@ class MlxWhisper:
             return None
 
     def transcribe(self, samples: np.ndarray, language: str | None, hotwords: str = "", progress: Callable[[float], None] | None = None) -> tuple[list[dict], str]:
-        out = self.run(
-            samples,
-            language=language,
-            initial_prompt=_prompt(STYLE.get(language or ""), hotwords),
-            word_timestamps=True,
-            condition_on_previous_text=True,
-            hallucination_silence_threshold=2.0,
-        )
-        total = max(len(samples) / RATE, 0.01)
-        segments = []
-        for segment in out.get("segments", []):
-            if progress:
-                progress(min(segment["end"] / total, 1.0))
-            words = [
-                {"start": round(w["start"], 2), "end": round(w["end"], 2), "word": w["word"]}
-                for w in segment.get("words") or []
-                if w["word"].strip()
-            ]
-            kept = phantoms.clean_segment(
-                {"start": round(segment["start"], 2), "end": round(segment["end"], 2), "text": segment["text"].strip(), "words": words},
-                phantoms.Sound(segment["end"] - segment["start"], segment.get("no_speech_prob", 0.0), segment.get("avg_logprob", 0.0)),
+        """Batch by batch of speech (`batches`): the bar moves after each, the silences are never read, and
+        the text before (the batch's last 200 characters) carries the punctuation on as one long run did.
+        The language Whisper finds in the first batch holds for the rest."""
+        groups = batches(speech_spans(samples), BATCH_SPEECH["whisper"])
+        segments: list[dict] = []
+        before = STYLE.get(language or "")
+        for n, spans in enumerate(groups):
+            joined = Joined(samples, spans)
+            out = self.run(
+                joined.sound,
+                language=language,
+                initial_prompt=_prompt(before, hotwords),
+                word_timestamps=True,
+                condition_on_previous_text=True,
+                hallucination_silence_threshold=2.0,
             )
-            if kept:
-                segments.append(kept)
-        return segments, out.get("language") or language or ""
+            language = language or out.get("language") or None
+            texts = []
+            for segment in out.get("segments", []):
+                words = [
+                    {"start": joined.at(w["start"]), "end": joined.at(w["end"]), "word": w["word"]}
+                    for w in segment.get("words") or []
+                    if w["word"].strip()
+                ]
+                kept = phantoms.clean_segment(
+                    {"start": joined.at(segment["start"]), "end": joined.at(segment["end"]), "text": segment["text"].strip(), "words": words},
+                    phantoms.Sound(segment["end"] - segment["start"], segment.get("no_speech_prob", 0.0), segment.get("avg_logprob", 0.0)),
+                )
+                if kept:
+                    segments.append(kept)
+                    texts.append(kept["text"])
+            before = " ".join(texts)[-200:] or before
+            if progress:
+                progress((n + 1) / len(groups))
+        return segments, language or ""
 
     def dictate(self, speech: np.ndarray, language: str | None, expected=(), hotwords: str = "", before: str = "", strict: bool = False) -> tuple[str, str, float]:
         """The speech (silences cut already) as a phrase; the language among the expected ones as pick_language
@@ -624,12 +721,54 @@ class Parakeet:
             return "", language or "", 0.0
         return str(self._model.recognize(speech)).strip(), language or "", 0.0
 
+    def transcribe(self, samples: np.ndarray, language: str | None = None, hotwords: str = "", progress: Callable[[float], None] | None = None) -> tuple[list[dict], str]:
+        """A long recording as Transcriber's segments, one per batch of speech (`batches`), every word with its
+        times; the bar moves after each. Parakeet takes no prompt, so `hotwords` are left to vocab.py's spelling.
+        Measured 2026-11-09 on an M1 with 8 GB: 10 minutes of a call in 39 s, its silences skipped."""
+        groups = batches(speech_spans(samples), BATCH_SPEECH["parakeet"])
+        model = self._model.with_timestamps()
+        segments: list[dict] = []
+        for n, spans in enumerate(groups):
+            joined = Joined(samples, spans)
+            words = _words(model.recognize(joined.sound), joined, len(joined.sound) / RATE)
+            if words:
+                segments.append({"start": words[0]["start"], "end": words[-1]["end"], "text": "".join(w["word"] for w in words).strip(), "words": words})
+            if progress:
+                progress((n + 1) / len(groups))
+        return segments, language or _cyrillic(" ".join(s["text"] for s in segments))
+
     def warm(self) -> None:
         if self._warm == self._key:
             return
         noise = (np.random.default_rng(0).standard_normal(RATE) * 0.01).astype(np.float32)
         self._model.recognize(noise)
         self._warm = self._key
+
+
+def _words(result, joined: Joined, length: float) -> list[dict]:
+    """Parakeet's tokens as words: a token beginning with a space begins a word, the rest (pieces, punctuation)
+    join the one before. A word lasts from its first token to the next word's (the last, to the sound's end),
+    1.2 s at most: the next word may be across a silence cut out of the batch."""
+    words: list[dict] = []
+    for token, start in zip(result.tokens or [], result.timestamps or []):
+        if token.startswith(" ") or not words:
+            words.append({"start": start, "word": token if token.startswith(" ") else " " + token})
+        else:
+            words[-1]["word"] += token
+    for i, w in enumerate(words):
+        end = words[i + 1]["start"] if i + 1 < len(words) else length
+        start = joined.at(w["start"])
+        w["start"], w["end"] = start, round(start + min(max(end - w["start"], 0.0), 1.2), 2)
+    return [{"start": w["start"], "end": w["end"], "word": w["word"]} for w in words if w["word"].strip()]
+
+
+def _cyrillic(text: str) -> str:
+    """Parakeet says no language: Ukrainian or Russian when the text tells, else unknown ("")."""
+    # ponytail: Cyrillic only, the languages Tyts is for; a Latin-script call stays "" (the summary then guesses itself).
+    if any(c in "іїєґІЇЄҐ" for c in text):
+        return "uk"
+    cyr = sum("а" <= c.lower() <= "я" or c in "ёЁ" for c in text)
+    return "ru" if cyr > len(text) * 0.3 else ""
 
 
 def recognizer(name: str):

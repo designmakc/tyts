@@ -1,0 +1,136 @@
+/* The panel at the top of the screen (edge.html): tray.css's ground, faces and
+   switches; a row of square buttons in groups, a card under them. */
+
+body {
+  width: 100%;
+}
+
+.estatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px 0;
+  color: var(--muted);
+  font-size: var(--t-small);
+}
+
+.estatus span {
+  flex: 1;
+}
+
+.ebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+}
+
+.ebar .gap {
+  flex: 1;
+}
+
+.egroup {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--r-md);
+  background: var(--overlay);
+}
+
+.eb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  color: var(--muted);
+}
+
+.eb:hover,
+.eb.open {
+  background: var(--hover);
+  color: var(--strong);
+}
+
+.eb.on {
+  color: var(--rec);
+}
+
+.eb:disabled {
+  opacity: 0.4;
+}
+
+.ecard {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 10px 12px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.ehead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 6px 6px;
+  color: var(--strong);
+}
+
+.erow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 32px;
+  padding: 0 6px;
+  border-radius: var(--r-sm);
+  text-align: left;
+}
+
+.erow:hover {
+  background: var(--hover);
+}
+
+.erow .l {
+  flex: 1;
+  min-width: 0;
+}
+
+.clip {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ecard .empty,
+.ecard .note {
+  margin: 0;
+  padding: 4px 6px;
+  color: var(--muted);
+  font-size: var(--t-small);
+}
+
+.ebtn {
+  align-self: flex-start;
+  margin: 6px 6px 0;
+  height: 30px;
+  padding: 0 14px;
+  border-radius: var(--r-sm);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 500;
+}
+
+.ebtn.stop {
+  background: var(--rec);
+}
+
+.link {
+  color: var(--accent-text);
+  font-size: var(--t-small);
+}
+
+.link:hover {
+  text-decoration: underline;
+}

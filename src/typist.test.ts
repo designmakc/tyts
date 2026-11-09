@@ -1296,3 +1296,82 @@ test('a dictation started before a picture went full screen still stops with its
   typing.keys('ghbdtn ')
   expect(typing.text).toBe('ghbdtn ')
 })
+
+describe('the bar by a selection', () => {
+  const selected = (desk: Desk) => desk.sent.filter(m => m.type === 'selected').length
+  const gone = (desk: Desk) => desk.sent.filter(m => m.type === 'barGone').length
+  const drag = (desk: Desk) => {
+    desk.mouse('left-down', 0)
+    desk.mouse('left-up', 80)
+  }
+
+  test('a drag or a double click is told when the bar is on, a plain click never', () => {
+    const desk = new Desk({ bar: true })
+    desk.mouse('left-down', 0)
+    desk.mouse('left-up', 0)
+    expect(selected(desk)).toBe(0)
+    desk.wait(1000)
+    drag(desk)
+    expect(desk.sent.find(m => m.type === 'selected')).toEqual({ type: 'selected', x: 80, y: 0, start: { x: 0, y: 0 } })
+    desk.wait(1000)
+    // Dragged back: it starts where the button went up.
+    desk.mouse('left-down', 300)
+    desk.mouse('left-up', 220)
+    expect(desk.sent.filter(m => m.type === 'selected').at(-1)).toEqual({ type: 'selected', x: 220, y: 0, start: { x: 220, y: 0 } })
+    desk.wait(1000)
+    desk.mouse('left-down', 200)
+    desk.mouse('left-up', 200)
+    desk.mouse('left-down', 200)
+    desk.mouse('left-up', 200)
+    expect(selected(desk)).toBe(3)
+    expect(selected(new Desk({}))).toBe(0)
+  })
+
+  test('not when off, in a program it is turned off for, in Tyts itself, in full screen', () => {
+    const off = new Desk({ bar: false })
+    drag(off)
+    const here = new Desk({ bar: true, apps: { 'notepad.exe': { off: ['bar'], layout: '' } } })
+    drag(here)
+    const own = new Desk({ bar: true })
+    own.exe = 'kryakl.exe'
+    drag(own)
+    const game = new Desk({ bar: true })
+    game.fullScreen = true
+    drag(game)
+    expect([off, here, own, game].map(selected)).toEqual([0, 0, 0, 0])
+  })
+
+  test('a key ends it, a modifier does not; a click on it is its own, a click elsewhere or the wheel ends it', () => {
+    const desk = new Desk({ bar: true })
+    drag(desk)
+    desk.typist.barShown(true, { x: 100, y: -10, width: 200, height: 36 })
+    desk.event(VK_LSHIFT, true)
+    desk.event(VK_LSHIFT, false)
+    // A click on it is kept from every window (the program keeps its selection) and told where it was.
+    expect(desk.typist.mouse('left-down', 150, 0, 5000)).toBe(true)
+    expect(desk.typist.mouse('left-up', 150, 0, 5050)).toBe(true)
+    expect(desk.sent.filter(m => m.type === 'barClick')).toEqual([{ type: 'barClick', x: 150, y: 0 }])
+    expect(desk.typist.mouse('wheel', 150, 0, 5100)).toBe(false)
+    expect([gone(desk), selected(desk)]).toEqual([0, 1])
+    desk.tap(VK_C)
+    expect(gone(desk)).toBe(1)
+    drag(desk)
+    desk.typist.barShown(true, { x: 100, y: -10, width: 200, height: 36 })
+    desk.mouse('wheel', 0)
+    expect(gone(desk)).toBe(2)
+    drag(desk)
+    desk.mouse('left-down', 500)
+    expect(gone(desk)).toBe(3)
+  })
+
+  test('another window in front ends it', () => {
+    const desk = new Desk({ bar: true })
+    drag(desk)
+    desk.typist.barShown(true, { x: 0, y: 0, width: 10, height: 10 })
+    desk.tick(100)
+    expect(gone(desk)).toBe(0)
+    desk.hwnd = 2n
+    desk.tick(100)
+    expect(gone(desk)).toBe(1)
+  })
+})

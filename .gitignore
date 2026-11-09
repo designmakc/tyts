@@ -1,6 +1,6 @@
 node_modules/
 dist/
-media/card.js
+media/*.js
 media/codicon.*
 release/
 .cache/
@@ -18,4 +18,5 @@ vendor/ocr-mac
 vendor/clip-mac
 vendor/kbd-mac
 vendor/mic-mac
-.autopilot/serve.*
+vendor/speakers-mac
+build/speakers-mac/.build/

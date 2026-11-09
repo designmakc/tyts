@@ -59,6 +59,7 @@ def worker() -> Worker:
     out.bench = FakeBench()
     out.yield_to_dictation = lambda: None
     out._speakers = lambda id, samples, wanted, progress: ([(0, 10, "SPEAKER_00")], "ok")
+    out.diarizer = jobs.Diarizer()
     return out
 
 
@@ -180,9 +181,29 @@ def test_exports_put_the_summary_on_top(tmp_path):
     assert kb.index("## Summary") < kb.index("Hello there.")
 
 
+def test_notes_are_kept_searched_exported_and_no_edit(client, fake_sound):
+    id = record(client)
+    store = engine.state.get_store()
+    worker()._transcribe(id, store.row(id))
+    got = client.request("PATCH", f"/transcripts/{id}", headers=KEY, json={"notes": "Ask Olga about the invoice"})
+    assert got.status_code == 200 and got.json()["notes"] == "Ask Olga about the invoice"
+    t = store.transcript(id)
+    assert t["notes"] == "Ask Olga about the invoice" and "edited" not in t
+    assert [r["id"] for r in client.get("/transcripts", headers=KEY, params={"q": "invoice"}).json()] == [id]
+    md = export.to_md(t)
+    assert md.index("## Notes") < md.index("Ask Olga") < md.index("## Transcript")
+    # Cut to its most; emptied, it is gone.
+    client.request("PATCH", f"/transcripts/{id}", headers=KEY, json={"notes": "x" * (engine.NOTES_MAX + 5)})
+    assert len(store.transcript(id)["notes"]) == engine.NOTES_MAX
+    client.request("PATCH", f"/transcripts/{id}", headers=KEY, json={"notes": "  "})
+    assert "notes" not in store.transcript(id)
+    assert client.get("/transcripts", headers=KEY, params={"q": "invoice"}).json() == []
+
+
 def test_exports_without_a_summary_are_as_before():
     plain = {k: v for k, v in T.items() if k != "summary"}
     assert "Summary" not in export.to_md(plain) and "Summary" not in export.to_txt(plain)
+    assert "Transcript" not in export.to_txt(plain)
 
 
 JPEG = b"\xff\xd8\xff\xe0frame"

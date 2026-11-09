@@ -22,6 +22,14 @@ describe('summaryInput', () => {
     ])
     expect(input.language).toBe('ru')
     expect(input.lost).toBe(2)
+    expect(input.notes).toBeUndefined()
+  })
+
+  it('carries the person’s notes, cut to their most; blank ones are none', () => {
+    const base = { title: 'Call', duration: 9, speakers: {}, utterances: [{ speaker: 'me', start: 0, text: 'Hi' }] }
+    expect(summaryInput({ ...base, notes: '  Ask about the budget ' }).notes).toBe('Ask about the budget')
+    expect(summaryInput({ ...base, notes: '   ' }).notes).toBeUndefined()
+    expect(summaryInput({ ...base, notes: 'x'.repeat(5000) }).notes?.length).toBe(2000)
   })
 })
 

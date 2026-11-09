@@ -6,6 +6,8 @@
 
 Сайт: [designmakc.github.io/tyts](https://designmakc.github.io/tyts/ru/). Тиць — форк [Kryakl](https://github.com/ikstro/kryakl) Евгения Пешинского.
 
+[![Тиць за 25 секунд (ролик на украинском): нажмите, чтобы посмотреть](docs/media/tyts-uk.jpg)](docs/media/tyts-uk.mp4)
+
 ## Что умеет
 
 Меню окна, в том порядке, в каком оно скорее всего понадобится:

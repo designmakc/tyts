@@ -16,6 +16,7 @@
 // message, sent again whenever any of it changes; every change goes back as a
 // message.
 
+import { AWAKE_HOURS, type AwakeHours } from '../awake'
 import { NATURAL_PREFIX, NATURAL_VOICES, naturalLabel } from '../natural'
 import { DOUBLE_MS, HotkeyRecorder, hotkeyLabel, onMac, type Recorded } from '../hotkey'
 import type { AppTab, AppView, DiffPart, Feature, KeyboardLayout, MistakeEntry, SavedWord, Settings, StorageId, StoragePart, StorageView, ToView, TutorHost } from '../protocol'
@@ -26,7 +27,10 @@ import type { AppPart } from '../typist'
 // app.ts has a languageName of its own (a code's English name); the interface's is langName here.
 import { formatDate, languageName as langName, levelName, setUiLanguage, t, uiLanguage, type Key } from '../i18n'
 import { parseEntry } from '../vocabulary'
+import { menuGroups, rewriteGroups } from '../menu'
+import type { RewriteStyle } from '../rewrite'
 import { changesOf, wordDiff } from '../worddiff'
+import { addCorrection, findCorrection, type Found } from '../corrections'
 import { logo, tile } from './brand'
 import { el, icon, setIcon } from './dom'
 import { glyph } from './glyphs'
@@ -66,7 +70,7 @@ function phrases<K extends string>(keys: Record<K, Key>): Record<K, string> {
 }
 
 type Action = 'translate' | 'english' | 'voice' | 'recordings' | 'layout'
-type Page = Action | 'keys' | 'words' | 'mistakes' | 'transcripts' | 'translations' | 'phrases' | 'vocabulary' | 'kept' | 'learned' | 'programs' | 'layouts' | 'settings' | 'models' | 'storage' | 'about' | 'report' | 'search'
+type Page = Action | 'keys' | 'words' | 'mistakes' | 'transcripts' | 'translations' | 'phrases' | 'vocabulary' | 'kept' | 'learned' | 'programs' | 'layouts' | 'settings' | 'models' | 'storage' | 'clipboard' | 'about' | 'report' | 'search'
 
 const ACTIONS: readonly Action[] = ['layout', 'voice', 'recordings', 'translate', 'english']
 /** Each action's icon, in the sidebar. */
@@ -76,6 +80,7 @@ const PARENT: Partial<Record<Page, Action | 'settings'>> = {
   keys: 'settings',
   models: 'settings',
   storage: 'settings',
+  clipboard: 'settings',
   translations: 'translate',
   words: 'english',
   mistakes: 'english',
@@ -107,6 +112,7 @@ const TITLES: Record<Page, string> = phrases({
   keys: 'nav.keys',
   models: 'nav.models',
   storage: 'nav.storage',
+  clipboard: 'nav.clipboard',
   about: 'nav.about',
   report: 'nav.report',
   search: 'nav.search',
@@ -769,7 +775,7 @@ function finishMoment(): void {
 // was scrolled to, as a browser does.
 
 /** A page of a page: a long part of it, opened from a line with a chevron or a tile. */
-type SubId = 'card' | 'screen' | 'aboutYou' | 'talkWindow' | 'notes' | 'edit' | 'speakers' | 'fixing' | 'program' | 'languages' | 'forTranslate' | 'forCheck' | 'forDictate' | 'forTranscribe' | 'forVoice'
+type SubId = 'card' | 'screen' | 'aboutYou' | 'talkWindow' | 'rewrite' | 'notes' | 'edit' | 'speakers' | 'fixing' | 'program' | 'languages' | 'forTranslate' | 'forCheck' | 'forDictate' | 'forTranscribe' | 'forVoice'
 
 type Place = { name: Page; sub?: SubId }
 
@@ -874,6 +880,7 @@ const SUBS: Record<SubId, Sub> = {
   screen: { title: () => t('screen.how'), body: screenHowPage },
   aboutYou: { title: () => t('talkPage.aboutYou'), body: aboutYouPage },
   talkWindow: { title: () => t('act.talkWindow'), body: talkWindowPage },
+  rewrite: { title: () => t('rewrite.title'), body: rewritePage },
   notes: { title: () => t('dictate.notesFolder'), body: kbRows },
   edit: { title: () => t('edit.title'), body: editPage },
   speakers: { title: () => t('page.speakers'), body: speakerRows, valid: installed },
@@ -1035,6 +1042,8 @@ function bodyOf(v: AppView): HTMLElement[] {
       return modelsPage(v)
     case 'storage':
       return storagePage(v)
+    case 'clipboard':
+      return clipboardPage(v)
     case 'about':
       return aboutPage(v)
     case 'report':
@@ -1056,6 +1065,7 @@ const SEARCHED: Place[] = [
   { name: 'translate', sub: 'screen' },
   { name: 'english', sub: 'aboutYou' },
   { name: 'english', sub: 'talkWindow' },
+  { name: 'english', sub: 'rewrite' },
   { name: 'voice', sub: 'notes' },
   { name: 'voice', sub: 'edit' },
   { name: 'layout', sub: 'fixing' },
@@ -1067,6 +1077,7 @@ const SEARCHED: Place[] = [
   { name: 'layouts' },
   { name: 'settings' },
   { name: 'keys' },
+  { name: 'clipboard' },
   { name: 'settings', sub: 'languages' },
   { name: 'models' },
   { name: 'models', sub: 'forTranslate' },
@@ -1219,6 +1230,7 @@ function tryIt(text: string, how: string): HTMLElement {
 
 type KeyName =
   | 'menuKey'
+  | 'clipboardKey'
   | 'selectKey'
   | 'snipKey'
   | 'translateKey'
@@ -1242,6 +1254,7 @@ type KeyName =
 
 const KEY_USE: Record<KeyName, string> = phrases({
   menuKey: 'keys.useMenu',
+  clipboardKey: 'keys.useClipboard',
   selectKey: 'keys.useSelect',
   snipKey: 'keys.useSnip',
   translateKey: 'keys.useTranslate',
@@ -2036,12 +2049,30 @@ function englishPage(v: AppView): HTMLElement[] {
     keyRow('typeCheckKey', t('check.typeKey'), t('check.typeKeyNote'), !v.keysOk.typeCheck),
     keyRow('practiceKey', t('act.say'), installed(v) ? t('act.sayNote') : t('talkPage.needsEngine'), !v.speech.keysOk.practice),
     aside('info', t('check.speechNote')),
+    navCard(null, t('rewrite.title'), t('rewrite.navNote'), null, () => openSub('rewrite'), 'rewrite'),
     grp(t('act.try')),
     tryIt(TRY_CHECK, how),
     enginePlate([
       { title: t('talkPage.model'), value: checkValue(v), open: () => go('models', 'forCheck') },
       { title: t('talkPage.voice'), value: voiceValue(v), open: () => go('models', 'forVoice') },
     ]),
+  ].filter((n): n is HTMLElement => n !== null)
+}
+
+/** English › Rewrite a selection: the menu's Rewrite… list (menu.ts, rewrite.ts), how to reach it, and its model. */
+function rewritePage(v: AppView): HTMLElement[] {
+  const s = v.settings
+  const letter = menuGroups(s.uiLanguage, true).flat().find(item => item.id === 'rewrite')?.letter ?? ''
+  const files = v.models[s.model]
+  return [
+    aside('info', s.menuKey ? t('rewrite.how', { keys: usage(s.menuKey), letter }) : t('rewrite.howNoKey', { letter })),
+    files.status === 'ready' ? null : aside('info', t('rewrite.needsModel', { name: levelName(s.model) })),
+    grp(t('rewrite.group')),
+    ...rewriteGroups(s.uiLanguage)
+      .flat()
+      .map(item => row(`${item.letter} · ${t(`menu.${item.id}`)}`, [t(`rewrite.${item.id as RewriteStyle}Note`)])),
+    aside('info', t('rewrite.keeps')),
+    enginePlate([{ title: t('rewrite.model'), value: checkValue(v), open: () => go('models', 'forCheck') }]),
   ].filter((n): n is HTMLElement => n !== null)
 }
 
@@ -2339,10 +2370,52 @@ function vocabularyPage(v: AppView): HTMLElement[] {
   ]
 }
 
-/** The phrases typed lately (dictationlog.ts), one line each: a tap copies it, a cross forgets it; Kryakl forgets them after 30 days by itself. */
+/** The phrase being corrected on the Phrases page, and what came of the fix: a pair to remember, or why there is none. */
+let fixing: { at: string; was: string; found?: Found } | undefined
+
+/** The fix of one phrase: a field with its text, then "Remember «heard» → «right»?" when the change is small (corrections.ts). */
+function fixCard(v: AppView): HTMLElement[] {
+  if (!fixing) return []
+  const f = fixing
+  const done = () => {
+    fixing = undefined
+    renderBody()
+  }
+  if (f.found?.ok) {
+    const c = f.found.correction
+    return [
+      grp(t('dictate.rememberAsk')),
+      row(t('dictate.rememberPair', { heard: c.heard, right: c.right }), [t('dictate.rememberNote')],
+        btn(t('dictate.remember'), () => {
+          save({ corrections: addCorrection(view?.settings.corrections ?? v.settings.corrections, c) })
+          done()
+        }, 'primary'),
+        btn(t('dictate.notNow'), done)),
+    ]
+  }
+  if (f.found) return [aside('info', t(f.found.why === 'short' ? 'dictate.fixShort' : f.found.why === 'big' ? 'dictate.fixBig' : 'dictate.fixSaved'), ' ', linkBtn(t('dictate.notNow'), done))]
+  const field = el('textarea', { class: 'field report about', rows: 3, 'aria-label': t('dictate.fixTitle'), 'data-live': 'fixPhrase' })
+  field.value = f.was
+  const keep = () => {
+    const text = field.value.replace(/\s+/g, ' ').trim()
+    if (!text || text === f.was) return done()
+    post({ type: 'fixPhrase', at: f.at, text })
+    f.found = findCorrection(f.was, text)
+    renderBody()
+  }
+  return [
+    grp(t('dictate.fixTitle')),
+    el('div', { class: 'row add' }, field, el('small', {}, t('dictate.fixNote')), el('div', { class: 'fields' }, btn(t('dictate.fixSave'), keep, 'primary'), btn(t('common.cancel'), done))),
+  ]
+}
+
+/** The phrases typed lately (dictationlog.ts), one line each: a tap copies it, the pencil corrects it, a cross forgets it; Kryakl forgets them after 30 days by itself. */
 function recentPage(v: AppView): HTMLElement[] {
   const recent = v.dictation.recent
+  if (fixing && !recent.some(e => e.at === fixing!.at)) fixing = undefined
+  const learned = v.settings.corrections
   return [
+    ...fixCard(v),
     grp(t('dictate.phrases'), recent.length || undefined, recent.length ? linkBtn(t('mistakes.clear'), () => post({ type: 'clearDictation' })) : null),
     recent.length
       ? lineList(
@@ -2351,11 +2424,29 @@ function recentPage(v: AppView): HTMLElement[] {
             more: whenSaid(e.at, Date.now()),
             title: e.heard ? `${e.text}\n\n${t('dictate.said', { heard: e.heard })}` : e.text,
             open: () => copyText(e.text),
+            edit: () => {
+              fixing = { at: e.at, was: e.text }
+              renderBody()
+              pBody.scrollTop = 0
+            },
+            editLabel: t('dictate.fix'),
             remove: () => post({ type: 'forgetPhrase', at: e.at }),
           })),
           'time',
         )
       : aside('info', t('dictate.recentEmpty')),
+    ...(learned.length
+      ? [
+          grp(t('dictate.learned'), learned.length, linkBtn(t('dictate.forgetAll'), () => save({ corrections: [] }))),
+          wordChips(
+            learned
+              .map(c => ({ text: c.heard, more: c.right, remove: () => save({ corrections: (view?.settings.corrections ?? learned).filter(x => x.heard !== c.heard) }) }))
+              .reverse(),
+            '→',
+          ),
+          aside('info', t('dictate.learnedNote')),
+        ]
+      : []),
   ]
 }
 
@@ -2384,6 +2475,13 @@ function speakersCard(v: AppView, open = () => openSub('speakers'), quiet = fals
   if (!hasPart(v, 'speakers')) {
     const sz = s.speakers.sizes[s.speakers.on]
     return navCard('users', title, note, t('transcribe.notInstalled', { size: speechSize(sz.download) }), open, 'speakers')
+  }
+  if (s.speakers.ane) {
+    // A Mac: the models are here; the engine says whether its helper is too. No key, no place to choose.
+    if (!running(v)) return navCard('users', title, note, t('transcribe.onMac'), open, 'speakers')
+    const ok = s.health?.diarization === 'ready'
+    const value = ok ? t('transcribe.ready') : t('transcribe.helperMissing')
+    return navCard('users', title, note, quiet && ok ? t('transcribe.onMac') : value, open, 'speakers', !quiet && ok)
   }
   const onCard = (s.pack.speakersOn ?? 'cpu') === 'cuda'
   const onDevice = t(onCard ? 'transcribe.onCard' : 'transcribe.onCpu')
@@ -2418,6 +2516,7 @@ function recordingsPage(v: AppView): HTMLElement[] {
     installed(v) ? callAutoRow(v) : null,
     keyRow('meetingKey', t('call.record'), t('call.keyNote'), !v.speech.keysOk.meeting),
     installed(v) ? toggleCard('camera', t('call.shots'), v.settings.callShots, callShots => save({ callShots }), t('call.shotsNote')) : null,
+    installed(v) ? toggleCard('message-square-text', t('call.live'), v.settings.callLive, callLive => save({ callLive }), t('call.liveNote')) : null,
     installed(v) && v.settings.callShots ? toggleCard('camera', t('call.names'), v.settings.callNames, callNames => save({ callNames }), t('call.namesNote')) : null,
     keyRow('shotKey', t('call.shotKey'), t('call.shotKeyNote'), !v.speech.keysOk.shot),
     ...summarySettings(v),
@@ -2425,8 +2524,27 @@ function recordingsPage(v: AppView): HTMLElement[] {
     grp(t('transcribe.setup')),
     speakersCard(v),
     libraryFolderCard(v),
+    running(v) ? knownVoices() : null,
     enginePlate([{ title: t('dictate.speechModel'), value: speechValue(v, 'transcripts'), open: () => go('models', 'forTranscribe') }]),
   ].filter((n): n is HTMLElement => n !== null)
+}
+
+/** Known voices (engine/voices.py): each name given to a speaker with its number of meetings, forgotten one by one or all. */
+function knownVoices(): HTMLElement {
+  const box = el('div', {})
+  const forget = (name?: string) => () => void api('DELETE', '/voices', name ? { name } : {}).then(fill, fault)
+  const fill = async () => {
+    const list = await api<{ name: string; meetings: number }[]>('GET', '/voices')
+    box.replaceChildren(
+      grp(t('voices.title')),
+      list.length
+        ? lineList(list.map(x => ({ text: x.name, more: t('voices.meetings', { n: x.meetings }), remove: forget(x.name), removeLabel: t('voices.forget', { name: x.name }) })))
+        : aside('info', t('voices.empty')),
+      ...(list.length ? [card('trash-2', t('voices.forgetAll'), [t('voices.forgetAllNote')], linkBtn(t('kb.forgetBtn'), forget()))] : []),
+    )
+  }
+  void fill().catch(() => box.remove())
+  return box
 }
 
 /** A call recorded: all of the computer's sound and the microphone, started and stopped here as by its key. */
@@ -2606,7 +2724,7 @@ function programsPage(v: AppView): HTMLElement[] {
   ].filter((n): n is HTMLElement => n !== null)
 }
 
-const APP_PART_NAMES: Record<AppPart, string> = { fix: t('kb.partFix'), switch: t('kb.partSwitch'), badge: t('kb.partBadge'), keys: t('kb.partKeys') }
+const APP_PART_NAMES: Record<AppPart, string> = { fix: t('kb.partFix'), switch: t('kb.partSwitch'), badge: t('kb.partBadge'), keys: t('kb.partKeys'), bar: t('kb.partBar') }
 
 /** What a program's rule does, in a few words. */
 function programNote(v: AppView, a: AppRule): string {
@@ -2629,6 +2747,7 @@ function programPage(v: AppView): HTMLElement[] {
     part('switch', 'keyboard', t('kb.switches'), t('kb.switchesNote')),
     part('badge', 'type', t('kb.shows'), t('kb.partBadge')),
     part('keys', 'circle-alert', t('kb.hears'), t('kb.hearsNote')),
+    part('bar', 'text-cursor', t('kb.barHere'), t('kb.barHereNote')),
     grp(t('kb.layout')),
     card(
       'globe',
@@ -2850,14 +2969,15 @@ const STORED: Record<StorageId, { title: string; note: string }> = {
   speechModel: { title: t('dictate.speechModel'), note: t('storage.speechModelNote') },
   speech: { title: t('storage.speech'), note: t('storage.speechNote') },
   gpu: { title: t('storage.gpu'), note: t('storage.gpuNote') },
-  speakers: { title: t('transcribe.speakers'), note: t('storage.speakersNote') },
+  speakers: { title: t('transcribe.speakers'), note: t(onMac ? 'storage.speakersNoteMac' : 'storage.speakersNote') },
+  speakersOld: { title: t('storage.speakersOld'), note: t('storage.speakersOldNote') },
   yours: { title: t('storage.yours'), note: t('storage.yoursNote') },
   transcripts: { title: t('tray.transcripts'), note: t('storage.transcriptsNote') },
 }
 
 /** The models and voices, and the programs that run them: everything Kryakl downloads, in its one folder. */
 const MODEL_PARTS: readonly StorageId[] = ['fast', 'dict', 'voice', 'accurate', 'most', 'unused', 'speechModel']
-const PROGRAM_PARTS: readonly StorageId[] = ['llama', 'speech', 'gpu', 'speakers']
+const PROGRAM_PARTS: readonly StorageId[] = ['llama', 'speech', 'gpu', 'speakers', 'speakersOld']
 const DOWNLOADED: readonly StorageId[] = [...MODEL_PARTS, ...PROGRAM_PARTS]
 const downloadsMb = (s: StorageView) => s.parts.filter(p => DOWNLOADED.includes(p.id)).reduce((mb, p) => mb + p.bytes / 1e6, 0)
 
@@ -2923,6 +3043,7 @@ function removable(v: AppView, p: StoragePart): boolean {
     case 'speech':
     case 'gpu':
     case 'speakers':
+    case 'speakersOld':
       return !pack && installed(v)
     default:
       return false
@@ -3124,6 +3245,36 @@ function keysPage(v: AppView): HTMLElement[] {
   ]
 }
 
+/** The clipboard history: on or off, its key, and the clips, each to copy again, pin or forget; Clear keeps the pinned. */
+function clipboardPage(v: AppView): HTMLElement[] {
+  const s = v.settings
+  const lines = (pinned: boolean) =>
+    lineList(
+      v.clips
+        .filter(c => !!c.pinned === pinned)
+        .map(c => ({ text: c.text, title: `${c.text}\n\n${whenSaid(c.at, Date.now())}\n${t('clips.copyNote')}`, open: () => copyText(c.text), remove: () => post({ type: 'clipForget', at: c.at }) })),
+    )
+  // Each line gets its Pin or Unpin before the cross.
+  const withPins = (list: HTMLElement, pinned: boolean) => {
+    const clips = v.clips.filter(c => !!c.pinned === pinned)
+    list.querySelectorAll('.ln').forEach((ln, i) => {
+      const c = clips[i]
+      if (c) ln.querySelector('.wdel')?.before(linkBtn(t(pinned ? 'clips.unpin' : 'clips.pin'), () => post({ type: 'clipPin', at: c.at, on: !pinned })))
+    })
+    return list
+  }
+  const pinned = v.clips.filter(c => c.pinned).length
+  const recent = v.clips.length - pinned
+  return [
+    toggleCard('copy', t('clips.on'), s.clipboardHistory, clipboardHistory => save({ clipboardHistory }), t('clips.onNote')),
+    s.clipboardHistory ? keyRow('clipboardKey', t('clips.key'), t('clips.keyNote')) : null,
+    pinned ? grp(t('clips.pinned'), pinned) : null,
+    pinned ? withPins(lines(true), true) : null,
+    grp(t('clips.recent'), recent || undefined, recent ? linkBtn(t('keys.clear'), () => post({ type: 'clipsClear' })) : null),
+    recent ? withPins(lines(false), false) : aside('info', t('clips.empty')),
+  ].filter((n): n is HTMLElement => n !== null)
+}
+
 function settingsPage(v: AppView): HTMLElement[] {
   const s = v.settings
   const keys = HOME_KEYS.filter(k => !k.speech || installed(v))
@@ -3132,6 +3283,7 @@ function settingsPage(v: AppView): HTMLElement[] {
       { icon: 'keyboard', title: TITLES.keys, count: keys.filter(k => s[k.key]).length, open: () => go('keys'), id: 'keys' },
       { icon: 'boxes', title: TITLES.models, open: () => go('models'), id: 'models' },
       { icon: 'hard-drive', title: TITLES.storage, count: v.storage?.parts.length ? speechSize(downloadsMb(v.storage)) : undefined, open: () => go('storage'), id: 'storage' },
+      { icon: 'copy', title: TITLES.clipboard, count: v.settings.clipboardHistory ? v.clips.length : undefined, open: () => go('clipboard'), id: 'clipboard' },
     ]),
     grp(t('act.general')),
     uiLanguageCard(s.uiLanguage, uiLanguage => save({ uiLanguage })),
@@ -3162,6 +3314,16 @@ function settingsPage(v: AppView): HTMLElement[] {
     ),
     toggleCard('power', t('settings.startWithWindows'), s.startWithWindows, startWithWindows => save({ startWithWindows })),
     toggleCard('pause', t('settings.pause'), s.paused, paused => save({ paused }), t('settings.pauseNote')),
+    toggleCard('panel-bottom', t('edge.setting'), s.edgePanel, edgePanel => save({ edgePanel }), t('edge.settingNote')),
+    toggleCard('text-cursor', t('bar.setting'), s.selectionBar, selectionBar => save({ selectionBar }), t('bar.settingNote')),
+    // Keep the computer awake (awake.ts): how long and whether the screen stays on; turned on from the tray or the menu on one key.
+    card(
+      'clock',
+      t('settings.awake'),
+      [t('settings.awakeNote')],
+      seg<AwakeHours>(s.awakeHours, AWAKE_HOURS.map(h => [h, h ? t('speech.h', { h }) : t('settings.awakeUntilOff')]), awakeHours => save({ awakeHours })),
+    ),
+    toggleCard('monitor', t('settings.awakeScreen'), s.awakeScreen, awakeScreen => save({ awakeScreen }), t('settings.awakeScreenNote')),
     // New versions are downloaded by hand from GitHub (the owner, 2026-10-30): nothing installs itself.
     card(
       'rotate-cw',

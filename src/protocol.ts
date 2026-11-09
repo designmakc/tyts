@@ -13,6 +13,7 @@ import type { SpeechHealth, SpeechResult, SpeechServiceState } from './speechser
 import type { TalkState, TalkTurn } from './talk'
 import type { TalkRecord, TalkSummary } from './talks'
 import type { TranslationEntry } from './translationlog'
+import type { Clip } from './cliphistory'
 import type { TranslatorState } from './translator'
 import type { MistakeEntry } from './mistakes'
 import type { Learned } from './typist'
@@ -32,7 +33,7 @@ export type { Choice, DeviceProfile, DictationEntry, DiffPart, Feature, FeatureP
  * DeepL: `translate` (selected), `text` (read from the screen). To check the
  * person's own English, its mistakes marked and set right: `check`.
  */
-export type CardKind = 'selection' | 'screenshot' | 'translate' | 'text' | 'check'
+export type CardKind = 'selection' | 'screenshot' | 'translate' | 'text' | 'check' | 'explain' | 'rewrite'
 
 /** The translation under a text shown as it is (a `translate` or `text` card), asked for with `translateText`. */
 export type TextResult =
@@ -96,6 +97,8 @@ export type CardState =
   | { status: 'text'; text: string; from: string; to: string; languages: string[]; mine?: string[]; result: TextResult; canPaste?: boolean }
   /** Check my English: the person's text as it is (editable) and what the checker (`model`, its level's name: Accurate) says of it; `canPaste` as a text's. */
   | { status: 'check'; text: string; result: CheckResult; model: string; canPaste?: boolean }
+  /** Rewrite… (rewrite.ts): the selection, and Explain's answer or a rewrite with no window to paste into; `answer` empty while the model works, `failed` when it says why there is none. */
+  | { status: 'explain'; text: string; answer: string; failed?: boolean }
   /** The snipped piece of the screen holds no text. */
   | { status: 'empty' }
   /** Windows has no text recognition installed for any language the card could use. */
@@ -188,6 +191,8 @@ export type SpeechView = {
     on: 'cuda' | 'cpu'
     sizes: Record<'cuda' | 'cpu', { download: number; installed: number }>
     model: boolean
+    /** A Mac: its own chip tells the voices apart (FluidAudio's models, ~21 MB); no key, no place to choose. */
+    ane?: true
   }
   /** The model dictation downloads at its first use (0 MB: it is here), on the processor or on the card, and its time for a phrase. */
   firstModel: { cpu: { model: string; mb: number; phrase: number }; cuda: { model: string; mb: number; phrase: number } }
@@ -262,6 +267,8 @@ export type AppView = {
   elevatedApp?: string
   /** The texts translated lately, newest first (the last 10). */
   translations: TranslationEntry[]
+  /** The clipboard history: the pinned first, then the texts copied lately, newest first (empty while it is off and was never on). */
+  clips: Clip[]
   /** The translator between English and the person's language: here, downloading, or to be downloaded on the first translation. */
   translator: 'absent' | 'downloading' | 'ready' | 'failed' | 'unsupported'
   /** The keyboard layouts Windows has, in its order. */
@@ -313,7 +320,7 @@ export type AppView = {
  * two language models and an older Kryakl's, llama.cpp's builds, each speech model, the speech engine's program and its
  * graphics card's and speakers' parts, the person's own things.
  */
-export type StorageId = 'fast' | 'dict' | 'voice' | 'accurate' | 'most' | 'unused' | 'llama' | 'speechModel' | 'speech' | 'gpu' | 'speakers' | 'yours' | 'transcripts'
+export type StorageId = 'fast' | 'dict' | 'voice' | 'accurate' | 'most' | 'unused' | 'llama' | 'speechModel' | 'speech' | 'gpu' | 'speakers' | 'speakersOld' | 'yours' | 'transcripts'
 /**
  * Its place, its bytes, and how many of them are files linked from elsewhere too (a developer's uv cache), which a removal does not free.
  * `item`: the language's code (fast, dict), the speech model's name, the build (llama: vulkan, cuda). `users`: the actions it serves now;
@@ -341,6 +348,8 @@ export type TrayView = {
   speech: { installed: boolean; recording: boolean; noteKey: string }
   /** A call is being recorded: its row stops it. */
   call: boolean
+  /** Keep the computer awake (awake.ts): on, and for how long still ("3 h 20 min", or empty until turned off). */
+  awake: { on: boolean; left: string }
   /** The translator between English and the person's language (as `AppView.translator`). */
   translator: AppView['translator']
   native: string
@@ -349,8 +358,29 @@ export type TrayView = {
   dev: boolean
 }
 
+/**
+ * What the panel at the top of the screen shows (edgepanel.ts, webview/edge.ts): one problem in the way, if any;
+ * whether there is a speech engine, a phrase or a call being recorded; the keys; the switches; the last phrases
+ * dictated and the last calls recorded.
+ */
+export type EdgeView = {
+  problem: '' | 'noEngine' | 'paused'
+  speech: boolean
+  dictating: boolean
+  call: boolean
+  keys: { dictate: string; again: string; call: string; fix: string }
+  autoFix: boolean
+  switchOn: boolean
+  layoutBadge: boolean
+  recent: { at: string; text: string }[]
+  calls: { id: string; title: string; created: string; duration: number }[]
+}
+
+/** What the panel at the top of the screen does besides the tray's commands; each puts the panel away. */
+export type EdgeAct = { act: 'dictate' } | { act: 'again' } | { act: 'paste'; at: string } | { act: 'openCall'; id: string } | { act: 'setup' }
+
 /** What the tray's panel can do; each puts the panel away first. */
-export type TrayCommand = 'listenCopied' | 'translateCopied' | 'typeToTranslate' | 'checkEnglish' | 'talk' | 'listenScreen' | 'translateScreen' | 'note' | 'call' | 'transcripts' | 'vocabulary' | 'kept' | 'settings' | 'report' | 'open' | 'quit'
+export type TrayCommand = 'listenCopied' | 'translateCopied' | 'typeToTranslate' | 'checkEnglish' | 'talk' | 'listenScreen' | 'translateScreen' | 'note' | 'call' | 'transcripts' | 'transcribe' | 'vocabulary' | 'kept' | 'settings' | 'report' | 'open' | 'quit' | 'awake'
 
 /**
  * Why a word has no meanings: no dictionary exists for the person's language,
@@ -406,11 +436,18 @@ export type ToView =
   | { type: 'dictationEditing' }
   | { type: 'dictationError'; message: string }
   /** The call recording's panel (capture.ts): record, under `title` (`app`: the call program running, for the engine; `shots`: a screenshot every 4 s when the screen changed), stop and save, pause or go on, take a screenshot now. */
-  | { type: 'capture'; command: 'start' | 'stop' | 'pause' | 'resume' | 'discard' | 'ask' | 'unask' | 'shot'; title?: string; app?: string; auto?: boolean; shots?: boolean }
+  | { type: 'capture'; command: 'start' | 'stop' | 'pause' | 'resume' | 'discard' | 'ask' | 'unask' | 'shot'; title?: string; app?: string; auto?: boolean; shots?: boolean; live?: boolean }
   /** The tray's panel was just shown: focus its first command. */
   | { type: 'trayShown' }
+  | { type: 'edge'; view: EdgeView }
   /** Kryakl's menu on one key: what it draws now. */
   | { type: 'menu'; view: MenuView }
+  /** The bar by a selection: what it draws now (`n` grows with each showing, which fades it in again). */
+  | { type: 'bar'; view: BarView }
+  /** Where the pointer is over the bar's window (CSS pixels; -1, -1 away from it): main looks, as a window that never takes the keyboard may get no pointer events. */
+  | { type: 'barPointer'; x: number; y: number }
+  /** A click on the bar there (CSS pixels): the keyboard thread kept it from every window, the page finds the button. */
+  | { type: 'barClick'; x: number; y: number }
   | { type: 'natural'; state: NaturalState }
   /** One sentence of reading `id` in the natural voice: 24 kHz audio and when each of its words is spoken. */
   | { type: 'naturalAudio'; id: number; index: number; samples: Float32Array; words: WordTime[] }
@@ -420,7 +457,10 @@ export type ToView =
 export type DictationMode = 'type' | 'english' | 'note' | 'check'
 
 /** The menu on one key: its groups of items by letter and name, the one lit, and the one just picked (-1 for none); both count through all the groups. */
-export type MenuView = { groups: { letter: string; label: string }[][]; lit: number; fired: number }
+export type MenuView = { groups: { letter: string; label: string }[][]; lit: number; fired: number; foot?: string }
+
+/** The bar by a selection: the dot alone, the pill, or the pill and "…"'s list (over it when `listAbove`); the pill's buttons and the list's lines by name. */
+export type BarView = { phase: 'dot' | 'pill' | 'list'; row: { id: string; label: string }[]; more: string; list: { id: string; label: string }[][]; listAbove: boolean; n: number }
 
 export type ToHost =
   | { type: 'lookup'; word: string }
@@ -496,8 +536,15 @@ export type ToHost =
   | { type: 'menuHeight'; px: number }
   | { type: 'menuHover'; index: number }
   | { type: 'menuPick'; index: number }
+  // The bar by a selection (barwindow.ts): its page is ready; its pill (with the list when open) is this big, in CSS pixels; a button was clicked ('more': "…").
+  | { type: 'barReady' }
+  | { type: 'barSize'; width: number; height: number }
+  | { type: 'barPick'; id: string }
   // The tray's panel.
   | { type: 'trayReady' }
+  | { type: 'edgeReady' }
+  | { type: 'edgeHeight'; px: number }
+  | ({ type: 'edgeAct' } & EdgeAct)
   /** The panel's content is this tall, in CSS pixels; the window follows. */
   | { type: 'trayHeight'; px: number }
   | { type: 'tray'; command: TrayCommand }
@@ -530,10 +577,15 @@ export type ToHost =
   | { type: 'clearTranslations' }
   /** One phrase or one translation forgotten, by when it was kept. */
   | { type: 'forgetPhrase'; at: string }
+  | { type: 'fixPhrase'; at: string; text: string }
   | { type: 'forgetTranslation'; at: string }
   /** What Kryakl learned from the person's typing: one word out of a list, or everything. */
   | { type: 'unlearn'; list: 'alwaysFix' | 'myWords'; word: string }
   | { type: 'forgetLearned' }
+  /** The clipboard history: a clip pinned or not, one forgotten (by when it was copied), or all but the pinned. */
+  | { type: 'clipPin'; at: string; on: boolean }
+  | { type: 'clipForget'; at: string }
+  | { type: 'clipsClear' }
   /** A backup of the settings and the libraries saved as a file, imported from one (the person picks it), or the settings all back to how they came. */
   | { type: 'exportBackup' }
   | { type: 'importBackup' }
@@ -576,6 +628,10 @@ export type ToHost =
   | { type: 'captureOpenSettings' }
   /** The question "Record the call?" answered (callAuto 'ask'). */
   | { type: 'captureAnswer'; record: boolean }
+  /** "Copy a phrase for the chat": main puts its own sentence (call.phrase) on the clipboard; the page names no text. */
+  | { type: 'captureCopyPhrase' }
+  /** The panel opened its draft of the words (taller) or closed it. */
+  | { type: 'captureExpand'; open: boolean }
   /** From the app window's Recordings page: a call recording started, or stopped and saved. */
   | { type: 'toggleCall' }
   /** Makes (or makes again) a transcript's summary; main saves it in the engine. */

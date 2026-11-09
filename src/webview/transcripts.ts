@@ -10,7 +10,7 @@ import { formatDate, languageName, levelName, t } from '../i18n'
 import type { Answer } from '../ask'
 import { CITE, cited } from '../ask'
 import type { AppView } from '../protocol'
-import { SUMMARY_OWN_MAX } from '../settings'
+import { NOTES_MAX, SUMMARY_OWN_MAX, SUMMARY_TEMPLATES_MAX, TEMPLATE_NAME_MAX } from '../settings'
 import type { SummaryTemplate } from '../summary'
 import { shownShots } from '../shots'
 import { secondsLeft, shotIn, topicIn } from '../summaryflow'
@@ -51,6 +51,8 @@ type Hooks = {
   show: () => void
   /** Opens the Transcribe page (the engine and the speakers are set up there). */
   setup: () => void
+  /** The list stays beside an open transcript (the calls window): it follows the engine too. */
+  beside?: boolean
 }
 
 let hooks: Hooks = { view: () => undefined, shown: () => false, show: () => {}, setup: () => {} }
@@ -112,14 +114,21 @@ const tx = {
   redoing: false,
   // The summary block of the transcript `sumFor`: the template, the person's own instruction, the language, and its two questions.
   sumFor: '',
-  template: 'general' as SummaryTemplate,
+  /** The template picked: a built-in one, `t<n>` the person's own n-th (settings.callTemplates), `new` one being written. */
+  template: 'general' as string,
+  /** The own template being written or changed: its name and its instruction. */
+  ownName: '',
   own: '',
   mine: false,
   editing: false,
   replacing: false,
   /** The transcript whose summary was being made when last drawn: it is read again once that is over. */
   sumBusy: '',
+  /** What an open transcript shows: its lines, the person's notes, or the summary. */
+  tab: 'text' as Tab,
 }
+
+type Tab = 'text' | 'notes' | 'summary'
 
 const DATE: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }
 const DAY: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }
@@ -283,7 +292,7 @@ async function loadRows(): Promise<void> {
     const rows = await api<Row[]>('GET', `/transcripts?q=${encodeURIComponent(tx.query)}`)
     const changed = JSON.stringify(rows) !== JSON.stringify(tx.rows)
     tx.rows = rows
-    if (changed && hooks.shown() && !tx.openId) redrawPage()
+    if (changed && hooks.shown() && (!tx.openId || hooks.beside)) redrawPage()
   } catch {
     // the engine is away; the page says so from the view
   }
@@ -374,6 +383,13 @@ function askRows(): HTMLElement[] {
 }
 
 function libraryPage(v: AppView): HTMLElement[] {
+  const [tools, ...rest] = transcriptsHome(v)
+  tools!.append(btn([icon('window'), t('calls.openWindow')], () => post({ type: 'tray', command: 'transcripts' }), '', t('calls.openWindowNote')))
+  return [tools!, ...rest, list(v)]
+}
+
+/** The search, the questions to the calls and the folders: what the library has besides its list. */
+function transcriptsHome(v: AppView): HTMLElement[] {
   const kb = v.speech.health?.kbDir
   return [
     el(
@@ -400,8 +416,17 @@ function libraryPage(v: AppView): HTMLElement[] {
     libraryFolderCard(v),
     kb === '' ? aside('book-open', t('tr.needKb'), ' ', linkBtn(t('tr.choose'), () => void pickKb())) : null,
     speakersMissing(v, () => hooks.setup()),
-    list(v),
   ].filter((n): n is HTMLElement => n !== null)
+}
+
+/**
+ * The calls window: every recording on the left (the search over it), and on the right the one
+ * open, or the questions to the calls and the folders while none is.
+ */
+export function callsColumns(v: AppView): { list: HTMLElement[]; open: HTMLElement[] } {
+  if (!installed(v) || !running(v)) return { list: [], open: transcriptsBody(v) }
+  const [tools, ...rest] = transcriptsHome(v)
+  return { list: [tools!, list(v)], open: tx.openId ? transcriptPage(v) : rest }
 }
 
 function list(v: AppView): HTMLElement {
@@ -432,7 +457,7 @@ function list(v: AppView): HTMLElement {
         {},
         el(
           'button',
-          { class: 'ti', onclick: () => openTranscript(r.id) },
+          { class: r.id === tx.openId ? 'ti on' : 'ti', 'aria-current': r.id === tx.openId ? 'true' : undefined, onclick: () => openTranscript(r.id) },
           el('span', { class: 'src' }, icon(SOURCES[r.source]?.icon ?? 'file')),
           el('span', { class: 'tm' }, el('b', {}, r.title), el('small', {}, meta(r)), r.snippet ? snippet(r.snippet) : null),
           statusChip(r) ?? (r.summarized ? el('span', { class: 'chip lit' }, t('sum.title')) : null),
@@ -465,6 +490,8 @@ function statusChip(r: Row): HTMLElement | null {
 /** Opens a transcript on the Transcripts page; an empty id, the library. */
 export function openTranscript(id: string, at?: number): void {
   if (id !== tx.openId) stopPlayer()
+  // Another recording, or a cited moment of this one: its lines.
+  if (id !== tx.openId || at !== undefined) tx.tab = 'text'
   tx.openId = id
   tx.seekTo = at
   tx.deleting = tx.exporting = tx.redoing = false
@@ -539,13 +566,43 @@ function transcriptPage(v: AppView): HTMLElement[] {
     stopPlayer()
     return [head, progressCard(r)]
   }
-  const nodes = [head, actions(tr), ...notices(v, r, tr), summaryBlock(v, tr), speakersStrip(tr), utterances(v, tr), player(v, tr)].filter((n): n is HTMLElement => n !== null)
+  const tab = tr.source === 'note' && tx.tab === 'summary' ? 'text' : tx.tab
+  const shown = tab === 'notes' ? [notesBlock(tr)] : tab === 'summary' ? [summaryBlock(v, tr)] : [speakersStrip(tr), utterances(v, tr)]
+  const nodes = [head, actions(tr), ...notices(v, r, tr), tabs(tr, tab), ...shown, player(v, tr)].filter((n): n is HTMLElement => n !== null)
   if (tx.seekTo !== undefined) {
     const at = tx.seekTo
     tx.seekTo = undefined
     window.setTimeout(() => jumpTo(tr, at), 0)
   }
   return nodes
+}
+
+/** Transcript · Notes · Summary (a note has no summary); the summary's tab says when one is made or being made. */
+function tabs(tr: Transcript, tab: Tab): HTMLElement {
+  const making = !!tx.sumBusy && tx.sumBusy === tr.id
+  const items: [Tab, string, boolean][] = [
+    ['text', t('calls.tabText'), false],
+    ['notes', t('calls.tabNotes'), !!tr.notes?.trim()],
+    ...(tr.source === 'note' ? [] : [['summary', t('calls.tabSummary'), !!tr.summary || making] as [Tab, string, boolean]]),
+  ]
+  return el(
+    'div',
+    { class: 'seg ttabs', role: 'tablist' },
+    ...items.map(([id, label, dot]) =>
+      el('button', { class: id === tab ? 'ttab on' : 'ttab', role: 'tab', 'aria-selected': String(id === tab), onclick: () => ((tx.tab = id), redrawPage()) }, label, dot ? el('i', { class: 'tdot' }) : null),
+    ),
+  )
+}
+
+/** The person's own notes on the recording: saved when the field is left; the summary reads them. */
+function notesBlock(tr: Transcript): HTMLElement {
+  const field = el('textarea', { class: 'field report tnotes', 'data-live': `notes-${tr.id}`, maxlength: NOTES_MAX, placeholder: t('calls.notesPlaceholder'), 'aria-label': t('calls.tabNotes') })
+  field.value = tr.notes ?? ''
+  field.rows = Math.min(30, Math.max(10, field.value.split('\n').length + 2))
+  field.addEventListener('blur', () => {
+    if (field.value !== (tr.notes ?? '')) void patch({ notes: field.value }).then(() => (toast(t('calls.notesSaved')), redrawPage()))
+  })
+  return el('div', { class: 'notes' }, field, el('small', { class: 'muted' }, t('calls.notesNote')))
 }
 
 function progressCard(r: Row): HTMLElement {
@@ -767,7 +824,8 @@ function speakersNotice(v: AppView, tr: Transcript): HTMLElement | null {
       ? t('tr.whyFailed')
       : tr.speakersStatus === 'no-part'
         ? `${t('tr.whyNoPart')}${meet}`
-        : `${t('tr.whyNoKey')}${meet}`
+        : // A Mac asks for no key (2026-11-09): one made there while a key was needed says the part was missing.
+          `${t(v.speech.speakers.ane ? 'tr.whyNoPart' : 'tr.whyNoKey')}${meet}`
   const missing = speakersMissing(v, () => hooks.setup())
   if (missing) return aside('users', why, ' ', linkBtn(t('tr.setUpSpeakers'), () => hooks.setup()))
   const way = splitWay(tr)
@@ -841,9 +899,10 @@ function speakersStrip(tr: Transcript): HTMLElement | null {
     strip.append(chipNode)
   }
   strip.append(el('small', {}, t('tr.tapRename')))
+  const voiceBox = voiceOffers(tr)
   // Names read off the screen (callNames): only offered; Apply renames as a tap on the chip does.
   const hints = Object.entries(tr.speakerHints ?? {}).filter(([key]) => tr.speakers[key])
-  if (hints.length === 0) return strip
+  if (hints.length === 0) return voiceBox ? el('div', {}, strip, voiceBox) : strip
   const offers = hints.map(([key, name]) => {
     const forget = () => {
       delete tr.speakerHints?.[key]
@@ -864,7 +923,35 @@ function speakersStrip(tr: Transcript): HTMLElement | null {
     return offer
   })
   const box = el('div', { class: 'namehints' }, ...offers, el('small', {}, t('tr.nameHintNote')))
-  return el('div', {}, strip, box)
+  return el('div', {}, strip, box, voiceBox)
+}
+
+/** Names recognised by voice from earlier meetings (engine/voices.py): offered, never applied by themselves. Accept names the speaker
+ * (which teaches the voice one meeting more); No is remembered for that speaker. */
+function voiceOffers(tr: Transcript): HTMLElement | null {
+  const hints = Object.entries(tr.voiceHints ?? {}).filter(([key]) => tr.speakers[key])
+  if (hints.length === 0) return null
+  const offers = hints.map(([key, hint]) => {
+    const forget = () => {
+      delete tr.voiceHints?.[key]
+      offer.remove()
+      if (!box.querySelector('.namehint')) box.remove()
+    }
+    const offer = el(
+      'div',
+      { class: 'namehint' },
+      el('span', {}, t('tr.voiceHint', { speaker: tr.speakers[key]!.name, name: hint.name })),
+      linkBtn(t('tr.acceptName'), () => {
+        tr.speakers[key]!.name = hint.name
+        forget()
+        void patch({ speakers: { [key]: hint.name } }).then(redrawPage)
+      }),
+      linkBtn(t('tr.notThem'), () => (forget(), void patch({ voiceRejected: { [key]: hint.name } }))),
+    )
+    return offer
+  })
+  const box = el('div', { class: 'namehints' }, ...offers, el('small', {}, t('tr.voiceHintNote')))
+  return box
 }
 
 function speakerMenu(tr: Transcript, i: number, label: HTMLElement): void {
@@ -970,7 +1057,6 @@ const TEMPLATES = (): [SummaryTemplate, string][] => [
   ['standup', t('sum.tStandup')],
   ['interview', t('sum.tInterview')],
   ['lecture', t('sum.tLecture')],
-  ['own', t('sum.tOwn')],
 ]
 
 /** The block over a transcript: make a summary, how it goes, the summary itself (editable, copied, made again). */
@@ -978,8 +1064,9 @@ function summaryBlock(v: AppView, tr: Transcript): HTMLElement | null {
   if (tr.source === 'note') return null
   if (tx.sumFor !== tr.id) {
     tx.sumFor = tr.id
-    tx.template = tr.summary?.template ?? v.settings.callTemplate
-    tx.own = v.settings.callOwn
+    const was = tr.summary?.template ?? v.settings.callTemplate
+    // The person's own instruction of a summary is not told apart later: the first own template stands for it.
+    pickTemplate(was === 'own' ? (v.settings.callTemplates.length ? 't0' : 'general') : was, v)
     tx.mine = tr.summary?.mine ?? v.settings.callSummaryMine
     tx.editing = tx.replacing = false
   }
@@ -1021,7 +1108,7 @@ function summaryBlock(v: AppView, tr: Transcript): HTMLElement | null {
     )
   }
   if (tr.summary) box.append(summaryView(v, tr))
-  if (files.status === 'ready') box.append(summaryControls(tr))
+  if (files.status === 'ready') box.append(summaryControls(v, tr))
   return box
 }
 
@@ -1044,10 +1131,47 @@ window.setInterval(() => {
 
 function startSummary(tr: Transcript): void {
   tx.replacing = false
-  post({ type: 'summarize', id: tr.id, template: tx.template, ...(tx.template === 'own' ? { own: tx.own.slice(0, SUMMARY_OWN_MAX) } : {}), mine: tx.mine })
+  const own = ownAt(tx.template)
+  const text = own === undefined ? undefined : hooks.view()?.settings.callTemplates[own]?.text
+  post({ type: 'summarize', id: tr.id, template: text === undefined ? (tx.template as SummaryTemplate) : 'own', ...(text === undefined ? {} : { own: text.slice(0, SUMMARY_OWN_MAX) }), mine: tx.mine })
 }
 
-function summaryControls(tr: Transcript): HTMLElement {
+/** `t3` → 3: the person's own template picked; undefined for a built-in one or a new one. */
+const ownAt = (pick: string): number | undefined => (/^t\d+$/.test(pick) ? Number(pick.slice(1)) : undefined)
+
+/** Picks a template; an own one (or a new one) fills the fields it is written in. */
+function pickTemplate(pick: string, v: AppView): void {
+  const own = ownAt(pick)
+  const kept = own === undefined ? undefined : v.settings.callTemplates[own]
+  tx.template = own !== undefined && !kept ? 'general' : pick
+  tx.ownName = kept?.name ?? ''
+  tx.own = kept?.text ?? ''
+}
+
+/** The person's own templates as the list shows them: by name, else by their first words. */
+const ownLabel = (o: { name: string; text: string }) => o.name || (o.text.length > 40 ? `${o.text.slice(0, 40).trim()}…` : o.text)
+
+/** Saves the template in the fields (a new one is added), or with `remove` takes it away. */
+function saveTemplate(v: AppView, remove = false): void {
+  const list = [...v.settings.callTemplates]
+  const at = ownAt(tx.template)
+  if (remove) {
+    if (at !== undefined) list.splice(at, 1)
+    tx.template = 'general'
+  } else {
+    const kept = { name: tx.ownName.trim(), text: tx.own.trim() }
+    if (!kept.text) return toast(t('sum.templateEmpty'), undefined, true)
+    if (at === undefined) {
+      if (list.length >= SUMMARY_TEMPLATES_MAX) return toast(t('sum.templatesFull', { n: SUMMARY_TEMPLATES_MAX }), undefined, true)
+      list.push(kept)
+      tx.template = `t${list.length - 1}`
+    } else list[at] = kept
+  }
+  post({ type: 'saveSettings', patch: { callTemplates: list } })
+  toast(remove ? t('sum.templateRemoved') : t('sum.templateSaved'))
+}
+
+function summaryControls(v: AppView, tr: Transcript): HTMLElement {
   const make = btn(tr.summary ? t('sum.again') : t('sum.make'), () => {
     if (tr.summary?.edited && !tx.replacing) (tx.replacing = true), redrawPage()
     else startSummary(tr)
@@ -1055,24 +1179,43 @@ function summaryControls(tr: Transcript): HTMLElement {
   const ask = tx.replacing
     ? el('span', { class: 'confirm' }, el('small', {}, t('sum.replaceAsk')), btn(t('sum.replace'), () => startSummary(tr), 'danger'), linkBtn(t('common.cancel'), () => ((tx.replacing = false), redrawPage())))
     : make
-  const own = el('textarea', { class: 'field report about', rows: 3, maxlength: SUMMARY_OWN_MAX, placeholder: t('sum.ownPlaceholder'), 'aria-label': t('sum.tOwn') })
-  own.value = tx.own
-  own.addEventListener('input', () => (tx.own = own.value))
+  const options: [string, string][] = [...TEMPLATES(), ...v.settings.callTemplates.map((o, i): [string, string] => [`t${i}`, ownLabel(o)]), ['new', t('sum.newTemplate')]]
+  const writing = tx.template === 'new' || ownAt(tx.template) !== undefined
+  const name = el('input', { type: 'text', class: 'field', 'data-live': `tname-${tx.template}`, maxlength: TEMPLATE_NAME_MAX, placeholder: t('sum.templateName'), 'aria-label': t('sum.templateName') })
+  name.value = tx.ownName
+  name.addEventListener('input', () => (tx.ownName = name.value))
+  const text = el('textarea', { class: 'field report about', 'data-live': `ttext-${tx.template}`, rows: 4, maxlength: SUMMARY_OWN_MAX, placeholder: t('sum.ownPlaceholder'), 'aria-label': t('sum.tOwn') })
+  text.value = tx.own
+  text.addEventListener('input', () => (tx.own = text.value))
+  const editor = writing
+    ? el(
+        'div',
+        { class: 'sumown' },
+        name,
+        text,
+        el(
+          'div',
+          { class: 'cardbtns' },
+          btn(t('sum.templateSave'), () => saveTemplate(v)),
+          tx.template === 'new' ? null : linkBtn(t('sum.templateDelete'), () => saveTemplate(v, true)),
+        ),
+      )
+    : null
   return el(
     'div',
     { class: 'sumctl' },
     el(
       'div',
       { class: 'sumrow' },
-      select(tx.template, TEMPLATES(), template => {
-        tx.template = template
+      select(tx.template, options, pick => {
+        pickTemplate(pick, v)
         redrawPage()
       }),
       el('label', { class: 'summine' }, toggleKnob(tx.mine, on => (tx.mine = on), t('sum.mine')), t('sum.mine')),
       el('span', { class: 'gap' }),
-      ask,
+      tx.template === 'new' ? null : ask,
     ),
-    tx.template === 'own' ? own : null,
+    editor,
   )
 }
 
@@ -1269,8 +1412,8 @@ window.addEventListener('keydown', event => {
 window.setInterval(() => {
   const v = hooks.view()
   if (!v || !running(v) || !hooks.shown()) return
-  if (!tx.openId) void loadRows()
-  else if (tx.row && tx.row.status !== 'done') void loadTranscript()
+  if (!tx.openId || hooks.beside) void loadRows()
+  if (tx.openId && tx.row && tx.row.status !== 'done') void loadTranscript()
 }, 1500)
 
 /** The page opened: the library is asked for at once. */

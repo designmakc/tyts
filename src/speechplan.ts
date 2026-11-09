@@ -45,7 +45,8 @@ export type CatalogModel = {
 }
 
 export const MODELS = catalog.models as CatalogModel[]
-const SPEAKERS = catalog.speakers as Record<'cpu' | 'cuda', { rtf: number }>
+/** mac: FluidAudio on a Mac's Neural Engine (2026-11-09), measured there as speakers|ane. */
+const SPEAKERS = catalog.speakers as Record<'cpu' | 'cuda' | 'mac', { rtf: number }>
 
 /** Seconds for a 7 s phrase; minutes of words for an hour of sound. */
 export const BUDGET: Record<Feature, Record<Prefer, number>> = {
@@ -208,6 +209,8 @@ function speed(m: CatalogModel, device: Device, compute: string, field: 'phrase'
 
 /** Seconds per second of sound to tell the speakers apart on a device: measured here, else the catalog's guess scaled to this computer. */
 function speakersRtfOn(input: PlanInput, device: 'cpu' | 'cuda'): number {
+  // A Mac's speakers run on its Neural Engine, whatever the plan's device: a guess as measured on an M1, unscaled.
+  if (input.metal) return measuredValue(input.bench, 'speakers|ane', 'rtf') ?? SPEAKERS.mac.rtf
   const measured = measuredValue(input.bench, `speakers|${device}`, 'rtf')
   return measured ?? SPEAKERS[device].rtf * (device === 'cpu' ? cpuFactor(input.profile) : cudaFactor(input.profile))
 }
@@ -257,7 +260,8 @@ const rankOf = (model: string) => MODELS.find(m => m.name === model)?.rank ?? 0
 
 function decide(feature: Feature, device: Device, input: PlanInput): FeaturePlan {
   const budget = BUDGET[feature][input.prefer]
-  const choices = MODELS.filter(m => m.features.includes(feature))
+  // Parakeet transcribes on a Mac only (2026-11-09): elsewhere calls stay Whisper's, as they were.
+  const choices = MODELS.filter(m => m.features.includes(feature) && (feature !== 'transcripts' || m.backend !== 'parakeet' || input.metal))
     .map(m => choice(m, feature, device, input))
     .sort((a, b) => Number(!!a.why) - Number(!!b.why) || rankOf(b.model) - rankOf(a.model) || a.estimate - b.estimate)
   const usable = choices.filter(c => !c.why)
@@ -285,7 +289,14 @@ function decide(feature: Feature, device: Device, input: PlanInput): FeaturePlan
 }
 
 function forDevice(device: Device, input: PlanInput): Record<Feature, FeaturePlan> {
-  const transcripts = decide('transcripts', device, input)
+  let transcripts = decide('transcripts', device, input)
+  if (device === 'cpu' && transcripts.chosen.device === 'metal' && !transcripts.pinned) {
+    // A Mac's calls go to Parakeet on the processor where it suits every language (2026-11-09: a call of two
+    // hours did not finish with turbo on an M1's graphics; Parakeet read 10 minutes of it in 39 s). Even a
+    // turbo kept from before gives way: it ranks the same, so the kept-model rule alone would hold it.
+    const parakeet = transcripts.choices.find(c => c.model.startsWith('parakeet') && !c.why && c.fits)
+    if (parakeet) transcripts = { ...transcripts, chosen: parakeet, better: undefined }
+  }
   let dictation = decide('dictation', device, input)
   if (device === 'cpu' && dictation.chosen.device === 'metal' && !dictation.pinned) {
     // Metal dictates only where it beats Parakeet on the processor (a guess until the speed test).
@@ -376,4 +387,3 @@ export function estimateText(feature: Feature, c: Choice): string {
   return feature === 'dictation' ? t('speech.perPhrase', { time: seconds(c.estimate) }) : t('speech.perHour', { time: minutes(c.estimate) })
 }
 
-export const BASIS_TEXT: Record<Basis, string> = { measured: 'measured here', scaled: 'from this computer’s test', guess: 'first guess' }

@@ -1,13 +1,13 @@
 import { describe, expect, test } from 'vitest'
 
-import { menuGroups, menuKeyOf } from './menu'
+import { barTick, clipGroups, isBarAction, menuGroups, menuKeyOf, rewriteGroups, type BarClock } from './menu'
 import { placeMenu } from './placement'
 
 describe('the items', () => {
-  test('nine in four groups with the speech engine, the voice\'s group gone without it', () => {
+  test('ten in five groups with the speech engine, the voice\'s group gone without it', () => {
     for (const lang of ['en', 'uk', 'ru'] as const) {
-      expect(menuGroups(lang, true).map(g => g.length)).toEqual([4, 2, 2, 1])
-      expect(menuGroups(lang, false).map(g => g.length)).toEqual([4, 2, 1])
+      expect(menuGroups(lang, true).map(g => g.length)).toEqual([4, 3, 2, 1, 1])
+      expect(menuGroups(lang, false).map(g => g.length)).toEqual([4, 3, 1, 1])
     }
   })
 
@@ -19,11 +19,43 @@ describe('the items', () => {
     }
   })
 
+  test('Rewrite… has a list of its own, each letter its own key there too', () => {
+    for (const lang of ['en', 'uk', 'ru'] as const) {
+      const items = rewriteGroups(lang).flat()
+      expect(items.map(i => i.id)).toEqual(['shorten', 'polite', 'formal', 'natural', 'explain'])
+      expect(new Set(items.map(i => i.code)).size).toBe(items.length)
+      expect(new Set(items.map(i => i.letter)).size).toBe(items.length)
+    }
+  })
+
   test('a Russian or Ukrainian letter is the key that types it in ЙЦУКЕН', () => {
     const code = (lang: 'uk' | 'ru', id: string) => menuGroups(lang, true).flat().find(i => i.id === id)?.code
     expect(code('ru', 'translate')).toBe('KeyG')
     expect(code('ru', 'screen')).toBe('Quote')
     expect(code('uk', 'fix')).toBe('KeyD')
+    expect(code('ru', 'awake')).toBe('KeyY')
+  })
+})
+
+describe('the clipboard history', () => {
+  test('its item only when it is on, its own key in each language', () => {
+    for (const lang of ['en', 'uk', 'ru'] as const) {
+      const items = menuGroups(lang, true, true).flat()
+      expect(items.some(i => i.id === 'clipboard')).toBe(true)
+      expect(menuGroups(lang, true, false).flat().some(i => i.id === 'clipboard')).toBe(false)
+      expect(new Set(items.map(i => i.code)).size).toBe(items.length)
+    }
+  })
+
+  test('its list: the pinned first, digits for the first nine', () => {
+    const clips = Array.from({ length: 11 }, (_, i) => ({ text: `c${i}`, pinned: i === 5 }))
+    const groups = clipGroups(clips, text => text)
+    expect(groups.map(g => g.length)).toEqual([1, 10])
+    expect(groups[0]?.[0]).toMatchObject({ label: 'c5', letter: '1', code: 'Digit1' })
+    const items = groups.flat()
+    expect(items[8]?.code).toBe('Digit9')
+    expect(items[9]?.letter).toBe('')
+    expect(menuKeyOf('Digit2', items, 0)).toEqual({ pick: 1 })
   })
 })
 
@@ -31,12 +63,12 @@ describe('a key in the open menu', () => {
   const items = menuGroups('en', true).flat()
 
   test('a letter picks its item, wherever the light is', () => {
-    expect(menuKeyOf('KeyF', items, 0)).toEqual({ pick: 8 })
+    expect(menuKeyOf('KeyF', items, 0)).toEqual({ pick: 9 })
   })
 
   test('the arrows go round, Enter picks what is lit, Esc closes', () => {
-    expect(menuKeyOf('ArrowUp', items, 0)).toEqual({ lit: 8 })
-    expect(menuKeyOf('ArrowDown', items, 8)).toEqual({ lit: 0 })
+    expect(menuKeyOf('ArrowUp', items, 0)).toEqual({ lit: items.length - 1 })
+    expect(menuKeyOf('ArrowDown', items, items.length - 1)).toEqual({ lit: 0 })
     expect(menuKeyOf('Enter', items, 3)).toEqual({ pick: 3 })
     expect(menuKeyOf('Escape', items, 3)).toBe('close')
   })
@@ -62,5 +94,27 @@ describe('where it opens', () => {
     expect(placeMenu({ x: 990, top: 100, bottom: 120 }, size, area).x).toBe(700)
     expect(placeMenu({ x: 5, top: 100, bottom: 120 }, size, area).x).toBe(0)
     expect(placeMenu({ x: -1900, top: 100, bottom: 120 }, size, { ...area, x: -1920 }).x).toBe(-1912)
+  })
+})
+
+describe('the bar by a selection', () => {
+  test('takes its buttons and its list from its page, nothing else', () => {
+    for (const id of ['translate', 'listen', 'check', 'copy', 'shorten', 'explain', 'notHere', 'settings']) expect(isBarAction(id), id).toBe(true)
+    for (const id of ['fix', 'dictate', 'awake', 'clipboard', 'screen', 'inPlace', 'rewrite', '']) expect(isBarAction(id), id).toBe(false)
+  })
+
+  test('the dot opens under the pointer, folds back 0.6 s after it leaves, and goes 4 s later', () => {
+    let c: BarClock | 'gone' = { phase: 'dot', away: 0 }
+    c = barTick(c as BarClock, false, 3000)
+    expect(c).toEqual({ phase: 'dot', away: 0 })
+    c = barTick(c as BarClock, true, 3500)
+    expect(c).toEqual({ phase: 'pill', away: undefined })
+    c = barTick({ phase: 'list', away: undefined }, false, 10_000)
+    expect(c).toEqual({ phase: 'list', away: 10_000 })
+    expect(barTick(c as BarClock, false, 10_500)).toEqual({ phase: 'list', away: 10_000 })
+    c = barTick(c as BarClock, false, 10_600)
+    expect(c).toEqual({ phase: 'dot', away: 10_600 })
+    expect(barTick(c as BarClock, false, 14_500)).toEqual({ phase: 'dot', away: 10_600 })
+    expect(barTick(c as BarClock, false, 14_600)).toBe('gone')
   })
 })

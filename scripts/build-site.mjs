@@ -19,7 +19,7 @@ const VERSIONS = [
 const LOGO_WORD = '>Tyts<span class="dot"'
 const CI = !!process.env.GITHUB_ACTIONS
 
-// The language links as seen from one version: relative, so the page works from a file and under /kryakl/ alike.
+// The language links as seen from one version: relative, so the page works from a file and under /tyts/ alike.
 function langLinks(from, label) {
   const up = from.dir ? '../' : ''
   const links = VERSIONS.map(v => {

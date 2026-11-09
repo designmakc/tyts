@@ -77,6 +77,7 @@ function setup(over: Partial<DictationOptions> = {}) {
     toEnglish,
     edit,
     editing: () => true,
+    corrections: () => [],
     check,
     languageOf: () => 'ru',
     log: { add: (entry: unknown) => void logged.push(entry) },
@@ -105,6 +106,14 @@ describe('a phrase heard, with text editing', () => {
     expect(sent).toContainEqual({ type: 'dictationEditing' })
     expect(typed).toEqual(['edited привет мир '])
     expect(logged).toEqual([{ mode: 'type', text: 'edited привет мир', heard: 'привет мир' }])
+  })
+
+  it('puts a learned correction right before the edit, and keeps what was said', async () => {
+    const { hear, typed, logged, edit } = setup({ editing: () => false, corrections: () => [{ heard: 'тиц', right: 'Tyts' }] })
+    await hear('type', 'открой тиц')
+    expect(edit).not.toHaveBeenCalled()
+    expect(typed).toEqual(['открой Tyts '])
+    expect(logged).toEqual([{ mode: 'type', text: 'открой Tyts', heard: 'открой тиц' }])
   })
 
   it('edits first and translates what comes of it', async () => {
@@ -165,6 +174,7 @@ describe('the panel while a phrase is dictated', () => {
       speech: { installed: true, ready: true, call: async () => ({ ok: true, data: { id: 'session' } }) },
       paste: async (text: string) => void typed.push(text),
       editing: () => false,
+      corrections: () => [],
       languageOf: () => 'ru',
       expected: () => ['ru', 'en'],
       warm: vi.fn(),

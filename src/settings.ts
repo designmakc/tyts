@@ -2,7 +2,9 @@
 // (%APPDATA%\Kryakl). The learned language is English: the natural voice and
 // the word dictionaries are English ones.
 
+import { correctionList, type Correction } from './corrections'
 import { COPY_TWICE } from './hotkey'
+import { AWAKE_HOURS, type AwakeHours } from './awake'
 import { isUiLanguage, type UiLanguage } from './i18n'
 import { findLanguage, LANGUAGES } from './languages'
 import type { WordHintMode } from './protocol'
@@ -17,7 +19,7 @@ const CALL_AUTO: readonly CallAuto[] = ['off', 'ask', 'record']
 /** A program by its .exe name (lower case): the parts of the keyboard helper left out there, and the layout it starts in ('' for none). */
 export type AppRule = { exe: string; off: AppPart[]; layout: string }
 
-export const APP_PARTS: readonly AppPart[] = ['fix', 'switch', 'badge', 'keys']
+export const APP_PARTS: readonly AppPart[] = ['fix', 'switch', 'badge', 'keys', 'bar']
 
 export const TARGET = 'English'
 
@@ -38,13 +40,14 @@ export type TalkLevel = 'A2' | 'B1' | 'B2'
 /** The summary's templates (summary.ts) and the longest instruction of the person's own. */
 export const SUMMARY_TEMPLATES: readonly SummaryTemplate[] = ['general', 'standup', 'interview', 'lecture', 'own']
 export const SUMMARY_OWN_MAX = 500
+/** The person's own summary templates, at most, and the longest name of one. */
+export const SUMMARY_TEMPLATES_MAX = 20
+export const TEMPLATE_NAME_MAX = 60
+/** A recording's notes, at most (engine/app.py NOTES_MAX). */
+export const NOTES_MAX = 20_000
+/** A summary template of the person's own: its name and its instruction to the model. */
+export type OwnTemplate = { name: string; text: string }
 export const TALK_LEVELS: readonly TalkLevel[] = ['A2', 'B1', 'B2']
-/** Each level's name and what the duck does there, for the Talk page; the model's own rules are duck.ts LEVELS. */
-export const TALK_LEVEL_NAMES: Readonly<Record<TalkLevel, { name: string; note: string }>> = {
-  A2: { name: 'Elementary', note: 'short sentences of everyday words, simple tenses, no idioms' },
-  B1: { name: 'Intermediate', note: 'everyday words and common phrasal verbs; a rarer word explained' },
-  B2: { name: 'Upper-intermediate', note: 'natural speech: longer sentences, phrasal verbs, an idiom now and then' },
-}
 /** What the learner tells the duck about themselves, at most. */
 export const TALK_ABOUT_MAX = 500
 /** Text editing: how a dictated phrase is put right by the local model (dictedit.ts); `own` is the person's instruction. */
@@ -87,6 +90,11 @@ export type Settings = {
   cardHeight: number
   /** One key for every action: it opens Kryakl's menu by the text cursor, a letter picks (menu.ts); empty for none. */
   menuKey: string
+  /** The clipboard history (cliphistory.ts): the texts copied lately kept to paste again; off unless the person turns it on. Its key opens the list by the text cursor. */
+  clipboardHistory: boolean
+  /** A small bar of actions by a text selected with the mouse in another program (barwindow.ts); off by default. */
+  selectionBar: boolean
+  clipboardKey: string
   /**
    * Keys (hotkey.ts; empty for none): listen to the selection (Kryakl copies it), or to a piece of the screen;
    * Ctrl+C twice ("Control+C*2") may be the key of one action on the selection: select, translate, inPlace or check.
@@ -139,6 +147,8 @@ export type Settings = {
   trayLayout: boolean
   /** Nothing of the keyboard helper while a program fills the screen (a game, a presentation, a video). */
   quietFullScreen: boolean
+  /** The panel at the top of the screen (edgepanel.ts): the pointer resting at the top middle shows it. Off by default. */
+  edgePanel: boolean
   /** A key that pauses Kryakl and resumes it; a key that opens its window. Empty for none. */
   pauseKey: string
   windowKey: string
@@ -162,6 +172,8 @@ export type Settings = {
   shotKey: string
   /** While a call records, a screenshot every 4 s when the screen changed, beside the sound. Off by default. */
   callShots: boolean
+  /** While a call records, a rough draft of its words on the panel (engine live.py, the dictation model on the processor). Off by default. */
+  callLive: boolean
   /** The reminder that the others' consent is needed was shown once, before the first call recording. */
   callConsentSeen: boolean
   /** A known call program holding the microphone 10 s (callwatch.ts): nothing, a question, or a recording at once. Off by default. */
@@ -174,6 +186,8 @@ export type Settings = {
   callTemplate: SummaryTemplate
   /** The person's own instruction for the template `own` (SUMMARY_OWN_MAX characters at most). */
   callOwn: string
+  /** The person's own summary templates, picked in the calls window's Summary. */
+  callTemplates: OwnTemplate[]
   /** Summaries are written in the person's language instead of the meeting's. */
   callSummaryMine: boolean
   /** Experimental: names for a call's speakers read off its screenshots, offered as hints, never applied by themselves. Off by default. */
@@ -209,6 +223,8 @@ export type Settings = {
    * ("Kryakl (крякл, кракл)"); vocabulary.ts reads them.
    */
   vocabulary: string[]
+  /** What dictation learned from the person's fixes of a phrase (corrections.ts): put right before a phrase is typed. */
+  corrections: Correction[]
   /**
    * Which translator every card and key uses: Fast (Firefox's models), or the
    * local model (`model`, llmtranslator.ts), downloaded when picked. A card
@@ -239,6 +255,10 @@ export type Settings = {
   introSeen: boolean
   /** Kryakl paused: all its keys and reactions off (Ctrl+C twice, the keyboard helper, dictation) until turned back on. */
   paused: boolean
+  /** Keep the computer awake (awake.ts): for how long when turned on from the tray or the menu, in hours, 0 until turned off; 1 by default. */
+  awakeHours: AwakeHours
+  /** While kept awake, the screen stays on too; off by default (the screen may turn off, the computer does not sleep). */
+  awakeScreen: boolean
   /** The settings file's keys are of this kind (`KEYS_VERSION`); an older file held Ctrl+C twice as a switch, `doubleCopy`. */
   keysVersion: number
   /**
@@ -263,6 +283,9 @@ export const DEFAULTS: Settings = {
   cardWidth: 440,
   cardHeight: 0,
   menuKey: '',
+  clipboardHistory: false,
+  selectionBar: false,
+  clipboardKey: '',
   selectKey: '',
   snipKey: 'Control+Alt+S',
   translateKey: '',
@@ -291,6 +314,7 @@ export const DEFAULTS: Settings = {
   layoutBadge: false,
   trayLayout: false,
   quietFullScreen: true,
+  edgePanel: false,
   pauseKey: '',
   windowKey: '',
   dictateKey: 'Control+Alt+D',
@@ -302,12 +326,14 @@ export const DEFAULTS: Settings = {
   meetingKey: '',
   shotKey: '',
   callShots: false,
+  callLive: false,
   callConsentSeen: false,
   callAuto: 'off',
   callPanelOffset: { dx: 0, dy: 0 },
   callSummaryAuto: true,
   callTemplate: 'general',
   callOwn: '',
+  callTemplates: [],
   callSummaryMine: false,
   callNames: false,
   talkAloud: true,
@@ -322,6 +348,7 @@ export const DEFAULTS: Settings = {
   dictationPanel: true,
   dictateHold: false,
   vocabulary: [],
+  corrections: [],
   translationLevel: 'fast',
   model: 'accurate',
   speechPrefer: 'accuracy',
@@ -336,6 +363,8 @@ export const DEFAULTS: Settings = {
   shareOfferSeen: [],
   introSeen: false,
   paused: false,
+  awakeHours: 1,
+  awakeScreen: false,
   keysVersion: 2,
   setupDone: true,
 }
@@ -475,6 +504,9 @@ export function normalize(raw: unknown, native = DEFAULTS.native): Settings {
     cardWidth: within(r.cardWidth, CARD_WIDTH, DEFAULTS.cardWidth),
     cardHeight: r.cardHeight === 0 ? 0 : within(r.cardHeight, CARD_HEIGHT, DEFAULTS.cardHeight),
     menuKey: key(r.menuKey, DEFAULTS.menuKey),
+    clipboardHistory: flag(r.clipboardHistory, DEFAULTS.clipboardHistory),
+    selectionBar: flag(r.selectionBar, DEFAULTS.selectionBar),
+    clipboardKey: key(r.clipboardKey, DEFAULTS.clipboardKey),
     selectKey: movedSelectKey(raw, r, key(r.selectKey, DEFAULTS.selectKey)),
     snipKey: key(r.snipKey, DEFAULTS.snipKey),
     translateKey: key(r.translateKey, DEFAULTS.translateKey),
@@ -504,6 +536,7 @@ export function normalize(raw: unknown, native = DEFAULTS.native): Settings {
     layoutBadge: flag(r.layoutBadge, DEFAULTS.layoutBadge),
     trayLayout: flag(r.trayLayout, DEFAULTS.trayLayout),
     quietFullScreen: flag(r.quietFullScreen, DEFAULTS.quietFullScreen),
+    edgePanel: flag(r.edgePanel, DEFAULTS.edgePanel),
     pauseKey: key(r.pauseKey, DEFAULTS.pauseKey),
     windowKey: key(r.windowKey, DEFAULTS.windowKey),
     dictateKey: key(r.dictateKey, DEFAULTS.dictateKey),
@@ -515,12 +548,14 @@ export function normalize(raw: unknown, native = DEFAULTS.native): Settings {
     meetingKey: key(r.meetingKey, DEFAULTS.meetingKey),
     shotKey: key(r.shotKey, DEFAULTS.shotKey),
     callShots: flag(r.callShots, DEFAULTS.callShots),
+    callLive: flag(r.callLive, DEFAULTS.callLive),
     callConsentSeen: flag(r.callConsentSeen, DEFAULTS.callConsentSeen),
     callAuto: CALL_AUTO.includes(r.callAuto as CallAuto) ? (r.callAuto as CallAuto) : DEFAULTS.callAuto,
     callPanelOffset: badgeOffset(r.callPanelOffset),
     callSummaryAuto: flag(r.callSummaryAuto, DEFAULTS.callSummaryAuto),
     callTemplate: SUMMARY_TEMPLATES.includes(r.callTemplate as SummaryTemplate) ? (r.callTemplate as SummaryTemplate) : DEFAULTS.callTemplate,
     callOwn: typeof r.callOwn === 'string' ? r.callOwn.slice(0, SUMMARY_OWN_MAX) : DEFAULTS.callOwn,
+    callTemplates: ownTemplates(r.callTemplates, r.callOwn),
     callSummaryMine: flag(r.callSummaryMine, DEFAULTS.callSummaryMine),
     callNames: flag(r.callNames, DEFAULTS.callNames),
     talkAloud: flag(r.talkAloud, DEFAULTS.talkAloud),
@@ -535,6 +570,7 @@ export function normalize(raw: unknown, native = DEFAULTS.native): Settings {
     dictationPanel: flag(r.dictationPanel, DEFAULTS.dictationPanel),
     dictateHold: flag(r.dictateHold, DEFAULTS.dictateHold),
     vocabulary: vocabularyLines(r.vocabulary),
+    corrections: correctionList(r.corrections),
     ...levelAndModel(r.translationLevel, r.model),
     speechPrefer: r.speechPrefer === 'speed' ? 'speed' : 'accuracy',
     dictationModel: key(r.dictationModel, DEFAULTS.dictationModel),
@@ -549,6 +585,17 @@ export function normalize(raw: unknown, native = DEFAULTS.native): Settings {
     shareOfferSeen: strings(r.shareOfferSeen).filter((m): m is LlmModel => m === 'accurate' || m === 'most'),
     introSeen: flag(r.introSeen, DEFAULTS.introSeen),
     paused: flag(r.paused, DEFAULTS.paused),
+    awakeHours: AWAKE_HOURS.includes(r.awakeHours as AwakeHours) ? (r.awakeHours as AwakeHours) : DEFAULTS.awakeHours,
+    awakeScreen: flag(r.awakeScreen, DEFAULTS.awakeScreen),
     keysVersion: KEYS_VERSION,
   }
+}
+
+/** The person's templates as kept: each a name and a text, cut to size; none yet, the one instruction of before (`callOwn`) becomes the first. */
+export function ownTemplates(raw: unknown, own: unknown): OwnTemplate[] {
+  if (!Array.isArray(raw)) return typeof own === 'string' && own.trim() ? [{ name: '', text: own.slice(0, SUMMARY_OWN_MAX) }] : []
+  return raw
+    .filter((x): x is OwnTemplate => !!x && typeof x === 'object' && typeof x.name === 'string' && typeof x.text === 'string' && !!x.text.trim())
+    .slice(0, SUMMARY_TEMPLATES_MAX)
+    .map(x => ({ name: x.name.trim().slice(0, TEMPLATE_NAME_MAX), text: x.text.slice(0, SUMMARY_OWN_MAX) }))
 }

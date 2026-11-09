@@ -363,6 +363,15 @@ svg.glyph {
   line-height: 1.55;
 }
 
+/* Rewrite…'s answer under the selection: plain text, to read or copy. */
+.explain-answer {
+  color: var(--strong);
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
 .empty .download {
   padding: 0;
 }

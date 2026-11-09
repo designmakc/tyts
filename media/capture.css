@@ -53,3 +53,15 @@ body { font: 400 var(--t-body) / 1.45 var(--font); color: var(--text); user-sele
 .note.warn::before { content: ''; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: var(--amber); }
 .note.error { color: var(--text); }
 .note .link { margin-left: 6px; padding: 0; border: 0; background: none; color: var(--accent-text); text-decoration: underline; text-decoration-color: var(--link-line); font: inherit; cursor: pointer; -webkit-app-region: no-drag; }
+.note .link.done { text-decoration: none; cursor: default; }
+
+/* The draft of the words (callLive), open: the window is taller and the panel grows upward. */
+.pb.on { color: var(--strong); background: var(--raised); }
+.draft { display: flex; flex-direction: column; gap: 4px; -webkit-app-region: no-drag; }
+.draft .mark { font-size: var(--t-small); color: var(--muted); }
+.draft .rows { height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 4px; user-select: text; cursor: auto; }
+.draft .row { font-size: var(--t-small); line-height: 1.45; color: var(--text); }
+.draft .who { font-weight: 600; color: var(--strong); margin-right: 6px; }
+.draft .row.me .who { color: var(--muted); }
+.draft .at { font: 500 var(--t-small) / 1 var(--mono); color: var(--muted); margin-right: 6px; font-variant-numeric: tabular-nums; }
+.draft .empty { font-size: var(--t-small); color: var(--muted); }

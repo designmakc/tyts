@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { badgeOffset, flightPoint, placeBadge, placeByTray, placeNear, resize } from './placement'
+import { badgeOffset, flightPoint, placeBadge, placeBar, placeByTray, placeDot, placeNear, resize } from './placement'
 
 const area = { x: 0, y: 0, width: 1920, height: 1040 }
 const size = { width: 440, height: 200 }
@@ -82,5 +82,29 @@ describe('placeBadge', () => {
   })
   test('kept inside a smaller screen', () => {
     expect(placeBadge({ dx: 5000, dy: 300 }, badge, area)).toEqual({ x: 1560, y: 976, width: 360, height: 64 })
+  })
+})
+
+describe('the bar by a selection', () => {
+  test('the dot sits under the line where the selection starts, its left edge at the text', () => {
+    expect(placeDot({ x: 300, top: 100, bottom: 116 }, area)).toEqual({ x: 292, y: 118, width: 36, height: 36 })
+  })
+
+  test('over the line at the bottom of the screen, and inside the work area at its edges', () => {
+    expect(placeDot({ x: 300, top: 1010, bottom: 1026 }, area)).toEqual({ x: 292, y: 972, width: 36, height: 36 })
+    expect(placeDot({ x: 2, top: 0, bottom: 10 }, area).x).toBe(0)
+    expect(placeDot({ x: 1915, top: 0, bottom: 10 }, area).x).toBe(1884)
+  })
+
+  test('the pill grows to the right of the dot, the dot staying, moved left only by the screen\'s edge', () => {
+    const box = { x: 292, y: 118, width: 36, height: 36 }
+    expect(placeBar(box, { width: 320, height: 36 }, area)).toEqual({ window: { x: 292, y: 118, width: 320, height: 36 }, listAbove: false })
+    expect(placeBar({ ...box, x: 1800 }, { width: 320, height: 36 }, area).window.x).toBe(1600)
+  })
+
+  test('"…"\'s list goes under the pill, over it where the screen ends, the pill in place', () => {
+    const box = { x: 292, y: 118, width: 36, height: 36 }
+    expect(placeBar(box, { width: 320, height: 300 }, area)).toEqual({ window: { x: 292, y: 118, width: 320, height: 300 }, listAbove: false })
+    expect(placeBar({ ...box, y: 900 }, { width: 320, height: 300 }, area)).toEqual({ window: { x: 292, y: 636, width: 320, height: 300 }, listAbove: true })
   })
 })

@@ -33,29 +33,74 @@ RESULT = {
 
 def test_metal_transcribes_as_faster_whisper_does(monkeypatch, tmp_path):
     calls = fake_mlx(monkeypatch, tmp_path, RESULT)
+    # Speech from 2 s to 5 s, the rest silence: only the speech is read, its times put back on the recording's.
+    monkeypatch.setattr(asr, "speech_spans", lambda samples: [(2 * RATE, 5 * RATE)])
     t = asr.Transcriber()
     t.load("large-v3-turbo", "cpu", "mlx")
     assert (t.device, t.compute, t.loaded) == ("metal", "mlx", True)
     seen = []
-    segments, language = t.transcribe(np.zeros(RATE * 3, np.float32), None, "Krya, Kryakl", seen.append)
+    segments, language = t.transcribe(np.zeros(RATE * 8, np.float32), None, "Krya, Kryakl", seen.append)
     assert language == "en"
     assert segments == [
-        {"start": 0.0, "end": 1.5, "text": "Hello there.", "words": [{"start": 0.0, "end": 0.6, "word": " Hello"}, {"start": 0.6, "end": 1.5, "word": " there."}]},
-        {"start": 1.5, "end": 3.0, "text": "Krya works.", "words": [{"start": 1.5, "end": 2.0, "word": " Krya"}, {"start": 2.0, "end": 3.0, "word": " works."}]},
+        {"start": 2.0, "end": 3.5, "text": "Hello there.", "words": [{"start": 2.0, "end": 2.6, "word": " Hello"}, {"start": 2.6, "end": 3.5, "word": " there."}]},
+        {"start": 3.5, "end": 5.0, "text": "Krya works.", "words": [{"start": 3.5, "end": 4.0, "word": " Krya"}, {"start": 4.0, "end": 5.0, "word": " works."}]},
     ]
-    assert seen == [0.5, 1.0]
+    assert seen == [1.0]
     kw = calls[0]
     assert kw["word_timestamps"] and kw["language"] is None and kw["path_or_hf_repo"] == str(tmp_path)
     assert kw["initial_prompt"] == "Krya, Kryakl"
 
 
-def test_the_prompt_keeps_its_last_400_characters(monkeypatch, tmp_path):
+def test_a_long_call_goes_batch_by_batch(monkeypatch, tmp_path):
     calls = fake_mlx(monkeypatch, tmp_path, RESULT)
+    # Two batches of speech: the bar moves after each, the language found first holds, the text before is the prompt.
+    monkeypatch.setattr(asr, "speech_spans", lambda samples: [(0, 30 * RATE), (40 * RATE, 70 * RATE)])
+    monkeypatch.setitem(asr.BATCH_SPEECH, "whisper", 30)
     t = asr.Transcriber()
     t.load("large-v3-turbo", "metal")
-    t.transcribe(np.zeros(RATE, np.float32), "ru", "слово " * 200)
-    prompt = calls[0]["initial_prompt"]
-    assert len(prompt) == 400 and prompt.endswith("слово")
+    seen = []
+    segments, language = t.transcribe(np.zeros(RATE * 80, np.float32), None, "", seen.append)
+    assert seen == [0.5, 1.0] and language == "en" and len(calls) == 2
+    assert calls[1]["language"] == "en" and calls[1]["initial_prompt"] == "Hello there. Krya works."
+    assert [s["start"] for s in segments] == [0.0, 1.5, 40.0, 41.5]
+
+
+def test_silence_alone_gives_no_words(monkeypatch, tmp_path):
+    calls = fake_mlx(monkeypatch, tmp_path, RESULT)
+    monkeypatch.setattr(asr, "speech_spans", lambda samples: [])
+    t = asr.Transcriber()
+    t.load("large-v3-turbo", "metal")
+    assert t.transcribe(np.zeros(RATE * 8, np.float32), "ru") == ([], "ru") and calls == []
+
+
+def test_batches_join_spans_and_times_come_back():
+    spans = [(0, 10 * RATE), (12 * RATE, 22 * RATE), (30 * RATE, 75 * RATE)]
+    assert asr.batches(spans, 20) == [spans[:2], spans[2:]]
+    joined = asr.Joined(np.zeros(RATE * 80, np.float32), spans[:2])
+    assert len(joined.sound) == 20 * RATE
+    assert (joined.at(0), joined.at(9.5), joined.at(10), joined.at(15)) == (0.0, 9.5, 12.0, 17.0)
+
+
+def test_parakeet_transcribes_a_call_with_word_times(monkeypatch):
+    class Result:
+        tokens = [" При", "вет", ",", " мир", "."]
+        timestamps = [0.0, 0.2, 0.4, 0.6, 0.9]
+
+    class Model:
+        def with_timestamps(self):
+            return self
+
+        def recognize(self, sound):
+            return Result()
+
+    monkeypatch.setattr(asr, "speech_spans", lambda samples: [(5 * RATE, 7 * RATE)])
+    p = asr.Parakeet()
+    p._model = Model()
+    seen = []
+    segments, language = p.transcribe(np.zeros(RATE * 10, np.float32), None, "", seen.append)
+    assert language == "ru" and seen == [1.0]
+    assert segments == [{"start": 5.0, "end": 6.8, "text": "Привет, мир.", "words": [
+        {"start": 5.0, "end": 5.6, "word": " Привет,"}, {"start": 5.6, "end": 6.8, "word": " мир."}]}]
 
 
 def test_metal_dictates_in_the_persons_own_language_when_it_cannot_tell(monkeypatch, tmp_path):

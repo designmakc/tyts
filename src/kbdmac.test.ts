@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { modOf } from './hotkey'
-import { MAC_TO_VK, macKeyboardLayout, macLang, macTable, VK_TO_MAC, type MacLayout } from './kbdmac'
+import { MAC_TO_VK, macCaret, macKeyboardLayout, macLang, macTable, VK_TO_MAC, type MacLayout } from './kbdmac'
 import { charOf, convertText } from './layoutfix'
 
 // Mac key codes of the letters g h b d t n, as Carbon's kVK_ANSI_* name them.
@@ -56,5 +56,20 @@ describe('Mac keys as Windows keys', () => {
     expect(macLang(layout('a', 'uk-UA', {}))).toBe('uk')
     expect(macLang(layout('a', 'zh_Hans', {}))).toBe('zh')
     expect(macKeyboardLayout(russian)).toEqual({ id: russian.id, name: russian.id, short: 'RU', lang: 'ru' })
+  })
+})
+
+describe('the text cursor on a Mac', () => {
+  it("takes the helper's place as it is, in points", () => {
+    expect(macCaret({ x: 479, y: 751, h: 20 })).toEqual({ x: 479, y: 751, h: 20 })
+  })
+
+  it('takes none for no answer, an empty one or a nonsense one', () => {
+    expect(macCaret({})).toBeUndefined()
+    expect(macCaret({ x: 10, y: 20 })).toBeUndefined()
+    expect(macCaret({ x: 10, y: 20, h: 0 })).toBeUndefined()
+    expect(macCaret({ x: Number.NaN, y: 20, h: 18 })).toBeUndefined()
+    expect(macCaret({ x: 10, y: 20, h: 900 })).toBeUndefined()
+    expect(macCaret({ x: '10', y: 20, h: 18 })).toBeUndefined()
   })
 })

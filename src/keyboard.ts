@@ -14,7 +14,7 @@ import { loadLib } from './native'
 import { isAccelerator, isCopyTwice } from './hotkey'
 import type { LearnedConfig } from './learning'
 import type { Rect } from './placement'
-import { RECORD_MS, type KbdConfig, type KbdIn, type KbdOut, type KeyAction, type Learned } from './typist'
+import { RECORD_MS, type Caret, type KbdConfig, type KbdIn, type KbdOut, type KeyAction, type Learned } from './typist'
 import type { KeyboardLayout } from './protocol'
 import { myLanguages, type Settings } from './settings'
 import { caretOf, foreground, installedLayouts } from './winkbd'
@@ -36,6 +36,8 @@ const BADGE_CAPS_WIDTH = 54
 const BADGE_MS = 900
 /** A word the badge says while Kryakl works stays up to this long, unless taken down sooner. */
 const SAY_MS = 15_000
+/** A Mac: the helper's answer where the text cursor is, waited this long before the badge goes by the pointer (a warm answer takes about 1 ms). */
+const CARET_MS = 120
 
 type MainAction = Exclude<KeyAction, 'switch' | 'fix' | 'layout'>
 
@@ -69,6 +71,12 @@ export type KeyboardEvents = {
   menuKey(code: string): void
   /** Another key, a click elsewhere or another window closed the menu. */
   menuClosed(): void
+  /** A selection made with the mouse ended at this point (the hooks' pixels): the bar by a selection may show. */
+  selected(point: { x: number; y: number }, start: { x: number; y: number }): void
+  /** A click on the bar by a selection, kept from every window (the hooks' pixels). */
+  barClick(point: { x: number; y: number }): void
+  /** A key, a click elsewhere, the wheel or another window ended the bar by a selection. */
+  barGone(): void
   failed(message: string): void
 }
 
@@ -93,6 +101,12 @@ export class KeyboardHelper {
   private tid = 0
   private badge: BrowserWindow | undefined
   private badgeTimer: NodeJS.Timeout | undefined
+  /** A Mac: the badges waiting for the text cursor's place, by question; only the latest is shown (`badgeTurn`). */
+  private carets = new Map<number, (caret?: Caret) => void>()
+  /** A Mac: the questions whether there is a selection, by number. */
+  private sels = new Map<number, (answer: { ok: boolean; secret?: boolean; at?: Caret }) => void>()
+  private selTurn = 0
+  private badgeTurn = 0
   private shorts = new Map<string, string>()
   /** A part of the settings needs the thread; a key field waits for a key (and stops waiting by itself after RECORD_MS). */
   private needed = false
@@ -145,6 +159,7 @@ export class KeyboardHelper {
         ['meeting', s.meetingKey],
         ['pause', s.pauseKey],
         ['window', s.windowKey],
+        ['clipboard', s.clipboardHistory ? s.clipboardKey : ''],
       ] as const) {
         // Held to talk, a dictation key is the thread's whatever it is: only the thread sees it go up.
         const held = s.dictateHold && (action === 'dictate' || action === 'english' || action === 'practice') && !!key && !isCopyTwice(key)
@@ -154,7 +169,8 @@ export class KeyboardHelper {
     const on = !s.paused
     const layoutKeys = on && s.switchOn ? s.layoutKeys : {}
     const apps = Object.fromEntries(s.apps.map(a => [a.exe, { off: a.off, layout: a.layout }]))
-    const watched = on && (s.autoFix || s.layoutBadge || s.trayLayout || s.switchSound || Object.keys(layoutKeys).length > 0 || s.apps.some(a => a.layout))
+    const bar = on && s.selectionBar
+    const watched = on && (bar || s.autoFix || s.layoutBadge || s.trayLayout || s.switchSound || Object.keys(layoutKeys).length > 0 || s.apps.some(a => a.layout))
     this.needed = Object.keys(keys).length > 0 || watched
     if (!this.needed && !this.recording) return this.stop()
     const config: KbdConfig = {
@@ -179,6 +195,7 @@ export class KeyboardHelper {
       learn: on && s.learn,
       ...learned,
       quietFullScreen: s.quietFullScreen,
+      bar,
       words: Object.fromEntries(FIX_LANGUAGES.map(code => [code, path.join(this.wordsDir, `${code}.txt`)])),
     }
     // Kept for a key field alone: no part of it acts (nothing is fixed, so nothing is learned).
@@ -231,6 +248,25 @@ export class KeyboardHelper {
   /** The menu on one key opened or closed: while open the thread takes its keys (`codes`), and knows where it is on the screen (`rect`, physical pixels). */
   menu(on: boolean, codes: string[] = [], rect?: Rect): void {
     this.post(rect ? { type: 'menu', on, codes, rect } : { type: 'menu', on, codes })
+  }
+
+  /** The bar by a selection shown (`rect`, the hooks' pixels) or gone. */
+  bar(on: boolean, rect?: Rect): void {
+    this.post(rect ? { type: 'bar', on, rect } : { type: 'bar', on })
+  }
+
+  /** A Mac: whether the program in front has a selection and where (Accessibility, through the helper); none within `ms`, none. */
+  macSelection(ms = 400): Promise<{ ok: boolean; secret?: boolean; at?: Caret }> {
+    if (!this.worker) return Promise.resolve({ ok: false })
+    const n = ++this.selTurn
+    return new Promise(resolve => {
+      const done = (answer: { ok: boolean; secret?: boolean; at?: Caret }) => {
+        if (this.sels.delete(n)) resolve(answer)
+      }
+      this.sels.set(n, done)
+      this.post({ type: 'sel', n })
+      setTimeout(() => done({ ok: false }), ms)
+    })
   }
 
   /** The fix key's action, asked by the menu. */
@@ -300,8 +336,11 @@ export class KeyboardHelper {
         PostThreadMessageW(this.tid, WM_APP_PORT, 0, 0)
         return
       case 'layout':
-        if (message.badge) this.showBadge(message.layout, message.caps, message.caret)
+        if (message.badge) this.atCaret(message.caret, caret => this.showBadge(message.layout, message.caps, caret))
         this.events.layout(message.layout, message.caps)
+        return
+      case 'caret':
+        this.carets.get(message.n)?.(message.caret)
         return
       case 'keep':
         this.events.keep(message.word)
@@ -345,6 +384,18 @@ export class KeyboardHelper {
       case 'menuClosed':
         this.events.menuClosed()
         return
+      case 'selected':
+        this.events.selected({ x: message.x, y: message.y }, message.start)
+        return
+      case 'barClick':
+        this.events.barClick({ x: message.x, y: message.y })
+        return
+      case 'barGone':
+        this.events.barGone()
+        return
+      case 'sel':
+        this.sels.get(message.n)?.({ ok: message.ok, ...(message.secret ? { secret: true } : {}), ...(message.at ? { at: message.at } : {}) })
+        return
       case 'note':
         console.warn(`Tyts keyboard: ${message.text}`)
         return
@@ -364,6 +415,7 @@ export class KeyboardHelper {
   /** A word in the badge by the text cursor while Kryakl works there (Translate in place); empty hides it. */
   say(text: string, ms = SAY_MS): void {
     if (!text) {
+      this.badgeTurn++
       if (this.badgeTimer) clearTimeout(this.badgeTimer)
       if (this.badge && !this.badge.isDestroyed()) this.badge.hide()
       return
@@ -371,18 +423,35 @@ export class KeyboardHelper {
     const front = foreground()
     // A word or two: the badge as wide as its text (its mono caption, about 7 px a letter).
     const width = Math.max(BADGE.width, Math.ceil(text.length * 7.2) + 18)
-    this.showBadgeText(text, { width, height: BADGE.height }, front.tid ? caretOf(front.tid) : undefined, ms)
+    this.atCaret(front.tid ? caretOf(front.tid) : undefined, caret => this.showBadgeText(text, { width, height: BADGE.height }, caret, ms))
+  }
+
+  /**
+   * Shows a badge where the text cursor is: on Windows the place is known already (`known`); a Mac's is asked of
+   * the keyboard thread's helper (Accessibility), the pointer when none comes within CARET_MS. A later badge wins.
+   */
+  private atCaret(known: Caret | undefined, show: (caret: Caret | undefined) => void): void {
+    const turn = ++this.badgeTurn
+    if (process.platform !== 'darwin') return show(known)
+    const done = (caret?: Caret) => {
+      if (this.carets.delete(turn) && turn === this.badgeTurn) show(caret)
+    }
+    this.carets.set(turn, done)
+    this.post({ type: 'caret', n: turn })
+    setTimeout(done, CARET_MS)
   }
 
   /** Shows the layout's short name (and Caps Lock, when on) by the text cursor (physical pixels), or by the pointer when the program has no system cursor. */
-  private showBadge(layout: string, caps: boolean, caret: { x: number; y: number; h: number } | undefined): void {
+  private showBadge(layout: string, caps: boolean, caret: Caret | undefined): void {
     const size = { width: caps ? BADGE_CAPS_WIDTH : BADGE.width, height: BADGE.height }
     this.showBadgeText(`${this.shortOf(layout)}${caps ? ' ⇪' : ''}`, size, caret, BADGE_MS)
   }
 
-  private showBadgeText(text: string, size: { width: number; height: number }, caret: { x: number; y: number; h: number } | undefined, ms: number): void {
+  private showBadgeText(text: string, size: { width: number; height: number }, caret: Caret | undefined, ms: number): void {
     const win = this.badgeWindow()
-    const at = caret ? screen.screenToDipPoint({ x: caret.x, y: caret.y + caret.h }) : screen.getCursorScreenPoint()
+    // Windows' caret is in physical pixels; a Mac's already in points, as Electron's screen counts (screenToDipPoint is not there).
+    const below = caret && { x: caret.x, y: caret.y + caret.h }
+    const at = below ? (process.platform === 'darwin' ? below : screen.screenToDipPoint(below)) : screen.getCursorScreenPoint()
     const offset = caret ? { x: 0, y: 4 } : { x: 14, y: 20 }
     const area = screen.getDisplayNearestPoint(at).workArea
     const x = Math.round(Math.min(Math.max(area.x, at.x + offset.x), area.x + area.width - size.width))

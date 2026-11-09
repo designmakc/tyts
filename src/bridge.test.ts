@@ -21,6 +21,24 @@ describe('a page that shows text from outside opens, removes and exports nothing
   test('the app window may', () => {
     for (const type of dangerous) expect(messageAllowed('app', type), type).toBe(true)
   })
+  test('the panel at the top of the screen runs the tray\'s commands and its own, saves its switches, and nothing else', () => {
+    expect(pageOf(at('edge.html'))).toBe('edge')
+    for (const type of ['edgeReady', 'edgeHeight', 'edgeAct', 'tray', 'saveSettings']) expect(messageAllowed('edge', type), type).toBe(true)
+    for (const type of [...dangerous, 'summarize', 'speak', 'talkSay', 'copyText', 'pasteText']) expect(messageAllowed('edge', type), type).toBe(false)
+    for (const page of ['app', 'card', 'tray', 'talk'] as const) expect(messageAllowed(page, 'edgeAct'), page).toBe(false)
+    expect(patchAllowed('edge', { autoFix: false })).toBe(true)
+    expect(patchAllowed('edge', { native: 'German' })).toBe(false)
+    expect(callAllowed('edge', { call: 'speech', method: 'GET', route: '/transcripts' } as never)).toBe(false)
+  })
+  test('the calls window is the app window\'s Transcripts page: it may what the app window may', () => {
+    expect(pageOf(at('calls.html'))).toBe('calls')
+    for (const type of dangerous) expect(messageAllowed('calls', type), type).toBe(true)
+    expect(patchAllowed('calls', { callTemplates: [] })).toBe(true)
+    expect(callAllowed('calls', { call: 'speech', method: 'GET', route: '/transcripts' } as never)).toBe(true)
+    // ...and nothing that is another page's alone.
+    expect(messageAllowed('calls', 'talkSay')).toBe(false)
+    expect(messageAllowed('calls', 'menuPick')).toBe(false)
+  })
   test('each page keeps what it does', () => {
     for (const type of ['ready', 'speak', 'speakNatural', 'stop', 'close', 'pin', 'maximize', 'height', 'copyText', 'pasteText', 'translateText', 'checkText', 'lookup', 'saveWord', 'unsaveWord', 'saveSettings', 'downloadNatural', 'openSpeechSettings']) expect(messageAllowed('card', type), type).toBe(true)
     for (const type of ['trayReady', 'trayHeight', 'trayClose', 'tray', 'keepWord', 'saveSettings']) expect(messageAllowed('tray', type), type).toBe(true)
@@ -41,6 +59,19 @@ describe('a page that shows text from outside opens, removes and exports nothing
   })
   test('an unknown page sends nothing', () => {
     expect(messageAllowed('other', 'ready')).toBe(false)
+  })
+})
+
+describe('the bar by a selection', () => {
+  test('is a page of its own, sends its own messages and no other, and no other page sends them', () => {
+    expect(pageOf('file:///C:/app/media/bar.html?lang=ru')).toBe('bar')
+    for (const type of ['barReady', 'barSize', 'barPick']) {
+      expect(messageAllowed('bar', type), type).toBe(true)
+      for (const page of ['app', 'card', 'tray', 'dictation', 'talk', 'menu'] as const) expect(messageAllowed(page, type), `${page} ${type}`).toBe(false)
+    }
+    for (const type of ['saveSettings', 'copyText', 'speak', 'tray', 'menuPick', 'openLink']) expect(messageAllowed('bar', type), type).toBe(false)
+    expect(patchAllowed('bar', { selectionBar: false })).toBe(false)
+    expect(callAllowed('bar', { call: 'speech', method: 'POST', route: '/dictate' })).toBe(false)
   })
 })
 
@@ -133,7 +164,7 @@ describe('what a page may open with the system', () => {
 describe('the call recording\'s panel', () => {
   test('is a page of its own, the only one that says how its recording goes', () => {
     expect(pageOf(at('capture.html'))).toBe('capture')
-    for (const type of ['captureState', 'captureDone', 'captureHide', 'captureOpenSettings']) {
+    for (const type of ['captureState', 'captureDone', 'captureHide', 'captureOpenSettings', 'captureAnswer', 'captureExpand']) {
       expect(messageAllowed('capture', type), type).toBe(true)
       for (const page of ['app', 'card', 'tray', 'dictation', 'talk', 'menu'] as const) expect(messageAllowed(page, type), `${page} ${type}`).toBe(false)
     }

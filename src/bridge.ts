@@ -9,9 +9,9 @@ import * as path from 'node:path'
 
 import type { HostCall, ToHost } from './protocol'
 
-export type Page = 'app' | 'card' | 'tray' | 'dictation' | 'talk' | 'menu' | 'capture' | 'other'
+export type Page = 'app' | 'calls' | 'edge' | 'card' | 'tray' | 'dictation' | 'talk' | 'menu' | 'bar' | 'capture' | 'other'
 
-const PAGES: Record<string, Page> = { 'app.html': 'app', 'card.html': 'card', 'tray.html': 'tray', 'dictation.html': 'dictation', 'talk.html': 'talk', 'menu.html': 'menu', 'capture.html': 'capture' }
+const PAGES: Record<string, Page> = { 'app.html': 'app', 'calls.html': 'calls', 'edge.html': 'edge', 'card.html': 'card', 'tray.html': 'tray', 'dictation.html': 'dictation', 'talk.html': 'talk', 'menu.html': 'menu', 'bar.html': 'bar', 'capture.html': 'capture' }
 
 /** The page a window shows, by its file (media/<page>.html, with or without a query); 'other' for anything else. */
 export function pageOf(url: string): Page {
@@ -23,16 +23,23 @@ export function pageOf(url: string): Page {
   }
 }
 
+/** The calls window is the app window's Transcripts page in a window of its own: it may do what the app window does. */
+const full = (page: Page) => page === 'app' || page === 'calls'
+
 /** Messages only the app window sends: they install, remove, reset, open or export. */
 const APP_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>([
   'clearDictation',
   'clearTranslations',
   'forgetPhrase',
+  'fixPhrase',
   'forgetTranslation',
   'clearMistakes',
   'forgetMistake',
   'unlearn',
   'forgetLearned',
+  'clipPin',
+  'clipForget',
+  'clipsClear',
   'exportBackup',
   'importBackup',
   'resetSettings',
@@ -84,30 +91,41 @@ const TALK_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>([
 /** Messages only the menu on one key sends, and the only ones it may: it is drawn over any program, so it asks for nothing but its own items. */
 const MENU_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>(['menuReady', 'menuHeight', 'menuHover', 'menuPick'])
 
+/** Messages only the bar by a selection sends, and the only ones it may: drawn over any program, it only says which button was clicked. */
+const BAR_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>(['barReady', 'barSize', 'barPick'])
+
+/** Messages only the panel at the top of the screen sends; it may also run the tray's commands and save its switches, nothing else. */
+const EDGE_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>(['edgeReady', 'edgeHeight', 'edgeAct'])
+
 /** Messages only the call recording's panel sends, and the only ones it may: how its recording goes. */
-const CAPTURE_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>(['captureState', 'captureDone', 'captureHide', 'captureOpenSettings', 'captureAnswer'])
+const CAPTURE_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>(['captureState', 'captureDone', 'captureHide', 'captureOpenSettings', 'captureAnswer', 'captureCopyPhrase', 'captureExpand'])
 
 export function messageAllowed(page: Page, type: string): boolean {
   if (page === 'other') return false
   if (MENU_ONLY.has(type as ToHost['type'])) return page === 'menu'
   if (page === 'menu') return false
+  if (BAR_ONLY.has(type as ToHost['type'])) return page === 'bar'
+  if (page === 'bar') return false
   if (CAPTURE_ONLY.has(type as ToHost['type'])) return page === 'capture'
   if (page === 'capture') return false
+  if (EDGE_ONLY.has(type as ToHost['type'])) return page === 'edge'
+  if (page === 'edge') return type === 'tray' || type === 'saveSettings'
   if (TALK_ONLY.has(type as ToHost['type'])) return page === 'talk'
   // The talk window listens too: the tray shows the red dot meanwhile.
-  if (type === 'micRecording') return page === 'app' || page === 'talk'
-  return page === 'app' || !APP_ONLY.has(type as ToHost['type'])
+  if (type === 'micRecording') return full(page) || page === 'talk'
+  return full(page) || !APP_ONLY.has(type as ToHost['type'])
 }
 
 /** The settings a page other than the app window may change: the card its reading mode, the tray panel its switches. */
 const PAGE_SETTINGS: Partial<Record<Page, ReadonlySet<string>>> = {
   card: new Set(['oneAtATime']),
   tray: new Set(['autoFix', 'switchOn', 'layoutBadge', 'trayLayout', 'paused']),
+  edge: new Set(['autoFix', 'switchOn', 'layoutBadge', 'paused']),
 }
 
 /** Whether `page` may save this settings patch: the app window any, the card and the tray panel only their own. */
 export function patchAllowed(page: Page, patch: unknown): boolean {
-  if (page === 'app') return true
+  if (full(page)) return true
   const own = PAGE_SETTINGS[page]
   return !!own && !!patch && typeof patch === 'object' && Object.keys(patch).every(key => own.has(key))
 }
@@ -123,7 +141,7 @@ function reached(route: string): string {
 
 /** The dictation badge dictates and records a note; the call panel only records; the app window does everything; the others call nothing. */
 export function callAllowed(page: Page, request: HostCall): boolean {
-  if (page === 'app') return true
+  if (full(page)) return true
   const dictating = /^\/(dictate|recordings)([/?]|$)/
   if (page === 'dictation') return request.call === 'speech' && dictating.test(request.route) && dictating.test(reached(request.route))
   const recording = /^\/recordings([/?]|$)/

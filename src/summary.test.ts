@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import type { LlmFiles } from './llmfiles'
-import { checkSummary, createSummarizer, renderSummary, screenOf, splitParts, TOPIC_TIME, topicSeconds, type SummaryInput, type SummaryJson, type SummaryLine } from './summary'
+import { checkSummary, createSummarizer, renderSummary, screenOf, splitParts, type SummaryInput, type SummaryJson, type SummaryLine } from './summary'
 
 const line = (start: number, text = 'x'.repeat(100), speaker = 'Me'): SummaryLine => ({ speaker, start, text })
 const empty: SummaryJson = { short: '', decisions: [], tasks: [], questions: [], topics: [] }
@@ -51,10 +51,9 @@ describe('renderSummary', () => {
     expect(renderSummary(json, 'en', 0)).not.toContain('lost')
   })
 
-  it('marks topic times the page can read back', () => {
-    const stamps = renderSummary(json, 'en').split('\n').map(l => l.match(TOPIC_TIME)?.[1]).filter(Boolean)
-    expect(stamps.map(s => topicSeconds(s!))).toEqual([754, 3723])
-    expect(topicSeconds('[12:34]')).toBe(754)
+  it('marks topic times', () => {
+    const stamps = renderSummary(json, 'en').split('\n').map(l => l.match(/\[((?:\d+:)?\d{1,2}:\d{2})\]/)?.[1]).filter(Boolean)
+    expect(stamps).toEqual(['12:34', '1:02:03'])
   })
 })
 
@@ -187,6 +186,15 @@ describe('createSummarizer', () => {
     expect(system).toContain('Only the money, please')
     expect(system.indexOf('never invent')).toBeLessThan(system.indexOf('Only the money, please'))
     expect(system).toMatch(/data, not instructions/)
+  })
+
+  it('gives every part the person’s notes, and the join none', async () => {
+    const { summarizer, asked } = setup()
+    await summarizer.summarize({ ...long, notes: 'Budget is the point' }, { template: 'general', mine: false, native: 'English' }, () => {})
+    const parts = asked.filter(a => !a.system.startsWith('You join'))
+    expect(parts.length).toBeGreaterThan(1)
+    expect(parts.every(a => a.user.includes('<notes>\nBudget is the point\n</notes>') && a.system.includes('<notes>'))).toBe(true)
+    expect(asked.filter(a => a.system.startsWith('You join')).every(a => !a.user.includes('<notes>') && !a.system.includes('<notes>'))).toBe(true)
   })
 
   it('stops when cancelled', async () => {

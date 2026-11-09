@@ -19,7 +19,20 @@ export function parseEntry(line: string): VocabularyEntry {
   return { word, heard }
 }
 
-/** The vocabulary as the engine takes it (`PUT /settings`); lines without a word are left out. */
-export function vocabularyFor(s: Pick<Settings, 'vocabulary'>): VocabularyEntry[] {
-  return s.vocabulary.map(parseEntry).filter(e => e.word)
+/**
+ * The vocabulary as the engine takes it (`PUT /settings`); lines without a word are left out.
+ * A learned correction (corrections.ts) whose right side is a name or a term (a capital, a digit)
+ * comes after, its left side what it is heard as; one of the person's own words is theirs alone.
+ */
+export function vocabularyFor(s: Pick<Settings, 'vocabulary'> & Partial<Pick<Settings, 'corrections'>>): VocabularyEntry[] {
+  const own = s.vocabulary.map(parseEntry).filter(e => e.word)
+  const mine = new Set(own.map(e => e.word.toLowerCase()))
+  const learned: VocabularyEntry[] = []
+  for (const c of s.corrections ?? []) {
+    if (!/[\p{Lu}\p{N}]/u.test(c.right) || mine.has(c.right.toLowerCase())) continue
+    const e = learned.find(x => x.word.toLowerCase() === c.right.toLowerCase())
+    if (e) e.heard.push(c.heard)
+    else learned.push({ word: c.right, heard: c.heard.toLowerCase() === c.right.toLowerCase() ? [] : [c.heard] })
+  }
+  return [...own, ...learned]
 }

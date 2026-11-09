@@ -1,3 +1,29 @@
+## Tyts 0.5.0
+
+**A bar by the selected text (new, off by default).** Select text with the mouse in any program, and a small dot appears under it. Point at the dot, and it opens into **Translate · Read aloud · Check · …**; the **…** holds Shorten, More polite, Formal, Natural English, Explain, Copy, "Don't show in this program" and Settings. The program keeps its selection: a click on the bar never takes the focus. Turn it on in Settings › General ("Actions by a selection"), and off for one program on Wrong letters › Programs.
+
+**Rewrite a selection (new).** In the menu on one key, **Rewrite…**: Shorten, More polite, Formal and Natural English put the rewrite over the selected text (Ctrl/Cmd+Z takes it back); Explain says what it means in a card. It runs on this computer with the Accurate model (Settings › Models), and leaves your text as it was when the answer looks wrong or comes too late.
+
+**Clipboard history (new, off by default).** Tyts remembers the last 30 texts you copied and up to 10 pinned ones, on this computer only; a key of its own (or the menu on one key) opens the list by the text cursor, and a digit pastes. Passwords copied by a password manager are never kept. Settings › Clipboard history.
+
+**Dictation learns your corrections (new).** Fix a recent phrase on Say it, I type it › Phrases with its pencil, and Tyts offers to remember the change (a word or a phrase of up to five words) and puts it right in every phrase after.
+
+**The words while a call records (new, off by default).** The call panel can open a rough draft of what is said, "Me" and "Others", while it records; the final transcript after the call is made as before. It reads on the processor at the lowest priority and never downloads anything by itself. Calls › "Show the words while recording".
+
+**Voices you named are recognised in later calls (new).** Once you name a speaker in a transcript, Tyts keeps that voice's print on this computer, and in a later call offers the name: "Speaker 2 is probably Sasha", Accept or Not them. It is a similarity of sound, never applied by itself; Calls › Known voices lists and forgets them.
+
+**The calls window.** Every recording, its notes and its summary in a window of its own.
+
+**The panel at the top of the screen (new, off by default).** Rest the pointer at the top middle of the screen: dictation, your last phrases, calls and quick settings.
+
+**Keep the computer awake (new).** From the tray or the menu on one key, for 1, 4 or 8 hours or until you turn it off; the screen may sleep or stay on. **A phrase for the call's chat:** the call panel copies "I'm recording this call to make notes afterwards…" in your language.
+
+**Mac:**
+- Actions on a selection work with a Ukrainian or Russian layout on: Translate, Check and the rest used to get an empty clipboard.
+- The menu on one key opens again (it failed on a Mac).
+- The layout badge stands by the text cursor, Caps Lock is turned off after a fix, and Tyts stays quiet while a program is full screen, as on Windows.
+- A two-hour call is transcribed in minutes, not hours.
+
 ## Tyts 0.4.1
 
 **One transcripts folder, no separate calls folder.** 0.3.0 added a "calls folder" of its own, which was not what was meant. Now the standard transcripts folder (`Documents\Tyts\Transcripts`, shown on the Calls page and over the list) is the notebook: the calls Tyts records are saved into it as `<date time> <title>.ogg` with a Markdown of the text and the summary beside each, and any recording you put into that folder, from another program too, is transcribed in the background, dated by the file, never moved or copied. Recordings appearing there are picked up within a few minutes.

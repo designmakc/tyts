@@ -62,6 +62,12 @@ export type Transcript = {
   shots?: Shot[]
   /** Names read off the call's screen (callNames), by speaker: offered until applied or dismissed. */
   speakerHints?: Record<string, string>
+  /** Names offered by the sound of a voice from earlier meetings (engine/voices.py), by speaker: a suggestion, never a name by itself. */
+  voiceHints?: Record<string, { name: string; score: number }>
+  /** Names offered by voice the person said no to, by speaker: never offered for that speaker again. */
+  voiceRejected?: Record<string, string[]>
+  /** The person's own notes on the recording (the calls window's Notes). */
+  notes?: string
 }
 
 /** A summary as the engine keeps it (PUT /transcripts/{id}/summary): Markdown with `[mm:ss]` topics. */
@@ -254,7 +260,7 @@ export function packWork(v: AppView): HTMLElement | undefined {
   if (p.status !== 'installing') return undefined
   // A part taken out (Storage's ×): the same sync, with fewer parts.
   if (p.installing && p.installing.length < p.parts.length) return row(t('speech.removingPart'), [t('speech.backSoon'), bar(p.progress ?? 0)], el('span', { class: 'pct' }, `${Math.round((p.progress ?? 0) * 100)}%`))
-  const what = p.step === 'tool' ? t('speech.stepTool') : t('speech.stepPackages')
+  const what = p.step === 'tool' ? t('speech.stepTool') : p.step === 'models' ? t('speech.stepModels') : t('speech.stepPackages')
   const pct = Math.round((p.progress ?? 0) * 100)
   const parts = (p.installing ?? []).filter(x => !p.parts.includes(x))
   const name = parts.includes('speakers') && p.parts.includes('core') ? t('speech.dlSpeakers') : t('speech.dlEngine')
@@ -574,6 +580,7 @@ const follow = (state: Diarization) => {
  * model, ready) and the four steps to get one.
  */
 export function speakerRows(v: AppView): HTMLElement[] {
+  if (v.speech.speakers.ane) return macSpeakerRows(v)
   const s = v.speech
   const out: HTMLElement[] = [...speakersDeviceRows(v), ...speakersInstallRows(v)]
   if (!hasPart(v, 'speakers')) return out
@@ -581,7 +588,26 @@ export function speakerRows(v: AppView): HTMLElement[] {
   return [...out, grp(t('speech.voicesModel')), ...keyRows(v)]
 }
 
-export const DEVICE_NAMES = { cuda: 'graphics card', cpu: 'processor' } as const
+/**
+ * Who spoke when on a Mac (2026-11-09): its models, downloaded once and checked, run on the Mac's own chip.
+ * No key and no place to choose: to download, downloading, why it stopped, or here.
+ */
+function macSpeakerRows(v: AppView): HTMLElement[] {
+  const s = v.speech
+  const rows: HTMLElement[] = [aside('info', t('speech.speakersInfoMac'))]
+  const work = packWork(v)
+  if (work) return [...rows, work]
+  if (!hasPart(v, 'speakers')) {
+    const failed = !!s.pack.message
+    const go = btn(failed ? t('common.tryAgain') : t('speech.download'), () => post({ type: 'installSpeech', parts: ['speakers'] }), 'primary')
+    const lines = [t('speech.dlOnceMac', { size: size(s.speakers.sizes.cpu.download) }), failed ? bad(t('speech.dlStopped', { why: s.pack.message ?? t('speech.unknownError') })) : null]
+    return [...rows, grp(t('speech.downloadGrp')), card('download', t('speech.whoMac'), lines, go)]
+  }
+  // The engine says whether the helper beside its models is there too (a Tyts installed whole has it).
+  const ok = !running(v) || s.health?.diarization === 'ready'
+  const line = ok ? el('small', { class: 'ok' }, t('speech.voicesHour', { time: minutes(s.plan.speakers.cpu) })) : bad(t('speech.helperMissing'))
+  return [...rows, grp(t('speech.installed')), card('circle-check', t('speech.installedMac'), [line], null)]
+}
 
 /** Where who spoke when runs, as the person may choose it: the card (when it has room) or the processor, each with its size and its time here. */
 function speakersDeviceRows(v: AppView): HTMLElement[] {

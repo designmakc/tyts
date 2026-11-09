@@ -1,7 +1,7 @@
 {
   "name": "tyts",
   "productName": "Tyts",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Tyts — and done. Translation, keyboard layouts, voice typing and English practice on one key, on your own computer, no cloud.",
   "author": {
     "name": "Mykola Onykiichuk",
@@ -23,7 +23,7 @@
     "test": "vitest run",
     "test:engine": "uv run --project engine --frozen --no-sync pytest engine/tests -q -p no:cacheprovider",
     "dist": "node esbuild.mjs && electron-builder --win --x64",
-    "dist:mac": "swiftc -O build/ocr.swift -o vendor/ocr-mac && swiftc -O build/kbd-mac.swift -o vendor/kbd-mac && swiftc -O build/clip-mac.swift -o vendor/clip-mac && swiftc -O build/mic-mac.swift -o vendor/mic-mac && node esbuild.mjs && electron-builder --mac dmg --arm64",
+    "dist:mac": "swiftc -O build/ocr.swift -o vendor/ocr-mac && swiftc -O build/kbd-mac.swift -o vendor/kbd-mac && swiftc -O build/clip-mac.swift -o vendor/clip-mac && swiftc -O build/mic-mac.swift -o vendor/mic-mac && swift build -c release --package-path build/speakers-mac && cp build/speakers-mac/.build/release/speakers-mac vendor/speakers-mac && node esbuild.mjs && electron-builder --mac dmg --arm64",
     "models": "node scripts/build-mt.mjs",
     "glyphs": "node scripts/build-glyphs.mjs",
     "shots": "node scripts/shots.mjs"

@@ -71,9 +71,10 @@ export type KeyAction =
   | 'pause'
   | 'window'
   | 'menu'
+  | 'clipboard'
 
-/** The parts of the keyboard helper a program can be left out of: fixing as one types, the switch and layout keys, the badge, every key of Kryakl's. */
-export type AppPart = 'fix' | 'switch' | 'badge' | 'keys'
+/** The parts of the keyboard helper a program can be left out of: fixing as one types, the switch and layout keys, the badge, every key of Kryakl's, the bar by a selection. */
+export type AppPart = 'fix' | 'switch' | 'badge' | 'keys' | 'bar'
 
 /** The field's answer to "is it a password?": yes, no, or it would not say. */
 export type FieldAnswer = boolean | 'unknown'
@@ -168,6 +169,8 @@ export type KbdConfig = {
   quietFullScreen: boolean
   /** The word lists by language code (media/layout/<code>.txt). */
   words: Record<string, string>
+  /** The bar by a selection (settings.selectionBar): a selection made with the mouse is told (`selected`). */
+  bar?: boolean
 }
 
 export type KbdIn =
@@ -188,11 +191,19 @@ export type KbdIn =
   | { type: 'fix' }
   /** A Mac: Cmd+V pressed by the helper itself, marked as Kryakl's, so its tap lets it through. */
   | { type: 'paste' }
+  /** A Mac: where the text cursor is now, asked of the helper; answered by a `caret` of the same `n`. */
+  | { type: 'caret'; n: number }
+  /** The bar by a selection is shown (`rect`: where, in the hooks' pixels), or gone: while shown, a key, a click outside it, the wheel or another window in front ends it (`barGone`). */
+  | { type: 'bar'; on: boolean; rect?: Rect }
+  /** A Mac: whether the program in front has a selection, asked of the helper; answered by a `sel` of the same `n`. */
+  | { type: 'sel'; n: number }
   | { type: 'quit' }
 
 export type KbdOut =
   /** The thread to wake after posting: the first message. */
   | { type: 'thread'; tid: number }
+  /** A Mac: the text cursor's place (points, as Electron's screen counts), none when the program shows none. */
+  | { type: 'caret'; n: number; caret?: Caret }
   /** The layout in front changed, or Caps Lock did (the first look too, for the tray's icon); `badge`: show it by the text cursor, whose place in physical pixels comes when the program has a system one. */
   | { type: 'layout'; layout: string; caps: boolean; badge: boolean; caret?: Caret }
   /** A fix was taken back: the word, as typed, is kept from now on. */
@@ -223,6 +234,14 @@ export type KbdOut =
   | { type: 'menuKey'; code: string }
   /** Another key, a click outside, or another window in front closed the menu; the key or click went on. */
   | { type: 'menuClosed' }
+  /** A selection made with the mouse (a drag, a double or triple click, Shift and a click) ended here (the hooks' pixels): the bar may show by it. */
+  | { type: 'selected'; x: number; y: number; start: { x: number; y: number } }
+  /** A click on the bar by a selection (the hooks' pixels): kept from every window, so the program keeps the keyboard and its selection; the bar's page finds the button. */
+  | { type: 'barClick'; x: number; y: number }
+  /** The bar by a selection is to go (or not to come): a key, a click elsewhere, the wheel, another window in front. */
+  | { type: 'barGone' }
+  /** A Mac: the program in front has a selection (`ok`), in a password field (`secret`); `at`: its end's right edge and its lines, in points. */
+  | { type: 'sel'; n: number; ok: boolean; secret?: boolean; at?: Caret }
   | { type: 'error'; message: string }
   /** A line for tyts.log of how the thread is doing (counts only, never what was typed). */
   | { type: 'note'; text: string }
@@ -438,6 +457,9 @@ export class Typist {
   private menuOpen: { codes: ReadonlySet<string>; rect: Rect | undefined; hwnd: bigint; until: number } | undefined
   /** The left button went down on the menu: its release is the menu's too. */
   private clickInMenu = false
+  /** The bar by a selection: asked for (no `rect` yet) or shown over the window `hwnd`. */
+  private bar: { hwnd: bigint; rect?: Rect } | undefined
+  private clickInBar = false
   /** A dictation key held down: its release is told (hold to talk). */
   private holdKey: { vk: number; action: 'dictate' | 'english' | 'practice' } | undefined
 
@@ -529,6 +551,8 @@ export class Typist {
       return false
     }
     if (this.recordKey(vk, down)) return true
+    // Any key but a modifier ends the bar by a selection; the key goes on to the program.
+    if (down && this.bar && !modOf(vk)) this.closeBar()
     if (down && this.menuKey(vk)) return true
     if (!down && this.holdKey?.vk === vk) {
       this.env.send({ type: 'hotkeyUp', action: this.holdKey.action })
@@ -718,9 +742,51 @@ export class Typist {
     }
   }
 
+  /** The bar by a selection shown at `rect` (the hooks' pixels), or gone (the main process hid it). */
+  barShown(on: boolean, rect?: Rect): void {
+    if (!on) this.bar = undefined
+    else this.bar = { hwnd: this.bar?.hwnd ?? this.env.foreground().hwnd, ...(rect ? { rect } : {}) }
+  }
+
+  private closeBar(): void {
+    this.bar = undefined
+    this.env.send({ type: 'barGone' })
+  }
+
+  /**
+   * A mouse event while the bar is asked for or shown. A left click on it is its own and kept from every window
+   * (`kept`: a click on a window would take the keyboard from the program, and its selection with it), told as
+   * `barClick`; the wheel or another button over it does nothing (`over`); a click elsewhere or the wheel ends it.
+   */
+  private barMouse(event: MouseEvent, x: number, y: number): 'kept' | 'over' | undefined {
+    if (event === 'left-up' && this.clickInBar) {
+      this.clickInBar = false
+      return 'kept'
+    }
+    const b = this.bar
+    if (!b || event === 'left-up' || event === 'x-up') return undefined
+    const r = b.rect
+    if (r && x >= r.x && x < r.x + r.width && y >= r.y && y < r.y + r.height) {
+      if (event !== 'left-down') return 'over'
+      this.clickInBar = true
+      this.env.send({ type: 'barClick', x, y })
+      return 'kept'
+    }
+    this.closeBar()
+    return undefined
+  }
+
+  /** Whether a selection made here may bring the bar: on, not in full screen, not Tyts's own window, not turned off for this program. */
+  private barHere(front: Front): boolean {
+    const exe = this.env.exeOf(front.pid)
+    return !!this.config.bar && !this.quiet() && !!front.hwnd && exe !== this.env.ownExe && !this.offHere('bar', front)
+  }
+
   /** A mouse event; true keeps it from the program (a side button that is a hotkey). */
   mouse(event: MouseEvent, x: number, y: number, time: number, button = 0): boolean {
     if (this.menuMouse(event, x, y, button)) return false
+    const onBar = this.barMouse(event, x, y)
+    if (onBar) return onBar === 'kept'
     if (event === 'x-down') {
       this.spoilTap()
       const mods = this.heldMods()
@@ -744,7 +810,16 @@ export class Typist {
     } else if (event === 'left-up') {
       // A drag, a double or triple click, or a click with Shift selects.
       const d = this.lastDown
-      if (d && (d.double || Math.abs(x - d.x) > 4 || Math.abs(y - d.y) > 4 || this.heldMods().has('Shift'))) this.last = 'selected'
+      if (d && (d.double || Math.abs(x - d.x) > 4 || Math.abs(y - d.y) > 4 || this.heldMods().has('Shift'))) {
+        this.last = 'selected'
+        const front = this.env.foreground()
+        if (!this.menuOpen && this.barHere(front)) {
+          this.bar = { hwnd: front.hwnd }
+          // Where the selection starts: the earlier of the press and the release in reading order (a drag may go back).
+          const back = d.y > y + 4 || (Math.abs(d.y - y) <= 4 && d.x > x)
+          this.env.send({ type: 'selected', x, y, start: back ? { x, y } : { x: d.x, y: d.y } })
+        }
+      }
     } else if (event === 'other-down') {
       this.spoilTap()
       this.resetRun()
@@ -1546,6 +1621,7 @@ export class Typist {
     if (this.asking && now - this.asking.since > FIELD_WAIT_MS) this.fieldIs('unknown')
     const front = this.env.foreground()
     if (this.menuOpen && (now > this.menuOpen.until || (front.hwnd && front.hwnd !== this.menuOpen.hwnd))) this.closeMenu()
+    if (this.bar && front.hwnd && front.hwnd !== this.bar.hwnd) this.closeBar()
     if (front.hwnd && front.hwnd !== this.frontWindow) {
       this.frontWindow = front.hwnd
       this.reportApp(front.pid)

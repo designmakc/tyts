@@ -105,3 +105,35 @@ export function badgeOffset(bounds: Rect, area: Rect): { dx: number; dy: number 
     dy: Math.round(bounds.y + bounds.height - (area.y + area.height - BADGE_GAP)),
   }
 }
+
+/** The bar by a selection: its dot's square (the pill's height; the dot in its middle), and the gap from the line. */
+export const BAR_BOX = 36
+const BAR_GAP = 2
+
+/**
+ * The dot by a selection: its square under the line where the selection starts (`at.x`, `top` to
+ * `bottom`), the dot's left edge at the text's, never over the text; above the line where the work
+ * area ends; never outside it.
+ */
+export function placeDot(at: { x: number; top: number; bottom: number }, area: Rect): Rect {
+  const dot = (BAR_BOX - 20) / 2
+  const x = Math.min(Math.max(at.x - dot, area.x), area.x + area.width - BAR_BOX)
+  let y = at.bottom + BAR_GAP
+  if (y + BAR_BOX > area.y + area.height) y = at.top - BAR_GAP - BAR_BOX
+  y = Math.min(Math.max(y, area.y), area.y + area.height - BAR_BOX)
+  return { x: Math.round(x), y: Math.round(y), width: BAR_BOX, height: BAR_BOX }
+}
+
+/**
+ * The bar opened from its dot (`box`): the pill grows to the right, the dot staying where it is
+ * (moved left only where the screen ends); with "…"'s list (`size.height` over the pill's) the list
+ * is under the pill, or over it where the work area ends (`listAbove`), the pill staying in place.
+ */
+export function placeBar(box: Rect, size: { width: number; height: number }, area: Rect): { window: Rect; listAbove: boolean } {
+  const width = Math.min(Math.max(size.width, BAR_BOX), area.width)
+  const height = Math.max(size.height, BAR_BOX)
+  const x = Math.max(Math.min(box.x, area.x + area.width - width), area.x)
+  const listAbove = height > BAR_BOX && box.y + height > area.y + area.height
+  const y = listAbove ? box.y + BAR_BOX - height : box.y
+  return { window: { x: Math.round(x), y: Math.round(Math.max(y, area.y)), width, height }, listAbove }
+}

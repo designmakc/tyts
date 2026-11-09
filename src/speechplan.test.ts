@@ -44,16 +44,23 @@ const m1: DeviceProfile = {
 }
 
 describe('planSpeech', () => {
-  it('an M1 with the mac part transcribes with turbo on Metal; Parakeet still dictates where it is quicker', () => {
+  it('an M1 with the mac part: Parakeet dictates and transcribes calls in its languages, turbo on Metal in the others', () => {
     const downloaded = ['large-v3-turbo', 'parakeet-tdt-0.6b-v3']
     const plan = planSpeech(input({ profile: m1, metal: true, downloaded, languages: ['ru', 'en'] }))
-    expect(plan.transcripts.chosen).toMatchObject({ model: 'large-v3-turbo', device: 'metal', compute: 'mlx', basis: 'guess' })
-    expect(plan.engine.cpu.transcripts).toEqual({ model: 'large-v3-turbo', compute: 'mlx' })
+    expect(plan.transcripts.chosen).toMatchObject({ model: 'parakeet-tdt-0.6b-v3', device: 'cpu' })
+    expect(plan.engine.cpu.transcripts.model).toBe('parakeet-tdt-0.6b-v3')
     expect(plan.dictation.chosen.model).toBe('parakeet-tdt-0.6b-v3')
-    expect(testRuns(input({ profile: m1, metal: true, downloaded }), plan)).toContainEqual({ model: 'large-v3-turbo', device: 'metal', compute: 'mlx', beam: 2 })
+    // Turbo kept from before gives way too.
+    expect(planSpeech(input({ profile: m1, metal: true, downloaded, languages: ['ru', 'en'], previous: { transcripts: 'large-v3-turbo' } })).transcripts.chosen.model).toBe('parakeet-tdt-0.6b-v3')
+    // A language Parakeet does not know: turbo on Metal, as before; picked by the person, it stays.
+    const japanese = planSpeech(input({ profile: m1, metal: true, downloaded, languages: ['ru', 'ja'] }))
+    expect(japanese.transcripts.chosen).toMatchObject({ model: 'large-v3-turbo', device: 'metal', compute: 'mlx', basis: 'guess' })
+    expect(japanese.engine.cpu.transcripts).toEqual({ model: 'large-v3-turbo', compute: 'mlx' })
+    expect(planSpeech(input({ profile: m1, metal: true, downloaded, pins: { dictation: '', transcripts: 'large-v3-turbo' } })).transcripts.chosen.model).toBe('large-v3-turbo')
+    expect(testRuns(input({ profile: m1, metal: true, downloaded }), japanese)).toContainEqual({ model: 'large-v3-turbo', device: 'metal', compute: 'mlx', beam: 2 })
     // A measured Metal run is this Mac's own.
     const bench = { fingerprint: 'fp', runs: { [runKey('large-v3-turbo', 'metal', 'mlx')]: { rtf: 0.04 } } }
-    expect(planSpeech(input({ profile: m1, metal: true, downloaded, bench })).transcripts.chosen.basis).toBe('measured')
+    expect(planSpeech(input({ profile: m1, metal: true, downloaded, languages: ['ja'], native: 'ja', bench })).transcripts.chosen.basis).toBe('measured')
     // Without the part, turbo is the processor's.
     expect(planSpeech(input({ profile: m1, downloaded })).transcripts.choices.some(c => c.device === 'metal')).toBe(false)
   })
@@ -63,7 +70,7 @@ describe('planSpeech', () => {
     expect(plan.device).toBe('cpu')
     expect(plan.dictation.chosen.model).toBe('parakeet-tdt-0.6b-v3')
     expect(plan.engine.cpu.dictation.model).toBe('parakeet-tdt-0.6b-v3')
-    // Parakeet dictates only.
+    // Parakeet does calls on a Mac only.
     expect(plan.transcripts.choices.some(c => c.model === 'parakeet-tdt-0.6b-v3')).toBe(false)
     const kazakh = planSpeech(input({ profile: weakLaptop, native: 'kk' }))
     expect(kazakh.dictation.chosen.model).toBe('base')
@@ -187,6 +194,15 @@ describe('planSpeech', () => {
     const without = planSpeech(input()).transcripts.chosen.estimate
     const withSpeakers = planSpeech(input({ speakers: true })).transcripts.chosen.estimate
     expect(withSpeakers - without).toBeCloseTo(60 * 0.8, 1)
+  })
+
+  it('a Mac tells its speakers apart on the Neural Engine: its own guess, or its measurement', () => {
+    const mac = { profile: m1, metal: true, languages: ['ja'], native: 'ja' }
+    const without = planSpeech(input(mac)).transcripts.chosen.estimate
+    expect(planSpeech(input({ ...mac, speakers: true })).transcripts.chosen.estimate - without).toBeCloseTo(60 * 0.0125, 3)
+    expect(planSpeech(input(mac)).speakers.cpu).toBe(1)
+    const bench = { fingerprint: 'fp', runs: { 'speakers|ane': { rtf: 0.05 } } }
+    expect(planSpeech(input({ ...mac, bench })).speakers.cpu).toBe(3)
   })
 
   it('tests the downloaded models not yet measured, the smallest first, and remembers a decline by them', () => {

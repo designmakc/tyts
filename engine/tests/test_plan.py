@@ -19,10 +19,11 @@ def test_catalog_models_are_the_whisper_ones():
     assert asr.SIZES["small"] > asr.SIZES["base"] > asr.SIZES["tiny"]
 
 
-def test_parakeet_dictates_on_the_processor_only():
+def test_parakeet_runs_on_the_processor_only():
     plan = clean_plan({"cpu": {"dictation": {"model": "parakeet-tdt-0.6b-v3"}, "transcripts": {"model": "parakeet-tdt-0.6b-v3"}}, "cuda": {"dictation": {"model": "parakeet-tdt-0.6b-v3", "compute": "float16"}}})
     # In the card's plan too (the card left to other programs), with no card's compute: it runs on the processor.
-    assert plan == {"cpu": {"dictation": {"model": "parakeet-tdt-0.6b-v3"}}, "cuda": {"dictation": {"model": "parakeet-tdt-0.6b-v3"}}}
+    # It transcribes too (a Mac's calls, src/speechplan.ts decides where).
+    assert plan == {"cpu": {"dictation": {"model": "parakeet-tdt-0.6b-v3"}, "transcripts": {"model": "parakeet-tdt-0.6b-v3"}}, "cuda": {"dictation": {"model": "parakeet-tdt-0.6b-v3"}}}
     assert asr.backend("parakeet-tdt-0.6b-v3") == "parakeet" and asr.backend("small") == "whisper"
 
 

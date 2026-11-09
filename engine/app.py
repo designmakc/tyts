@@ -22,6 +22,7 @@ What other apps may use, and keep using:
   POST /transcripts {path}            a file on this computer -> a transcript in the library
   POST /library/move {to}             the library moved into the folder named, what is there kept
   POST /recordings ...                a recording that arrives in chunks (a call, the microphone, a note)
+  GET  /recordings/<id>/live          a call's rough draft while it records ({live: true} at the start; memory only)
   GET  /health                        what is installed (parts), loaded and busy; without
                                       the key only {ok}, or with X-Tyts-Nonce only {proof}
   GET  /transcripts/<id>/file?format= the transcript as txt, md, srt, vtt, docx or json (bytes)
@@ -67,11 +68,13 @@ import export
 import notes
 import numpy as np
 import vocab
+import voices
 
 from bench import Calibrator
 from jobs import SHOT_NAME, Worker, finish_recording
 from settings import ALL_MODELS, APP_DIR, Settings, adopt_altscribe, move_library, move_transcripts
 from store import Store, now_iso
+from live import Live, Lives
 from stream import Session, Sessions
 
 VERSION = "0.2.0"
@@ -107,6 +110,7 @@ state = State()
 worker = Worker(settings, state.get_store)
 setup = diarize.Setup()
 sessions = Sessions()
+lives = Lives()
 worker.dictating = sessions.active
 # The speed test runs only while nothing else does: no transcription, no phrase being recognized.
 calibrator = Calibrator(worker.bench, lambda: worker.idle() and not _dictating.locked() and not sessions.active(), worker.unload_all, lambda: worker.activity, worker.threads)
@@ -171,7 +175,7 @@ def health_view() -> dict:
         "ok": True,
         "version": VERSION,
         "device": worker.device,
-        "parts": {"core": True, "gpu": asr.gpu(), "speakers": diarize.installed(), "mac": asr.mlx_ready()},
+        "parts": {"core": True, "gpu": asr.gpu(), "speakers": diarize.installed() and (not diarize.mac() or diarize.downloaded()), "mac": asr.mlx_ready()},
         "whisper": whisper_status(s["model"]),
         "models": {"transcripts": planned("transcripts"), "dictation": planned("dictation")},
         "downloaded": [m for m in ALL_MODELS if asr.downloaded(m)],
@@ -179,7 +183,7 @@ def health_view() -> dict:
         "fallback": worker.fallback,
         "calibration": calibrator.status(),
         "bench": {"fingerprint": bench.get("fingerprint", ""), "runs": bench.get("runs", {})},
-        "speakersDevice": "cuda" if asr.torch_cuda() and asr.gpu() else "cpu",
+        "speakersDevice": "ane" if diarize.mac() else "cuda" if asr.torch_cuda() and asr.gpu() else "cpu",
         "diarization": diarize.status(s["hfToken"], setup),
         "diarizationMessage": setup.message,
         "busy": worker.current,
@@ -474,7 +478,9 @@ def library_move(body: dict = Body(...)):
 
 @app.post("/diarization/setup")
 def setup_again():
-    """Checks the saved token again: after the model's terms were accepted, or the connection came back."""
+    """Checks the saved token again: after the model's terms were accepted, or the connection came back. A Mac needs no key."""
+    if diarize.mac():
+        return {"state": diarize.status("", setup)}
     if not settings["hfToken"]:
         raise HTTPException(409, "Paste a Hugging Face key first")
     setup.start(settings["hfToken"])
@@ -504,6 +510,8 @@ def public(t: dict, id: str) -> dict:
     """A transcript as the window wants it: without the words (thousands of them), saying whether they are kept."""
     out = {k: v for k, v in t.items() if k != "words"}
     out["hasWords"] = bool(t.get("words"))
+    # Names offered by the sound of a voice from earlier meetings (voices.py): a suggestion, never a name by itself.
+    out["voiceHints"] = voices.known.suggest(id, t)
     out["audioPath"] = str(state.get_store().folder(id) / t.get("audio", "audio.ogg"))
     return out
 
@@ -520,15 +528,34 @@ def get_transcript(id: str):
 
 
 
+# The person's notes on a recording, at most (src/settings.ts NOTES_MAX).
+NOTES_MAX = 20_000
+
+
 @app.patch("/transcripts/{id}")
 def patch_transcript(id: str, changes: dict = Body(...)):
     """Title, speaker names, an utterance's text or speaker: {title?, speakers?: {key: name}, utterances?: {index: {text?, speaker?}}}.
 
     Kryakl's own marks, which are no edit of the text: shots: {file: {key: bool}} (a call's key screenshots), speakerHints:
-    {key: name | null} (names read off the call's screen, a suggestion until the person applies one)."""
+    {key: name | null} (names read off the call's screen, a suggestion until the person applies one), voiceRejected:
+    {key: name} (a name offered by voice the person said no to, never offered for that speaker again); and the person's
+    notes beside the text, notes: str (NOTES_MAX characters at most, empty removes them).
+
+    A speaker named here has their voice print filed under the name (voices.py)."""
     store = state.get_store()
     t = transcript_or_404(id)
-    marks = {k for k in ("shots", "speakerHints") if k in changes}
+    marks = {k for k in ("shots", "speakerHints", "voiceRejected", "notes") if k in changes}
+    rejected = t.get("voiceRejected") or {}
+    for key, name in (changes.get("voiceRejected") or {}).items():
+        if key in t["speakers"] and isinstance(name, str) and 0 < len(name) <= 200 and name not in rejected.get(key, []):
+            rejected.setdefault(key, []).append(name)
+    if rejected:
+        t["voiceRejected"] = rejected
+    if isinstance(changes.get("notes"), str):
+        if changes["notes"].strip():
+            t["notes"] = changes["notes"][:NOTES_MAX]
+        else:
+            t.pop("notes", None)
     for shot in t.get("shots") or []:
         mark = (changes.get("shots") or {}).get(shot["file"])
         if SHOT_NAME.fullmatch(shot["file"]) and isinstance(mark, dict) and isinstance(mark.get("key"), bool):
@@ -554,6 +581,7 @@ def patch_transcript(id: str, changes: dict = Body(...)):
     for key, name in (changes.get("speakers") or {}).items():
         if key in t["speakers"] and isinstance(name, str) and name.strip():
             t["speakers"][key]["name"] = name.strip()
+            voices.known.learn(name, id, key)
     for index, edit in (changes.get("utterances") or {}).items():
         i = int(index)
         if 0 <= i < len(t["utterances"]):
@@ -616,7 +644,7 @@ def split_speakers(id: str, body: dict = Body(default={})):
         raise HTTPException(409, "This recording is still being transcribed")
     if row["source"] == "note":
         raise HTTPException(409, "A note has one voice")
-    if not diarize.installed():
+    if not diarize.installed() or (diarize.mac() and not diarize.downloaded()):
         raise HTTPException(409, "Install the speakers part first")
     if diarize.status(settings["hfToken"], setup) == "needs-token":
         raise HTTPException(409, "Add a Hugging Face key first")
@@ -645,6 +673,21 @@ def delete_transcript(id: str):
     if worker.current == id:
         raise HTTPException(409, "This recording is being transcribed right now")
     store.delete(id)
+    voices.known.drop_meeting(id)
+    return {"ok": True}
+
+
+@app.get("/voices")
+def list_voices():
+    """The voices recognised across meetings: [{name, meetings}] (the prints themselves never leave the engine)."""
+    return voices.known.list()
+
+
+@app.delete("/voices")
+def forget_voices(body: dict = Body(default={})):
+    """{name} forgets one name's voice print; no name, every print."""
+    name = body.get("name") if isinstance(body, dict) else None
+    voices.known.forget(name if isinstance(name, str) and name else None)
     return {"ok": True}
 
 
@@ -751,7 +794,56 @@ def start_recording(request: Request, body: dict = Body(...)):
         job["app"] = body["app"].strip()[:80]  # the call's program, as Kryakl found it running
     id = store.create(title, source, "recording", job)
     (store.folder(id) / "incoming").mkdir()
+    if body.get("live") is True and source == "system":
+        return {"id": id, "live": open_live(id, list(job["tracks"]), job["language"])}
     return {"id": id}
+
+
+# A call's words while it records (live.py) -----------------------------------
+
+
+def live_model() -> tuple[str, dict]:
+    """Why the draft cannot be read ("card": dictation is on the graphics card, kept for the person's programs;
+    "missing": its model is not downloaded, and nothing downloads for it), else "" and the model."""
+    device, entry = worker.entry("dictation")
+    if device != "cpu":
+        return "card", entry
+    return ("" if asr.downloaded(entry["model"]) else "missing"), entry
+
+
+def live_may_run() -> bool:
+    """The draft is read only when nothing else would wait for it: no transcript being made or queued, no phrase, no speed test."""
+    return worker.idle() and not sessions.active() and not _dictating.locked() and not calibrator.running
+
+
+def open_live(id: str, tracks: list[str], language: str | None) -> str:
+    why, _ = live_model()
+    if why:
+        return why
+
+    def recognize(sound: np.ndarray, before: str) -> str:
+        # Not waiting: a phrase dictated now comes first, and this piece of the draft is skipped.
+        if live_model()[0] or not _dictating.acquire(blocking=False):
+            return ""
+        try:
+            worker.activity += 1
+            transcriber, entry = worker.dictation_model()
+            text, _, _ = transcriber.dictate(sound, language, [], hotwords(), entry.get("beam") or 2, before)
+            return vocab.correct(text, settings["vocabulary"])
+        finally:
+            _dictating.release()
+
+    lives.open(id, Live(tracks, recognize, live_may_run))
+    return "listening"
+
+
+@app.get("/recordings/{id}/live")
+def live_view(id: str):
+    """The draft's last lines, {state, lines: [{who: me|others, at, text | gap}]}: only in memory, never kept."""
+    live = lives.get(id)
+    if live is None:
+        return {"state": live_model()[0] or "off", "lines": []}
+    return live.view()
 
 
 # A call's screenshot (capture.ts): a JPEG of 2 MB at most, while the call records.
@@ -796,7 +888,9 @@ async def chunk(id: str, track: str, seq: int, request: Request):
     if track not in row["job"].get("tracks", {}) or not 0 <= seq < 1_000_000:
         raise HTTPException(400, "No such track")
     part = store.folder(id) / "incoming" / f"{track}-{seq:06d}.part"
-    part.write_bytes(await request.body())
+    data = await request.body()
+    part.write_bytes(data)
+    lives.add(id, track, seq, data)
     store.update(id, touched=now_iso())
     return Response(status_code=204)
 
@@ -807,6 +901,7 @@ def finish(id: str, request: Request, body: dict = Body(default={})):
     lost = body.get("lost", 0)
     if type(lost) is not int or lost < 0:
         raise HTTPException(400, "lost is a count of chunks")
+    lives.stop(id)
     if not finish_recording(store, id, body):
         raise HTTPException(409, "Nothing to transcribe")
     worker.submit(id)
@@ -815,6 +910,7 @@ def finish(id: str, request: Request, body: dict = Body(default={})):
 
 @app.delete("/recordings/{id}")
 def cancel(id: str):
+    lives.stop(id)
     store = state.get_store()
     row = store.row(id)
     if row is not None and row["status"] == "recording":

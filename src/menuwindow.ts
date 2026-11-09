@@ -10,6 +10,11 @@ import { frameWindow } from './dwm'
 import { t } from './i18n'
 import { menuKeyOf, type MenuAction, type MenuItem } from './menu'
 import { placeMenu, type Rect } from './placement'
+
+// Windows' hooks and caret count physical pixels; on a Mac they already are Electron's points (and its screen has no dipToScreenRect).
+const MAC = process.platform === 'darwin'
+const toScreen = (win: BrowserWindow, rect: Rect): Rect => (MAC ? rect : screen.dipToScreenRect(win, rect))
+const toDip = (point: { x: number; y: number }): { x: number; y: number } => (MAC ? point : screen.screenToDipPoint(point))
 import type { MenuView, ToHost, ToView } from './protocol'
 import { handleOf } from './winclip'
 import { putOnTop } from './winkbd'
@@ -29,6 +34,8 @@ export type MenuOptions = {
   border: () => string
   /** The groups to show now. */
   groups: () => MenuItem[][]
+  /** An item's own list (Rewrite…'s), shown in place of the groups when it is picked. */
+  sub: (action: MenuAction) => MenuItem[][] | undefined
   /** The text cursor of the window in front, in physical pixels, when it has a system one. */
   caret: () => { x: number; y: number; h: number } | undefined
   /** The keyboard thread takes the menu's keys, or no longer; `rect`: where it is, in physical pixels. */
@@ -38,7 +45,11 @@ export type MenuOptions = {
   log: (win: BrowserWindow) => void
 }
 
+/** Another list in the same window in place of the actions (the clipboard history): its items, its line at the foot, and what a pick does. */
+export type MenuList = { groups: MenuItem[][]; foot: string; run: (index: number) => void }
+
 export class TytsMenu {
+  private list: MenuList | undefined
   private win: BrowserWindow | undefined
   private ready = false
   private open = false
@@ -56,22 +67,24 @@ export class TytsMenu {
     return this.open
   }
 
-  toggle(): void {
+  /** `list`: that list instead of the actions. */
+  toggle(list?: MenuList): void {
     if (this.open) this.close()
-    else this.show()
+    else this.show(list)
   }
 
   /** Opens by the text cursor, else by the pointer; the keys are taken at once, the window shows as soon as its height is known. */
-  private show(): void {
+  private show(list?: MenuList): void {
+    this.list = list
     const caret = this.o.caret()
     if (caret) {
-      const top = screen.screenToDipPoint({ x: caret.x, y: caret.y })
-      this.at = { x: top.x, top: top.y, bottom: screen.screenToDipPoint({ x: caret.x, y: caret.y + caret.h }).y }
+      const top = toDip({ x: caret.x, y: caret.y })
+      this.at = { x: top.x, top: top.y, bottom: toDip({ x: caret.x, y: caret.y + caret.h }).y }
     } else {
       const p = screen.getCursorScreenPoint()
       this.at = { x: p.x, top: p.y, bottom: p.y }
     }
-    this.groups = this.o.groups()
+    this.groups = list?.groups ?? this.o.groups()
     this.items = this.groups.flat()
     this.lit = 0
     this.fired = -1
@@ -83,7 +96,7 @@ export class TytsMenu {
   }
 
   private codes(): string[] {
-    return this.items.map(item => item.code)
+    return this.items.map(item => item.code).filter(Boolean)
   }
 
   /** Closes it: the keyboard is the program's again. */
@@ -123,13 +136,26 @@ export class TytsMenu {
   private pick(index: number): void {
     const item = this.items[index]
     if (!item || !this.open || this.firing) return
+    const sub = this.o.sub(item.id)
+    if (sub) {
+      // Its list in place of the groups, the keys still the menu's: its letters now; the height it reports places it again.
+      this.groups = sub
+      this.items = sub.flat()
+      this.lit = 0
+      const win = this.win
+      this.o.keys(true, this.codes(), win && !win.isDestroyed() ? toScreen(win, win.getBounds()) : undefined)
+      this.send()
+      return
+    }
     this.o.keys(false)
     this.lit = index
     this.fired = index
     this.send()
+    const list = this.list
     this.firing = setTimeout(() => {
       this.closed()
-      this.o.run(item.id)
+      if (list) list.run(index)
+      else this.o.run(item.id)
     }, FIRE_MS)
   }
 
@@ -171,7 +197,8 @@ export class TytsMenu {
   private send(): void {
     if (!this.win || this.win.isDestroyed() || !this.ready) return
     const view: MenuView = {
-      groups: this.groups.map(group => group.map(item => ({ letter: item.letter, label: t(`menu.${item.id}`) }))),
+      groups: this.groups.map(group => group.map(item => ({ letter: item.letter, label: item.label ?? t(`menu.${item.id}`) }))),
+      ...(this.list ? { foot: this.list.foot } : {}),
       lit: this.lit,
       fired: this.fired,
     }
@@ -187,7 +214,7 @@ export class TytsMenu {
     win.setBounds(bounds)
     if (!win.isVisible()) win.showInactive()
     putOnTop(handleOf(win))
-    if (!this.firing) this.o.keys(true, this.codes(), screen.dipToScreenRect(win, win.getBounds()))
+    if (!this.firing) this.o.keys(true, this.codes(), toScreen(win, win.getBounds()))
   }
 
   private window(): BrowserWindow {

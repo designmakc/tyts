@@ -36,8 +36,9 @@ import * as path from 'node:path'
 
 import { execFile, execFileSync, spawn } from 'node:child_process'
 
-import { app, BrowserWindow, clipboard, desktopCapturer, dialog, globalShortcut, ipcMain, nativeImage, nativeTheme, Notification, powerMonitor, screen, session, shell, systemPreferences, Tray, type Rectangle } from 'electron'
+import { app, BrowserWindow, clipboard, desktopCapturer, dialog, globalShortcut, ipcMain, nativeImage, nativeTheme, Notification, powerMonitor, powerSaveBlocker, screen, session, shell, systemPreferences, Tray, type Rectangle } from 'electron'
 
+import { Awake } from './awake'
 import { backupSummary, makeBackup, readBackup, type BackupRead } from './backup'
 import { callAllowed, messageAllowed, openable, pageOf, patchAllowed, type Page } from './bridge'
 import { callApp, callTitle, runningProcessNames } from './callapps'
@@ -55,6 +56,7 @@ import { ClipboardGuard } from './clipguard'
 import { Dictation } from './dictation'
 import { createDuck, type Duck } from './duck'
 import { DictationLog } from './dictationlog'
+import { EDGE_TICK_MS, EdgeWatch, panelPlace } from './edgepanel'
 import { DOWNLOADABLE, DictionaryStore } from './dictstore'
 import { fetchPinned, openStream } from './download'
 import { findUpdate } from './update'
@@ -82,19 +84,22 @@ import { recognize, recognizeMac } from './ocr'
 import { pickLines } from './ocrpick'
 import { adoptLocalFolder, adoptOldFolders, freeFolder, hasToMove, healSpeech, leftIn, moveDownloads, OLD_LOCAL_FOLDERS, partDir, removeOldUpdaterCaches, type LeftPart, type Warn } from './oldfolder'
 import { paragraphsOf } from './ocrtext'
-import { menuGroups, type MenuAction } from './menu'
+import { clipGroups, menuGroups, rewriteGroups, type BarAction, type MenuAction } from './menu'
+import { createRewriter, REWRITE_MOST_CHARS, type Rewriter, type RewriteStyle } from './rewrite'
 import { TytsMenu } from './menuwindow'
+import { SelectionBar, type BarSelection } from './barwindow'
 import { placeByTray, placeNear, resize, type Point } from './placement'
-import type { AppTab, AppView, BusyPart, CardKind, CardState, CheckResult, DictationMode, DictionaryStatus, GlossMissing, HostCall, HostVoice, Refused, StorageId, StoragePart, StorageView, TalkWindowView, TextResult, ToHost, ToView, TranslationState, TrayCommand, TrayView, ViewConfig } from './protocol'
+import type { AppTab, AppView, BusyPart, EdgeView, CardKind, CardState, CheckResult, DictationMode, DictionaryStatus, GlossMissing, HostCall, HostVoice, Refused, StorageId, StoragePart, StorageView, TalkWindowView, TextResult, ToHost, ToView, TranslationState, TrayCommand, TrayView, ViewConfig } from './protocol'
 import { draftsIn, englishHtml, textOutHtml, translationHtml } from './render'
 import { issueUrl, mailUrl, makeReport, namesHere, reportName, type ReportFacts } from './report'
 import { addKept, CARD_WIDTH, DEFAULTS, keptForm, LEVEL_NAMES, myLanguages, normalize, SUMMARY_OWN_MAX, TARGET, type LlmModel, type Settings, type TranslationLevel } from './settings'
 import { Speaker, listHostVoices } from './speech'
 import { SpeechHost } from './speechhost'
-import { MODELS as SPEECH_MODELS } from './speechplan'
+import { minutes as minutesText, MODELS as SPEECH_MODELS } from './speechplan'
 import { SPEECH_PORT } from './speechservice'
 import { recommendedModels } from './setup'
 import { cleanable, markAway, measureParts, partPackages, speechModelDir, splitSpeech, withUse, type Place, type UseContext } from './storage'
+import { leftoverPackages } from './speechpack'
 import { NaturalSpeaker } from './synth'
 import { system32 } from './system32'
 import { Talk } from './talk'
@@ -116,13 +121,14 @@ import {
   type Translate,
 } from './translate'
 import { TranslationLog } from './translationlog'
+import { ClipHistory, PINS_MOST, clipLine } from './cliphistory'
 import type { Translator } from './translator'
 import manifest from './voice-manifest.json'
 import { vocabularyFor } from './vocabulary'
 import { VoiceStore, type VoiceManifest } from './voicestore'
 import { wordDiff } from './worddiff'
-import { focus, focusedElement, release, saysNothingSelected, selectedText } from './uia'
-import { allowForeground, ctrlHeld, handleOf, inFront, keysLetGo, pressCopy, pressPaste, pressSelectBack, watchClipboard, watchRendering } from './winclip'
+import { focus, focusedElement, focusedIsPassword, release, saysNothingSelected, selectedText } from './uia'
+import { allowForeground, ctrlHeld, handleOf, inFront, keysLetGo, macConcealed, pressCopy, pressPaste, pressSelectBack, watchClipboard, watchRendering } from './winclip'
 import {
   privateCopy,
   readers as clipboardReaders,
@@ -175,7 +181,7 @@ const TRAY_REOPEN_MS = 300
 /** Ctrl+C pressed twice, a key of an action on the selection (settings.ts COPY_TWICE_KEYS), as a card's header draws it too. */
 const DOUBLE_COPY = COPY_TWICE
 /** The settings that are keys of actions. */
-const ACTION_KEYS: readonly (keyof Settings)[] = ['menuKey', 'selectKey', 'snipKey', 'translateKey', 'textKey', 'inPlaceKey', 'checkKey', 'typeKey', 'typeCheckKey', 'switchKey', 'fixKey', 'pauseKey', 'windowKey']
+const ACTION_KEYS: readonly (keyof Settings)[] = ['menuKey', 'clipboardKey', 'selectKey', 'snipKey', 'translateKey', 'textKey', 'inPlaceKey', 'checkKey', 'typeKey', 'typeCheckKey', 'switchKey', 'fixKey', 'pauseKey', 'windowKey']
 /** The settings the keyboard thread is given (besides the keys). */
 const KEYBOARD_SETTINGS: readonly (keyof Settings)[] = [
   'layouts',
@@ -197,6 +203,7 @@ const KEYBOARD_SETTINGS: readonly (keyof Settings)[] = [
   'layoutBadge',
   'trayLayout',
   'quietFullScreen',
+  'selectionBar',
   'paused',
 ]
 /** The links the About tab may open. */
@@ -207,16 +214,8 @@ const LINKS = new Set([
   'https://github.com/designmakc/tyts/releases',
   'https://github.com/designmakc/tyts/blob/main/NOTICE',
   'mailto:designmakc@gmail.com',
-  'https://ikstro.com',
+  // Kryakl, the app Tyts is based on (About).
   'https://github.com/ikstro/kryakl',
-  'https://github.com/ikstro/kryakl/releases',
-  'https://github.com/ikstro/kryakl/blob/main/NOTICE',
-  // The author's own places, and a letter to him (About).
-  'https://github.com/ikstro',
-  'https://linkedin.com/in/ikstro',
-  'https://t.me/ikstrovert',
-  'https://behance.net/ikstro',
-  'mailto:hello@ikstro.com',
   // The steps to the speakers' model: an account, the model's terms, a Read token.
   'https://huggingface.co/join',
   'https://huggingface.co/pyannote/speaker-diarization-community-1',
@@ -294,6 +293,10 @@ let hostVoices: HostVoice[] | undefined
 const copies = new DoubleCopy()
 let appWin: BrowserWindow | undefined
 let appReady = false
+/** The calls window (media/calls.html): the Transcripts page in a window of its own. */
+let callsWin: BrowserWindow | undefined
+let callsReady = false
+let pendingCall: string | undefined
 let quitting = false
 let keysOk = { snip: true, select: true, translate: true, text: true, inPlace: true, check: true, type: true, typeCheck: true, pause: true, window: true }
 let speechKeysOk = { dictate: true, note: true, english: true, again: true, practice: true, talk: true, meeting: true, shot: true }
@@ -308,6 +311,8 @@ let balloonClick: (() => void) | undefined
 let keyboard: KeyboardHelper
 /** The menu on one key, by the text cursor. */
 let oneKeyMenu: TytsMenu | undefined
+/** The bar by a selection (settings.selectionBar). */
+let selectionBar: SelectionBar | undefined
 let keyboardTrouble: string | undefined
 /** On a Mac without Accessibility the keyboard thread sees no key: the dictation keys held to talk go back to Electron's toggle. */
 let keysUnseen = false
@@ -320,10 +325,19 @@ let elevatedApp: string | undefined
 let frontLayout: { layout: string; caps: boolean } | undefined
 let learned: LearnStore
 let translationLog: TranslationLog
+/** The texts copied lately, when the clipboard history is on. */
+let clips: ClipHistory
 let rivals: string[] = []
 let keyboardApps: string[] = []
 let foreignKeys = false
 let trayPanel: BrowserWindow | undefined
+/** The panel at the top of the screen (edgepanel.ts), its page ready, its height as the page asks, its watch on the pointer. */
+let edgeWin: BrowserWindow | undefined
+let edgeReady = false
+let edgeHeight = 150
+let edgeTimer: NodeJS.Timeout | undefined
+let edgeCalls: EdgeView['calls'] = []
+const edgeWatch = new EdgeWatch()
 let trayReady = false
 let trayHeight = 600
 /** The last word fixed by itself, as typed and as fixed, for the tray's "Keep a word as typed…"; kept in memory only. */
@@ -359,8 +373,6 @@ let maximizedFrom: Rectangle | undefined
 let pinnedBefore = false
 /** The tab the app window opens on, once its page is ready. */
 let pendingTab: AppTab | undefined
-/** The transcript it shows then (a note left in Transcripts, from its balloon). */
-let pendingTranscript: string | undefined
 /** The Talk key was pressed before the talk window's page was ready: it listens once it is. */
 let pendingTalk = false
 /** The talk with the duck (talk.ts), the duck's answers (duck.ts), and the talks kept on disk (talks.ts). */
@@ -486,17 +498,19 @@ function saveSettings(patch: Partial<Settings>): void {
   }
   if ('startWithWindows' in patch) applyLoginItem()
   // A key may be Electron's or the keyboard thread's (hotkey.ts isAccelerator): both learn of any change.
-  if ([...ACTION_KEYS, ...DICTATION_KEYS, 'paused', 'dictateHold'].some(k => k in patch)) registerShortcuts()
-  if ([...ACTION_KEYS, ...DICTATION_KEYS, ...KEYBOARD_SETTINGS, 'dictateHold'].some(k => k in patch)) applyKeyboard()
+  if ([...ACTION_KEYS, ...DICTATION_KEYS, 'paused', 'dictateHold', 'clipboardHistory'].some(k => k in patch)) registerShortcuts()
+  if ([...ACTION_KEYS, ...DICTATION_KEYS, ...KEYBOARD_SETTINGS, 'dictateHold', 'clipboardHistory'].some(k => k in patch)) applyKeyboard()
   if ('trayLayout' in patch && !settings.trayLayout) frontLayout = undefined
   // Paused while a phrase is recorded: the phrase is dropped, as Esc would.
   if (patch.paused && settings.paused) dictation?.cancel()
   if ('theme' in patch) applyTheme()
   if (settings.uiLanguage !== wasLanguage) applyUiLanguage()
   // The speech models are chosen from these (speechplan.ts), and the words to spell go with the plan: sent to the engine again.
-  if (speech && (['native', 'speechPrefer', 'dictationModel', 'transcriptsModel', 'speechTestAgreed', 'vocabulary'] as const).some(k => k in patch)) speech.replan()
+  if (speech && (['native', 'speechPrefer', 'dictationModel', 'transcriptsModel', 'speechTestAgreed', 'vocabulary', 'corrections'] as const).some(k => k in patch)) speech.replan()
   if ('talkOnTop' in patch) talkWin?.setAlwaysOnTop(settings.talkOnTop)
   if ('callAuto' in patch) void callAutoChanged()
+  if ('edgePanel' in patch) applyEdge()
+  if (('selectionBar' in patch || 'paused' in patch) && (!settings.selectionBar || settings.paused)) selectionBar?.gone()
   refreshTray()
   if (shown) postCard()
   postApp()
@@ -554,9 +568,17 @@ function applyUiLanguage(): void {
     talkReady = false
     void talkWin.loadFile(media('talk.html'), pageOptions())
   }
+  if (callsWin && !callsWin.isDestroyed()) {
+    callsReady = false
+    void callsWin.loadFile(media('calls.html'), pageOptions())
+  }
   if (trayPanel && !trayPanel.isDestroyed()) {
     trayReady = false
     void trayPanel.loadFile(media('tray.html'), pageOptions())
+  }
+  if (edgeWin && !edgeWin.isDestroyed()) {
+    edgeReady = false
+    void edgeWin.loadFile(media('edge.html'), pageOptions())
   }
   dictation?.languageChanged()
   oneKeyMenu?.languageChanged()
@@ -574,13 +596,15 @@ function applyColors(): void {
     card.setBackgroundColor(cardColor())
     frameWindow(card, { corner: 'round', border: borderColor() })
   }
-  if (appWin && !appWin.isDestroyed()) {
-    appWin.setBackgroundColor(appColor())
-    frameWindow(appWin, { corner: 'default', border: borderColor() })
+  for (const win of [appWin, callsWin]) {
+    if (!win || win.isDestroyed()) continue
+    win.setBackgroundColor(appColor())
+    frameWindow(win, { corner: 'default', border: borderColor() })
   }
-  if (trayPanel && !trayPanel.isDestroyed()) {
-    trayPanel.setBackgroundColor(appColor())
-    frameWindow(trayPanel, { corner: 'round', border: borderColor() })
+  for (const panel of [trayPanel, edgeWin]) {
+    if (!panel || panel.isDestroyed()) continue
+    panel.setBackgroundColor(appColor())
+    frameWindow(panel, { corner: 'round', border: borderColor() })
   }
   if (talkWin && !talkWin.isDestroyed()) {
     talkWin.setBackgroundColor(cardColor())
@@ -1015,7 +1039,7 @@ function post(message: ToView): void {
 }
 
 /** What a text is picked for: the card that reads its English aloud, the translator, its translation pasted over it, or its English checked. */
-type Purpose = 'listen' | 'translate' | 'inPlace' | 'check'
+type Purpose = 'listen' | 'translate' | 'inPlace' | 'check' | 'rewrite'
 
 let languageWordsRead: LanguageWords | undefined
 /** The words that tell a text's language, read once. */
@@ -1104,10 +1128,13 @@ function storagePlaces(): Place[] {
   const fast = downloads('models')
   const dict = downloads('dict')
   const speechDir = localPart('speech')
-  const site = path.join(speechDir, 'env', 'Lib', 'site-packages')
+  const site = onMac ? path.join(speechDir, 'env', 'lib', 'python3.12', 'site-packages') : path.join(speechDir, 'env', 'Lib', 'site-packages')
   const packages = partPackages(namesIn(site))
   const inSite = (names: string[]) => names.map(name => path.join(site, name))
   const voices = path.join(speechDir, 'models', 'diarization')
+  // A Mac's speakers are FluidAudio's models (2026-11-09); pyannote's model and packages left from before are the person's to remove.
+  const macSpeakers = path.join(speechDir, 'models', 'speakers-mac')
+  const engine = ['installed.json', 'env', 'python', 'uv', 'cache', 'pycache'].map(name => path.join(speechDir, name))
   const transcripts = speech?.service.health?.dataDir
   return [
     ...namesIn(fast).map((code): Place => ({ id: 'fast', item: code, path: path.join(fast, code) })),
@@ -1123,9 +1150,17 @@ function storagePlaces(): Place[] {
     ...(['vulkan', 'cuda'] as const).map((kind): Place => ({ id: 'llama', item: kind, path: builds, only: namesIn(builds).filter(name => name.startsWith(`${kind}-`)).map(name => path.join(builds, name)) })),
     ...SPEECH_MODELS.map((m): Place => ({ id: 'speechModel', item: m.name, path: speechModelDir(path.join(speechDir, 'models'), m) })),
     // The engine but its speech models; its two parts are measured on their own and taken out of it (splitSpeech).
-    { id: 'speech', path: speechDir, only: [...['installed.json', 'env', 'python', 'uv', 'cache', 'pycache'].map(name => path.join(speechDir, name)), voices] },
-    { id: 'gpu', path: speechDir, only: inSite(packages.gpu) },
-    { id: 'speakers', path: speechDir, only: [...inSite(packages.speakers), voices] },
+    ...(onMac
+      ? [
+          { id: 'speech' as const, path: speechDir, only: [...engine, macSpeakers, voices] },
+          { id: 'speakers' as const, path: macSpeakers },
+          { id: 'speakersOld' as const, path: speechDir, only: [...leftoverPackages(site), voices] },
+        ]
+      : [
+          { id: 'speech' as const, path: speechDir, only: [...engine, voices] },
+          { id: 'gpu' as const, path: speechDir, only: inSite(packages.gpu) },
+          { id: 'speakers' as const, path: speechDir, only: [...inSite(packages.speakers), voices] },
+        ]),
     { id: 'yours', path: userDir() },
     ...(transcripts ? [{ id: 'transcripts' as const, path: transcripts }] : []),
   ]
@@ -1162,7 +1197,7 @@ function measureStorage(): void {
 const remeasure = () => (storage ? measureStorage() : postApp())
 
 /** Kryakl's downloads, which belong in its one folder; the person's own things live elsewhere. */
-const DOWNLOADED: readonly StorageId[] = ['fast', 'dict', 'voice', 'accurate', 'most', 'unused', 'llama', 'speechModel', 'speech', 'gpu', 'speakers']
+const DOWNLOADED: readonly StorageId[] = ['fast', 'dict', 'voice', 'accurate', 'most', 'unused', 'llama', 'speechModel', 'speech', 'gpu', 'speakers', 'speakersOld']
 
 /** What the parts serve now (storage.ts withUse): the settings, the build the model runs on here, the speech plan with its reserve on the other device. */
 function useContext(): UseContext {
@@ -1231,13 +1266,14 @@ async function removeStored(id: StorageId, item?: string): Promise<void> {
     case 'speech':
       await speech.remove()
       registerShortcuts()
-  // A few seconds after start, so the tray and the windows come first.
-  setTimeout(() => void offerUpdate(), 5_000)
       applyKeyboard()
       return
     case 'gpu':
     case 'speakers':
       await speech.removePart(id)
+      return
+    case 'speakersOld':
+      await speech.removeOldSpeakers()
       return
     case 'yours':
     case 'transcripts':
@@ -1348,6 +1384,7 @@ function appView(): AppView {
     ...(elevatedApp ? { elevatedApp } : {}),
     learned: { alwaysFix: [...learned.alwaysFix], myWords: [...learned.myWords] },
     translations: translationLog.list(10),
+    clips: clips.list(),
     rivals,
     keyboardApps,
     foreignKeys,
@@ -1359,7 +1396,13 @@ function appView(): AppView {
 }
 
 function postApp(): void {
-  if (appWin && appReady && !appWin.isDestroyed()) appWin.webContents.send('to-view', { type: 'app', view: appView() } satisfies ToView)
+  const appOpen = appWin && appReady && !appWin.isDestroyed()
+  const callsOpen = callsWin && callsReady && !callsWin.isDestroyed()
+  if (appOpen || callsOpen) {
+    const message = { type: 'app', view: appView() } satisfies ToView
+    if (appOpen) appWin!.webContents.send('to-view', message)
+    if (callsOpen) callsWin!.webContents.send('to-view', message)
+  }
   postTalk()
 }
 
@@ -1429,12 +1472,73 @@ function openApp(tab?: AppTab): void {
   appWin.focus()
 }
 
-/** The app window on one transcript. */
+/** The calls window on one transcript. */
 function openTranscript(id: string): void {
-  openApp('transcripts')
-  if (appReady) appWin?.webContents.send('to-view', { type: 'openTranscript', id } satisfies ToView)
-  else pendingTranscript = id
+  openCalls(id)
 }
+
+// ---------------------------------------------------------------- the calls window
+// The Transcripts page in a window of its own (media/calls.html, webview/calls.ts):
+// every recording on the left, one on the right with its transcript, notes and
+// summary. It sends what the app window sends (bridge.ts `full`). Closing hides it.
+
+function createCallsWindow(): BrowserWindow {
+  const area = screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea
+  const win = new BrowserWindow({
+    width: Math.min(1080, area.width),
+    height: Math.min(720, area.height),
+    minWidth: 640,
+    minHeight: 440,
+    show: false,
+    frame: false,
+    title: t('calls.title'),
+    icon: path.join(app.getAppPath(), 'media', 'icon.png'),
+    backgroundColor: appColor(),
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      sandbox: true,
+      nodeIntegration: false,
+      spellcheck: false,
+    },
+  })
+  frameWindow(win, { corner: 'default', border: borderColor() })
+  win.removeMenu()
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+  win.webContents.on('will-navigate', event => event.preventDefault())
+  const state = () => {
+    if (callsReady && !win.isDestroyed()) win.webContents.send('to-view', { type: 'appWindow', maximized: win.isMaximized() } satisfies ToView)
+  }
+  win.on('maximize', state)
+  win.on('unmaximize', state)
+  logPageErrors(win, 'calls window')
+  win.on('close', event => {
+    if (quitting) return
+    event.preventDefault()
+    win.hide()
+  })
+  win.on('closed', () => {
+    callsWin = undefined
+    callsReady = false
+  })
+  void win.loadFile(path.join(app.getAppPath(), 'media', 'calls.html'), pageOptions())
+  return win
+}
+
+/** Shows the calls window, on one recording when `id` is given. */
+function openCalls(id?: string): void {
+  if (!callsWin || callsWin.isDestroyed()) callsWin = createCallsWindow()
+  if (id) {
+    if (callsReady) callsWin.webContents.send('to-view', { type: 'openTranscript', id } satisfies ToView)
+    else pendingCall = id
+  }
+  if (callsWin.isMinimized()) callsWin.restore()
+  callsWin.show()
+  callsWin.focus()
+}
+
+/** The window a dialog belongs to: the one in front (the calls window or the app window). */
+const dialogOwner = () => BrowserWindow.getFocusedWindow() ?? appWin
 
 function postCard(): void {
   if (!shown) return
@@ -1571,6 +1675,7 @@ function setCardHeight(px: number): void {
 function onMessage(message: ToHost, page: Page): void {
   if (dictation?.onMessage(message)) return
   if (oneKeyMenu?.onMessage(message)) return
+  if (selectionBar?.onMessage(message)) return
   const asker: VoicePage = page === 'talk' ? 'talk' : 'card'
   switch (message.type) {
     case 'clearDictation':
@@ -1584,6 +1689,10 @@ function onMessage(message: ToHost, page: Page): void {
       dictationLog.remove(message.at)
       postApp()
       return
+    case 'fixPhrase':
+      dictationLog.update(message.at, message.text)
+      postApp()
+      return
     case 'forgetTranslation':
       translationLog.remove(message.at)
       postApp()
@@ -1591,6 +1700,18 @@ function onMessage(message: ToHost, page: Page): void {
     case 'unlearn':
       learned.remove(message.list, message.word)
       applyKeyboard()
+      postApp()
+      return
+    case 'clipPin':
+      if (!clips.pin(message.at, message.on)) balloon(t('app.name'), t('clips.pinsFull', { n: PINS_MOST }))
+      postApp()
+      return
+    case 'clipForget':
+      clips.remove(message.at)
+      postApp()
+      return
+    case 'clipsClear':
+      clips.clear()
       postApp()
       return
     case 'forgetLearned':
@@ -1764,6 +1885,14 @@ function onMessage(message: ToHost, page: Page): void {
       unsaveWord(message.word)
       return
     case 'appReady':
+      if (page === 'calls') {
+        callsReady = true
+        postApp()
+        callsWin?.webContents.send('to-view', { type: 'appWindow', maximized: callsWin.isMaximized() } satisfies ToView)
+        if (pendingCall) callsWin?.webContents.send('to-view', { type: 'openTranscript', id: pendingCall } satisfies ToView)
+        pendingCall = undefined
+        return
+      }
       appReady = true
       // A page loaded afresh records nothing.
       if (micRecording) {
@@ -1773,9 +1902,7 @@ function onMessage(message: ToHost, page: Page): void {
       postApp()
       postAppWindow()
       if (pendingTab) appWin?.webContents.send('to-view', { type: 'appTab', tab: pendingTab } satisfies ToView)
-      if (pendingTranscript) appWin?.webContents.send('to-view', { type: 'openTranscript', id: pendingTranscript } satisfies ToView)
       pendingTab = undefined
-      pendingTranscript = undefined
       return
     case 'saveSettings':
       saveSettings(message.patch)
@@ -1812,15 +1939,18 @@ function onMessage(message: ToHost, page: Page): void {
         console.warn('Tyts: the keyboard thread could not read the keys for a key field', error)
       }
       return
-    case 'window':
-      if (message.action === 'minimize') appWin?.minimize()
+    case 'window': {
+      const win = page === 'calls' ? callsWin : appWin
+      if (message.action === 'minimize') win?.minimize()
       else if (message.action === 'maximize') {
-        if (appWin?.isMaximized()) appWin.unmaximize()
-        else appWin?.maximize()
-      } else appWin?.hide()
+        if (win?.isMaximized()) win.unmaximize()
+        else win?.maximize()
+      } else win?.hide()
       return
+    }
     case 'micRecording':
       micRecording = message.on
+      if (micRecording) selectionBar?.gone()
       refreshTray()
       return
     case 'captureState':
@@ -1828,6 +1958,10 @@ function onMessage(message: ToHost, page: Page): void {
     case 'captureHide':
     case 'captureOpenSettings':
       capture?.message(message)
+      return
+    case 'captureCopyPhrase':
+      // Copied because the person asked, to paste into the call's chat: a plain copy, as the card's Copy.
+      clipboard.writeText(t('call.phrase'))
       return
     case 'toggleCall':
       toggleCall()
@@ -1901,6 +2035,25 @@ function onMessage(message: ToHost, page: Page): void {
       trayReady = true
       refreshTray()
       return
+    case 'edgeReady':
+      edgeReady = true
+      postEdge()
+      return
+    case 'edgeHeight':
+      edgeHeight = Math.ceil(message.px)
+      if (edgeWin?.isVisible()) edgeWin.setBounds({ ...edgeWin.getBounds(), height: edgeHeight })
+      return
+    case 'edgeAct':
+      hideEdge()
+      if (message.act === 'dictate') dictation.press('type', settings.dictateKey)
+      else if (message.act === 'again') dictation.typeAgain()
+      else if (message.act === 'openCall') openCalls(message.id)
+      else if (message.act === 'setup') openApp('recordings')
+      else {
+        const entry = dictationLog.list().find(e => e.at === message.at)
+        if (entry) void typeText(`${entry.text} `).catch(error => console.warn('Tyts: could not type the phrase', error))
+      }
+      return
     case 'trayHeight':
       trayHeight = Math.ceil(message.px)
       if (trayPanel?.isVisible()) placeTrayPanel()
@@ -1917,7 +2070,9 @@ function onMessage(message: ToHost, page: Page): void {
       return
     }
     case 'tray':
-      hideTrayPanel()
+      hideEdge()
+      // Keeping awake is a switch: the panel stays, as for Pause.
+      if (message.command !== 'awake') hideTrayPanel()
       runTrayCommand(message.command)
       return
   }
@@ -2408,6 +2563,7 @@ let checker: Checker
 let summarizer: ReturnType<typeof createSummarizer>
 let asker: ReturnType<typeof createAsker>
 let editor: Editor
+let rewriter: Rewriter
 let mistakes: MistakeStore
 
 /** The latest check asked of a check card: an older one, still running, is not shown. */
@@ -2639,6 +2795,7 @@ function showText(text: string, purpose: Purpose, at: Point, window?: bigint, vi
   if (purpose === 'translate') return translateWindow(text, at, window, via, field)
   if (purpose === 'check') return checkWindow(text, at, window, via, field)
   releaseField(field)
+  if (purpose === 'rewrite') return void rewriteSelection(text, rewriteStyle, at, window, via)
   if (purpose === 'inPlace' && window) void translateInPlace(text, at, window, via)
   else translateText(text, 'selection', at, via)
 }
@@ -2735,10 +2892,11 @@ function watchModel(): void {
  * (the level's model, Check's always) and once its files are here.
  */
 function warmModel(purpose: Purpose): void {
-  const model = purpose === 'check' ? settings.model : settings.translationLevel
+  const own = purpose === 'check' || purpose === 'rewrite'
+  const model = own ? settings.model : settings.translationLevel
   if (model === 'fast' || llmFiles.state(model).status !== 'ready') return
-  // Check my English always uses the model.
-  if (purpose === 'check') return llmFiles.server.warm(llmFiles.target(model))
+  // Check my English and Rewrite always use the model.
+  if (own) return llmFiles.server.warm(llmFiles.target(model))
   warmWhole(model)
 }
 
@@ -2778,6 +2936,57 @@ async function editPhrase(text: string, stop: AbortSignal): Promise<{ text: stri
     log(`edit: ${style}, gave up after ${((Date.now() - began) / 1000).toFixed(1)} s: ${error instanceof Error ? error.name : 'failed'}`)
     return { text, note: t('dict.editSlow') }
   }
+}
+
+/** What the menu's Rewrite… item was asked to do with the selection being copied. */
+let rewriteStyle: RewriteStyle = 'shorten'
+
+/** How long a selection waits for its rewrite, the model's load included: then it stays as it was. A selection may be a paragraph, so longer than a phrase's. */
+const REWRITE_WAIT_MS = { card: 15_000, processor: 45_000 }
+
+/** How long the badge says what a rewrite did, or why it did not. */
+const REWRITE_SAY_MS = 3500
+
+/**
+ * Rewrite… (rewrite.ts): the selection shortened, made more polite, formal or
+ * natural English and pasted over it, or explained in the card. The selection
+ * is never lost: no model, a busy model, a slow or odd answer leave it as it
+ * was and the badge says why; no window to paste into (a Mac, or the person
+ * went elsewhere meanwhile) shows the rewrite in the card. Never a word of the
+ * text in the log.
+ */
+async function rewriteSelection(text: string, style: RewriteStyle, at: Point, window: bigint | undefined, via?: string): Promise<void> {
+  const say = (key: Parameters<typeof t>[0]) => keyboard.say(t(key), REWRITE_SAY_MS)
+  const model = settings.model
+  if (llmFiles.state(model).status !== 'ready') return say('rewrite.noModel')
+  if (text.length > REWRITE_MOST_CHARS) return say('rewrite.tooLong')
+  const busy = busyFor(model) ?? ((await cardFull(model).catch(() => undefined)) ? 'card' : undefined)
+  if (busy) return say(busy === 'card' ? 'rewrite.card' : 'rewrite.processor')
+  const explain = style === 'explain'
+  const id = explain ? openCard('explain', { status: 'explain', text, answer: '' }, at, via) : undefined
+  if (!explain) keyboard.say('…', REWRITE_WAIT_MS.processor)
+  const wait = REWRITE_WAIT_MS[translationAdvice(speech?.profile)[model].where === 'card' ? 'card' : 'processor']
+  const began = Date.now()
+  const secs = () => ((Date.now() - began) / 1000).toFixed(1)
+  let out: { text: string; doubt: string }
+  try {
+    out = await rewriter.rewrite(text, style, settings.uiLanguage, AbortSignal.timeout(wait))
+  } catch (error) {
+    log(`rewrite: ${style}, gave up after ${secs()} s: ${error instanceof Error ? error.name : 'failed'}`)
+    if (id !== undefined) return setState(id, { status: 'explain', text, answer: t('rewrite.explainSlow'), failed: true })
+    return say('rewrite.slow')
+  }
+  log(`rewrite: ${style}, ${secs()} s${out.doubt ? `, left as it was (${out.doubt})` : ''}`)
+  if (id !== undefined) return setState(id, out.doubt ? { status: 'explain', text, answer: t('rewrite.explainDoubt'), failed: true } : { status: 'explain', text, answer: out.text })
+  if (out.doubt) return say(out.doubt === 'same' ? 'rewrite.same' : 'rewrite.doubt')
+  if (!window || foreground().hwnd !== window) {
+    keyboard.say('')
+    openCard('rewrite', { status: 'explain', text, answer: out.text }, at, via)
+    return
+  }
+  await keysLetGo()
+  await pasteInto(window, undefined, out.text)
+  say('rewrite.done')
 }
 
 /**
@@ -2881,6 +3090,7 @@ function onClipboardChange(): void {
       // A copy without a picture is the person's own: the snip is not coming.
       if (!png) {
         endSnip()
+        rememberCopy()
         return doubleCopyChange(now, ctrl)
       }
       snipSince = 0
@@ -2891,7 +3101,41 @@ function onClipboardChange(): void {
     })
     return
   }
+  rememberCopy()
   doubleCopyChange(now, ctrl)
+}
+
+/** A password manager's copy, marked for others to leave alone: on Windows its "do not watch" formats, on a Mac nspasteboard.org's concealed and transient types. */
+function concealedCopy(): boolean {
+  return onMac ? macConcealed() : privateCopy()
+}
+
+/** The person copied something: its text kept in the clipboard history when that is on; never a password manager's copy, nor while Kryakl borrows the clipboard. */
+function rememberCopy(): void {
+  if (!settings.clipboardHistory || settings.paused || concealedCopy()) return
+  afterSettling(async () => {
+    if (clipboardBusy || concealedCopy()) return
+    if (clips.add(await clipboard.readText())) postApp()
+  })
+}
+
+/** The clips the list by the cursor shows at most: the pinned (10 at most), then the newest. */
+const CLIPS_SHOWN = 15
+
+/** The clipboard history's key, or its item in the menu: the list by the text cursor, pressed again it goes; a clip picked is pasted where the keyboard is, the clipboard put back after. */
+function openClips(): void {
+  if (!settings.clipboardHistory) return
+  if (oneKeyMenu?.isOpen) return oneKeyMenu.close()
+  const list = clips.list().slice(0, CLIPS_SHOWN)
+  if (list.length === 0) return keyboard.say(t('clips.nothing'), NOTHING_SAY_MS)
+  oneKeyMenu?.toggle({
+    groups: clipGroups(list, clipLine),
+    foot: t('clips.foot'),
+    run: index => {
+      const clip = list[index]
+      if (clip) typeText(clip.text).catch(error => console.warn('Tyts: could not paste the clip', error))
+    },
+  })
 }
 
 /** The action on the selection whose key is Ctrl+C twice, if one has it (one at most: the settings keep a key for one use). */
@@ -2954,9 +3198,12 @@ function macOwnWrites(ms: number): void {
   ownClipboardUntil = Math.max(ownClipboardUntil, Date.now() + ms + OWN_CLIPBOARD_MS)
 }
 
+/** The physical keys of Cmd+C and Cmd+V (ANSI C and V). By key code, as `keystroke "c"` types nothing while a layout without Latin letters (Ukrainian, Russian) is on. */
+const MAC_KEY_CODES = { c: 8, v: 9 } as const
+
 /** A Cmd+letter sent to the program in front through System Events. */
-function macKeystroke(letter: string): Promise<void> {
-  return new Promise(resolve => execFile('osascript', ['-e', `tell application "System Events" to keystroke "${letter}" using command down`], () => resolve()))
+function macKeystroke(letter: keyof typeof MAC_KEY_CODES): Promise<void> {
+  return new Promise(resolve => execFile('osascript', ['-e', `tell application "System Events" to key code ${MAC_KEY_CODES[letter]} using command down`], () => resolve()))
 }
 
 /** How long the badge says there is nothing selected. */
@@ -2994,7 +3241,62 @@ function runMenu(action: MenuAction): void {
       return dictation.press('english', via)
     case 'fix':
       return keyboard.fixNow()
+    case 'awake':
+      toggleAwake()
+      return keyboard.say(awake.on ? t('menu.awakeOn', { time: awakeLeft() || t('tray.awakeUntilOff') }) : t('menu.awakeOff'), NOTHING_SAY_MS)
+    case 'clipboard':
+      return openClips()
+    case 'rewrite':
+      // Its own list, opened by the menu itself (menuwindow.ts sub).
+      return
+    default:
+      rewriteStyle = action
+      return selection('rewrite', via, () => keyboard.say(t('menu.nothingToRewrite'), NOTHING_SAY_MS))
   }
+}
+
+/**
+ * Whether the program in front has a selection, for the bar by a selection: a Mac asks Accessibility through the
+ * keyboard helper (where it starts too), Windows UI Automation (the mouse then). Never the clipboard;
+ * a password field, or a program that will not say, has none. Only the length is ever looked at, and not logged.
+ */
+async function barSelection(): Promise<BarSelection> {
+  if (onMac) {
+    const sel = await keyboard.macSelection()
+    return { ok: sel.ok && !sel.secret, ...(sel.at ? { at: sel.at } : {}) }
+  }
+  try {
+    if (focusedIsPassword() !== false) return { ok: false }
+  } catch {
+    return { ok: false }
+  }
+  const field = focusedField()
+  const ok = selectionIn(field).length > 0
+  releaseField(field)
+  return { ok }
+}
+
+/** A button of the bar by a selection: the menu's own handlers; Copy; the program left out (its rule's `bar` part); the setting's page. */
+function runBar(action: BarAction): void {
+  if (action === 'copy') return copySelection()
+  if (action === 'settings') return openApp('settings')
+  if (action === 'notHere') {
+    const exe = lastApp
+    if (!exe) return
+    const rule = settings.apps.find(a => a.exe === exe)
+    const apps = rule
+      ? settings.apps.map(a => (a.exe === exe && !a.off.includes('bar') ? { ...a, off: [...a.off, 'bar' as const] } : a))
+      : [...settings.apps, { exe, off: ['bar' as const], layout: '' }]
+    log(`bar: left out of ${exe}`)
+    return saveSettings({ apps })
+  }
+  runMenu(action)
+}
+
+/** The bar's Copy: the program's own copy of its selection, as the person's Ctrl+C (Cmd+C) would. */
+function copySelection(): void {
+  if (onMac) return void macKeystroke('c')
+  void pressCopy().catch(error => console.warn('Tyts: could not copy the selection', error))
 }
 
 /** The pause key: Kryakl paused, or back. */
@@ -3035,6 +3337,8 @@ function registerShortcuts(): void {
     pause: register(settings.pauseKey, togglePause),
     window: register(settings.windowKey, () => openApp()),
   }
+  // ponytail: not counted among the keys "taken" by another program; add it to keysOk if people hit that
+  if (settings.clipboardHistory) register(settings.clipboardKey, openClips)
   if (onMac) {
     // The menu key is the keyboard thread's on Windows; a Mac has none.
     register(settings.menuKey, menuPressed)
@@ -3308,7 +3612,7 @@ export async function startCall(auto?: { app: string; title: string | null }): P
   // Without the microphone the others are still recorded (the panel says so).
   if (onMac) await systemPreferences.askForMediaAccess('microphone').catch(() => false)
   const known = auto?.app ?? callApp(await runningProcessNames())
-  capture.start(auto?.title ?? callTitle(known, new Date()), known ?? undefined, !!auto, settings.callShots)
+  capture.start(auto?.title ?? callTitle(known, new Date()), known ?? undefined, !!auto, settings.callShots, settings.callLive)
 }
 
 // ---------------------------------------------------------------- a call that starts by itself
@@ -3568,6 +3872,7 @@ function trayView(): TrayView {
     },
     speech: { installed: speech?.installed ?? false, recording: dictation?.state === 'recording', noteKey: settings.noteKey },
     call: capture?.busy ?? false,
+    awake: { on: awake.on, left: awakeLeft() },
     translator: activeTranslator().state(langCode(settings.native)).status,
     native: settings.native,
     version: app.getVersion(),
@@ -3583,9 +3888,114 @@ function refreshTray(): void {
   sendTrayView()
 }
 
-/** The tray's panel drawn again, the icon left as it is. */
+/** The tray's panel drawn again, the icon left as it is; the panel at the top of the screen too, while it shows. */
 function sendTrayView(): void {
   if (trayPanel && trayReady && !trayPanel.isDestroyed()) trayPanel.webContents.send('to-view', { type: 'tray', view: trayView() } satisfies ToView)
+  postEdge()
+}
+
+// ---------------------------------------------------------------- the panel at the top of the screen
+// Shown when the pointer rests at the top middle of a screen (edgepanel.ts), while
+// settings.edgePanel is on: the pointer's place is asked every EDGE_TICK_MS, nothing
+// else runs. The panel never takes the focus (`focusable: false`), so dictation and
+// a phrase pasted from it go into the program the person was in.
+
+/** What the panel shows (protocol.ts EdgeView). */
+function edgeView(): EdgeView {
+  return {
+    problem: settings.paused ? 'paused' : speech?.installed ? '' : 'noEngine',
+    speech: speech?.installed ?? false,
+    dictating: dictation?.state === 'recording',
+    call: capture?.busy ?? false,
+    keys: { dictate: settings.dictateKey, again: settings.againKey, call: settings.meetingKey, fix: settings.fixKey },
+    autoFix: settings.autoFix,
+    switchOn: settings.switchOn,
+    layoutBadge: settings.layoutBadge,
+    recent: dictationLog.list(3).map(e => ({ at: e.at, text: e.text })),
+    calls: edgeCalls,
+  }
+}
+
+function postEdge(): void {
+  if (edgeWin && edgeReady && !edgeWin.isDestroyed() && edgeWin.isVisible()) edgeWin.webContents.send('to-view', { type: 'edge', view: edgeView() } satisfies ToView)
+}
+
+/** The setting turned on or off: the pointer is watched, or no more. */
+function applyEdge(): void {
+  clearInterval(edgeTimer)
+  edgeTimer = undefined
+  if (settings.edgePanel) edgeTimer = setInterval(edgeTick, EDGE_TICK_MS)
+  else hideEdge()
+}
+
+function edgeTick(): void {
+  const point = screen.getCursorScreenPoint()
+  const display = screen.getDisplayNearestPoint(point)
+  const panel = edgeWin && !edgeWin.isDestroyed() && edgeWin.isVisible() ? edgeWin.getBounds() : undefined
+  // Only asked at the very top: on Windows it reads the window in front.
+  // ponytail: on a Mac a full-screen program is a screen without a menu bar; one whose menu bar hides by itself gets no panel either.
+  const fullScreen = !panel && point.y <= display.bounds.y + 2 && (process.platform === 'win32' ? fullScreenNow() : display.workArea.y === display.bounds.y)
+  const step = edgeWatch.step({ now: Date.now(), point, screen: display.bounds, fullScreen, panel })
+  if (step === 'show') showEdge(display.workArea)
+  else if (step === 'hide') hideEdge()
+}
+
+function createEdgeWindow(): BrowserWindow {
+  const win = new BrowserWindow({
+    width: 480,
+    height: edgeHeight,
+    show: false,
+    frame: false,
+    resizable: false,
+    movable: false,
+    minimizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    skipTaskbar: true,
+    focusable: false,
+    alwaysOnTop: true,
+    title: t('app.name'),
+    backgroundColor: appColor(),
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      sandbox: true,
+      nodeIntegration: false,
+      spellcheck: false,
+      backgroundThrottling: false,
+    },
+  })
+  frameWindow(win, { corner: 'round', border: borderColor() })
+  win.setAlwaysOnTop(true, 'pop-up-menu')
+  win.removeMenu()
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+  win.webContents.on('will-navigate', event => event.preventDefault())
+  logPageErrors(win, 'edge panel')
+  win.on('closed', () => {
+    edgeWin = undefined
+    edgeReady = false
+  })
+  void win.loadFile(path.join(app.getAppPath(), 'media', 'edge.html'), pageOptions())
+  return win
+}
+
+/** Under the top of `work` (a Mac's menu bar), centred; the last calls are asked for as it opens. */
+function showEdge(work: Rectangle): void {
+  if (!edgeWin || edgeWin.isDestroyed()) edgeWin = createEdgeWindow()
+  edgeWin.setBounds(panelPlace(work, { width: 480, height: edgeHeight }))
+  edgeWin.showInactive()
+  postEdge()
+  if (speech?.ready) {
+    void speech.call<{ id: string; title: string; created: string; duration: number; source: string }[]>('GET', '/transcripts').then(r => {
+      if (!r.ok) return
+      edgeCalls = r.data.filter(row => row.source === 'system' || row.source === 'meet').slice(0, 3).map(({ id, title, created, duration }) => ({ id, title, created, duration }))
+      postEdge()
+    })
+  }
+}
+
+function hideEdge(): void {
+  if (edgeWin && !edgeWin.isDestroyed() && edgeWin.isVisible()) edgeWin.hide()
 }
 
 /** The middle of the tray icon; Windows gives no place for one kept among the hidden icons: the corner of the screen by them. */
@@ -3678,7 +4088,7 @@ function tooltip(): string {
   if (settings.paused) return t('tray.tipPaused')
   const listen = settings.selectKey ? t('tray.tipListen', { keys: keyLabel(settings.selectKey) }) : ''
   const translate = settings.translateKey ? t('tray.tipTranslate', { key: keyLabel(settings.translateKey) }) : ''
-  return [t('app.name'), listen, translate].filter(Boolean).join(' · ')
+  return [t('app.name'), awake.on ? t('tray.tipAwake') : '', listen, translate].filter(Boolean).join(' · ')
 }
 
 /** The tray's pictures (scripts/icons.mjs): the duck for a light or a dark taskbar, faded while paused, and the red dot while recording. */
@@ -3818,7 +4228,10 @@ function runTrayCommand(command: TrayCommand): void {
       toggleCall()
       return
     case 'transcripts':
-      openApp('transcripts')
+      openCalls()
+      return
+    case 'transcribe':
+      openApp('recordings')
       return
     case 'vocabulary':
       openApp('vocabulary')
@@ -3838,13 +4251,32 @@ function runTrayCommand(command: TrayCommand): void {
     case 'quit':
       app.quit()
       return
+    case 'awake':
+      toggleAwake()
+      return
   }
+}
+
+/** Keep the computer awake (awake.ts), for this run only: from the tray's switch and the menu on one key. */
+const awake = new Awake(powerSaveBlocker, () => refreshTray())
+
+/** On for the hours chosen in Settings, or off. */
+function toggleAwake(): void {
+  if (awake.on) awake.stop()
+  else awake.start(settings.awakeHours, settings.awakeScreen)
+  log(`awake: ${awake.on ? `on, ${settings.awakeHours || 'until turned off'} h, screen ${settings.awakeScreen ? 'on' : 'may turn off'}` : 'off'}`)
+}
+
+/** How long it stays awake still, as the tray says it: empty until turned off. */
+function awakeLeft(): string {
+  const left = awake.left()
+  return left === null ? '' : minutesText(left)
 }
 
 /**
  * For a mouse button or a launcher: `Kryakl --clipboard` listens to the
  * copied text and `--translate` translates it; `--snip` snips to listen,
- * `--text` to translate. True when the arguments held one.
+ * `--text` to translate; `--calls` opens the calls window. True when the arguments held one.
  */
 function runCommand(argv: readonly string[]): boolean {
   if (argv.includes('--clipboard')) {
@@ -3861,6 +4293,11 @@ function runCommand(argv: readonly string[]): boolean {
   }
   if (argv.includes('--text')) {
     snip('translate')
+    return true
+  }
+  // A launcher's (or a Dock menu's) way to the calls window.
+  if (argv.includes('--calls')) {
+    openCalls()
     return true
   }
   // Started again by Move to Kryakl: back on the Storage page, measured anew.
@@ -3894,6 +4331,7 @@ function setUpSpeechEngine(): void {
     root: localPart('speech'),
     userDir: userDir(),
     engineDir: unpacked('engine'),
+    ...(onMac ? { speakersHelper: unpacked('vendor', 'speakers-mac') } : {}),
     sharedCache: sharedUvCache(),
     port: speechPort,
     open: url => openStream(url),
@@ -3918,6 +4356,7 @@ function setUpSpeechEngine(): void {
     },
     edit: editPhrase,
     editing: () => settings.dictateEdit,
+    corrections: () => settings.corrections,
     warm: () => {
       if (settings.dictateEdit && llmFiles.state(settings.model).status === 'ready') warmWhole(settings.model)
     },
@@ -3930,6 +4369,7 @@ function setUpSpeechEngine(): void {
     openTranscript,
     onChange: () => {
       keyboard?.dictating(dictation.state !== 'idle')
+      if (dictation.state !== 'idle') selectionBar?.gone()
       refreshTray()
     },
     log: dictationLog,
@@ -3944,7 +4384,7 @@ function setUpSpeechEngine(): void {
   // main adds the engine's key to that window's requests to the engine, and to no other window's.
   // Any port: the engine moves to the next free one when its own is taken (speechservice.ts freePort).
   session.defaultSession.webRequest.onBeforeSendHeaders({ urls: ['http://127.0.0.1:*/*'] }, (details, done) => {
-    const fromApp = !!appWin && !appWin.isDestroyed() && details.webContentsId === appWin.webContents.id
+    const fromApp = [appWin, callsWin].some(win => !!win && !win.isDestroyed() && details.webContentsId === win.webContents.id)
       && new URL(details.url).port === String(speech.port)
     const key = fromApp ? speech.token : undefined
     done({ requestHeaders: key ? { ...details.requestHeaders, 'X-Tyts-Token': key } : details.requestHeaders })
@@ -3982,7 +4422,8 @@ async function hostCall(request: HostCall): Promise<unknown> {
     }
     case 'pickFolder': {
       const options: Electron.OpenDialogOptions = { title: request.title, defaultPath: request.current || app.getPath('documents'), properties: ['openDirectory', 'createDirectory'] }
-      const { canceled, filePaths } = appWin ? await dialog.showOpenDialog(appWin, options) : await dialog.showOpenDialog(options)
+      const owner = dialogOwner()
+      const { canceled, filePaths } = owner ? await dialog.showOpenDialog(owner, options) : await dialog.showOpenDialog(options)
       return canceled ? null : (filePaths[0] ?? null)
     }
     case 'exportTranscript': {
@@ -3993,7 +4434,8 @@ async function hostCall(request: HostCall): Promise<unknown> {
         defaultPath: path.join(app.getPath('documents'), `${safe}.${request.format}`),
         filters: [{ name: request.format.toUpperCase(), extensions: [request.format] }],
       }
-      const { canceled, filePath } = appWin ? await dialog.showSaveDialog(appWin, options) : await dialog.showSaveDialog(options)
+      const owner = dialogOwner()
+      const { canceled, filePath } = owner ? await dialog.showSaveDialog(owner, options) : await dialog.showSaveDialog(options)
       if (canceled || !filePath) return null
       // The engine gives the bytes; Kryakl writes them where the person chose (the engine writes no file a caller names).
       fs.writeFileSync(filePath, await speech.bytes(`/transcripts/${encodeURIComponent(request.id)}/file?format=${request.format}`))
@@ -4058,6 +4500,7 @@ function start(): void {
   words = new WordStore(path.join(userDir(), 'words.json'))
   dictationLog = new DictationLog(path.join(userDir(), 'dictation.json'))
   translationLog = new TranslationLog(path.join(userDir(), 'translations.json'))
+  clips = new ClipHistory(path.join(userDir(), 'clips.json'))
   learned = new LearnStore(path.join(userDir(), 'learning.json'))
   translator = createTranslator(downloads('models'), unpacked('dist', 'mt-worker.js'), {
     loader: unpacked('vendor', 'bergamot', 'bergamot-translator.js'),
@@ -4076,6 +4519,7 @@ function start(): void {
   summarizer = createSummarizer({ files: llmFiles, model: () => settings.model })
   asker = createAsker({ files: llmFiles, model: () => settings.model })
   editor = createEditor({ files: llmFiles, model: () => settings.model })
+  rewriter = createRewriter({ files: llmFiles, model: () => settings.model })
   mistakes = new MistakeStore(path.join(userDir(), 'mistakes.json'))
   // Talk: the same model checks each line and the duck answers it (talk.ts, duck.ts).
   duck = createDuck({ files: llmFiles, model: () => settings.model, onTimed: modelTimed })
@@ -4100,8 +4544,11 @@ function start(): void {
   setUpSpeechEngine()
   // Made now, so the first click on the tray icon opens it at once.
   trayPanel = createTrayPanel()
+  applyEdge()
   refreshTray()
   registerShortcuts()
+  // A few seconds after start, so the tray and the windows come first.
+  setTimeout(() => void offerUpdate(), 5_000)
   keyboard = new KeyboardHelper(unpacked('dist', 'kbd-worker.js'), path.join(app.getAppPath(), 'media', 'layout'), unpacked('media'), {
     keep: word => {
       learned.kept(word)
@@ -4160,6 +4607,7 @@ function start(): void {
       else if (action === 'text') snip('translate', settings.textKey)
       else if (action === 'window') openApp()
       else if (action === 'menu') menuPressed()
+      else if (action === 'clipboard') openClips()
       else snip('listen', settings.snipKey)
     },
     hotkeyUp: () => dictation.release(),
@@ -4184,6 +4632,12 @@ function start(): void {
     },
     menuKey: code => oneKeyMenu?.key(code),
     menuClosed: () => oneKeyMenu?.closed(),
+    // Not while a phrase or a Talk / practice is being recorded: the bar would be in the way of the voice.
+    selected: (_point, start) => {
+      if (settings.selectionBar && !settings.paused && dictation.state === 'idle' && !micRecording) selectionBar?.selected(start)
+    },
+    barClick: point => selectionBar?.click(point),
+    barGone: () => selectionBar?.gone(),
     failed: message => {
       keyboardTrouble = message
       // 'macAccess' (kbdmac-worker.ts) until Accessibility is given; '' once the thread sees keys.
@@ -4229,7 +4683,8 @@ function start(): void {
     query: pageQuery,
     background: cardColor,
     border: borderColor,
-    groups: () => menuGroups(settings.uiLanguage, !!speech?.installed),
+    groups: () => menuGroups(settings.uiLanguage, !!speech?.installed, settings.clipboardHistory),
+    sub: action => (action === 'rewrite' ? rewriteGroups(settings.uiLanguage) : undefined),
     caret: () => {
       const front = foreground()
       return front.tid ? caretOf(front.tid) : undefined
@@ -4237,6 +4692,16 @@ function start(): void {
     keys: (on, codes, rect) => keyboard.menu(on, codes, rect),
     run: runMenu,
     log: win => logPageErrors(win, 'menu'),
+  })
+  selectionBar = new SelectionBar({
+    page: path.join(app.getAppPath(), 'media', 'bar.html'),
+    preload: path.join(__dirname, 'preload.js'),
+    query: pageQuery,
+    program: () => lastApp ?? '',
+    ask: barSelection,
+    keys: (on, rect) => keyboard.bar(on, rect),
+    run: runBar,
+    log: win => logPageErrors(win, 'bar'),
   })
   applyKeyboard()
   card = createCard()

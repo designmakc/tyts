@@ -4,6 +4,9 @@
 
 import type { SummaryInput, SummaryLine } from './summary'
 
+/** The person's notes a summary reads, at most: every part is that much shorter. */
+export const NOTES_CHARS = 2000
+
 /** The transcript as the engine stores it, the parts a summary reads. */
 export interface SummarySource {
   title: string
@@ -12,13 +15,16 @@ export interface SummarySource {
   lost?: number
   speakers: Record<string, { name: string }>
   utterances: { speaker: string; start: number; text: string }[]
+  /** The person's own notes on it (the calls window's Notes). */
+  notes?: string
 }
 
 export function summaryInput(tr: SummarySource): SummaryInput {
   const lines: SummaryLine[] = tr.utterances
     .filter(u => u.text.trim())
     .map(u => ({ speaker: tr.speakers[u.speaker]?.name ?? u.speaker, start: u.start, text: u.text.trim() }))
-  return { title: tr.title, lines, duration: tr.duration, language: tr.language || null, ...(tr.lost ? { lost: tr.lost } : {}) }
+  const notes = tr.notes?.trim().slice(0, NOTES_CHARS)
+  return { title: tr.title, lines, duration: tr.duration, language: tr.language || null, ...(tr.lost ? { lost: tr.lost } : {}), ...(notes ? { notes } : {}) }
 }
 
 /** Seconds left from the parts done so far at their average pace; null until the first part is done, and while the parts are joined. */

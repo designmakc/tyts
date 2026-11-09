@@ -82,7 +82,7 @@ export function speechModelDir(models: string, m: { name: string; backend: strin
  * program's line keeps what is neither the speakers' nor the card's, so nothing is counted twice.
  */
 export function splitSpeech(parts: readonly StoragePart[]): StoragePart[] {
-  const inner = parts.filter(p => p.id === 'gpu' || p.id === 'speakers')
+  const inner = parts.filter(p => p.id === 'gpu' || p.id === 'speakers' || p.id === 'speakersOld')
   const bytes = inner.reduce((n, p) => n + p.bytes, 0)
   const shared = inner.reduce((n, p) => n + p.shared, 0)
   return parts.map(p => (p.id === 'speech' ? { ...p, bytes: Math.max(0, p.bytes - bytes), shared: Math.max(0, p.shared - shared) } : p))
@@ -133,6 +133,9 @@ function usersOf(p: StoragePart, c: UseContext): string[] | undefined {
       return ['Dictate', 'Transcribe']
     case 'speakers':
       return ['Transcribe']
+    // A Mac's pyannote left from before 2026-11-09: nothing uses it, Clean up removes it.
+    case 'speakersOld':
+      return []
     case 'yours':
     case 'transcripts':
       return undefined

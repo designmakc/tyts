@@ -38,7 +38,11 @@ export type MenuOptions = {
   log: (win: BrowserWindow) => void
 }
 
+/** Another list in the same window in place of the actions (the clipboard history): its items, its line at the foot, and what a pick does. */
+export type MenuList = { groups: MenuItem[][]; foot: string; run: (index: number) => void }
+
 export class TytsMenu {
+  private list: MenuList | undefined
   private win: BrowserWindow | undefined
   private ready = false
   private open = false
@@ -56,13 +60,15 @@ export class TytsMenu {
     return this.open
   }
 
-  toggle(): void {
+  /** `list`: that list instead of the actions. */
+  toggle(list?: MenuList): void {
     if (this.open) this.close()
-    else this.show()
+    else this.show(list)
   }
 
   /** Opens by the text cursor, else by the pointer; the keys are taken at once, the window shows as soon as its height is known. */
-  private show(): void {
+  private show(list?: MenuList): void {
+    this.list = list
     const caret = this.o.caret()
     if (caret) {
       const top = screen.screenToDipPoint({ x: caret.x, y: caret.y })
@@ -71,7 +77,7 @@ export class TytsMenu {
       const p = screen.getCursorScreenPoint()
       this.at = { x: p.x, top: p.y, bottom: p.y }
     }
-    this.groups = this.o.groups()
+    this.groups = list?.groups ?? this.o.groups()
     this.items = this.groups.flat()
     this.lit = 0
     this.fired = -1
@@ -83,7 +89,7 @@ export class TytsMenu {
   }
 
   private codes(): string[] {
-    return this.items.map(item => item.code)
+    return this.items.map(item => item.code).filter(Boolean)
   }
 
   /** Closes it: the keyboard is the program's again. */
@@ -127,9 +133,11 @@ export class TytsMenu {
     this.lit = index
     this.fired = index
     this.send()
+    const list = this.list
     this.firing = setTimeout(() => {
       this.closed()
-      this.o.run(item.id)
+      if (list) list.run(index)
+      else this.o.run(item.id)
     }, FIRE_MS)
   }
 
@@ -171,7 +179,8 @@ export class TytsMenu {
   private send(): void {
     if (!this.win || this.win.isDestroyed() || !this.ready) return
     const view: MenuView = {
-      groups: this.groups.map(group => group.map(item => ({ letter: item.letter, label: t(`menu.${item.id}`) }))),
+      groups: this.groups.map(group => group.map(item => ({ letter: item.letter, label: item.label ?? t(`menu.${item.id}`) }))),
+      ...(this.list ? { foot: this.list.foot } : {}),
       lit: this.lit,
       fired: this.fired,
     }

@@ -54,6 +54,11 @@ body {
   text-overflow: ellipsis;
 }
 
+/* A clip past the ninth has no digit: its place stays, so the lines start in one column. */
+.ki .key:empty {
+  visibility: hidden;
+}
+
 .ki.on {
   background: var(--selected);
   color: var(--strong);

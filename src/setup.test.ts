@@ -38,6 +38,7 @@ function view(profile: DeviceProfile, over: Partial<AppView> = {}): AppView {
     keysOk: { snip: true, select: true, translate: true, text: true, inPlace: true, check: true, type: true, typeCheck: true, pause: true, window: true },
     learned: { alwaysFix: [], myWords: [] },
     translations: [],
+    clips: [],
     translator: 'absent',
     layouts: [],
     rivals: [],

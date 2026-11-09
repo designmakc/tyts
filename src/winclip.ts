@@ -71,8 +71,15 @@ function held(vk: number): boolean {
 
 /** On a Mac: whether Command was held at the last change, as build/clip-mac.swift read it then. */
 let commandAtChange = false
+/** On a Mac: whether the last change was marked by a password manager (nspasteboard.org's concealed or transient type). */
+let concealedAtChange = false
 
-/** A Mac's clipboard changes, from build/clip-mac.swift: one line a change, 1 when Command was held. */
+/** A Mac's last clipboard change was a password manager's, marked for others to leave alone. */
+export function macConcealed(): boolean {
+  return concealedAtChange
+}
+
+/** A Mac's clipboard changes, from build/clip-mac.swift: one line a change, 1 when Command was held, " concealed" after it for a password manager's copy. */
 function watchClipboardMac(exe: string, onChange: () => void): () => void {
   const child = spawn(exe, [], { stdio: ['pipe', 'pipe', 'ignore'] })
   let rest = ''
@@ -80,7 +87,9 @@ function watchClipboardMac(exe: string, onChange: () => void): () => void {
     const lines = (rest + chunk.toString()).split('\n')
     rest = lines.pop() ?? ''
     for (const line of lines) {
-      commandAtChange = line.trim() === '1'
+      const [command, mark] = line.trim().split(' ')
+      commandAtChange = command === '1'
+      concealedAtChange = mark === 'concealed'
       onChange()
     }
   })

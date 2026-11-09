@@ -83,7 +83,7 @@ import { recognize, recognizeMac } from './ocr'
 import { pickLines } from './ocrpick'
 import { adoptLocalFolder, adoptOldFolders, freeFolder, hasToMove, healSpeech, leftIn, moveDownloads, OLD_LOCAL_FOLDERS, partDir, removeOldUpdaterCaches, type LeftPart, type Warn } from './oldfolder'
 import { paragraphsOf } from './ocrtext'
-import { menuGroups, type MenuAction } from './menu'
+import { clipGroups, menuGroups, type MenuAction } from './menu'
 import { TytsMenu } from './menuwindow'
 import { placeByTray, placeNear, resize, type Point } from './placement'
 import type { AppTab, AppView, BusyPart, EdgeView, CardKind, CardState, CheckResult, DictationMode, DictionaryStatus, GlossMissing, HostCall, HostVoice, Refused, StorageId, StoragePart, StorageView, TalkWindowView, TextResult, ToHost, ToView, TranslationState, TrayCommand, TrayView, ViewConfig } from './protocol'
@@ -118,13 +118,14 @@ import {
   type Translate,
 } from './translate'
 import { TranslationLog } from './translationlog'
+import { ClipHistory, PINS_MOST, clipLine } from './cliphistory'
 import type { Translator } from './translator'
 import manifest from './voice-manifest.json'
 import { vocabularyFor } from './vocabulary'
 import { VoiceStore, type VoiceManifest } from './voicestore'
 import { wordDiff } from './worddiff'
 import { focus, focusedElement, release, saysNothingSelected, selectedText } from './uia'
-import { allowForeground, ctrlHeld, handleOf, inFront, keysLetGo, pressCopy, pressPaste, pressSelectBack, watchClipboard, watchRendering } from './winclip'
+import { allowForeground, ctrlHeld, handleOf, inFront, keysLetGo, macConcealed, pressCopy, pressPaste, pressSelectBack, watchClipboard, watchRendering } from './winclip'
 import {
   privateCopy,
   readers as clipboardReaders,
@@ -177,7 +178,7 @@ const TRAY_REOPEN_MS = 300
 /** Ctrl+C pressed twice, a key of an action on the selection (settings.ts COPY_TWICE_KEYS), as a card's header draws it too. */
 const DOUBLE_COPY = COPY_TWICE
 /** The settings that are keys of actions. */
-const ACTION_KEYS: readonly (keyof Settings)[] = ['menuKey', 'selectKey', 'snipKey', 'translateKey', 'textKey', 'inPlaceKey', 'checkKey', 'typeKey', 'typeCheckKey', 'switchKey', 'fixKey', 'pauseKey', 'windowKey']
+const ACTION_KEYS: readonly (keyof Settings)[] = ['menuKey', 'clipboardKey', 'selectKey', 'snipKey', 'translateKey', 'textKey', 'inPlaceKey', 'checkKey', 'typeKey', 'typeCheckKey', 'switchKey', 'fixKey', 'pauseKey', 'windowKey']
 /** The settings the keyboard thread is given (besides the keys). */
 const KEYBOARD_SETTINGS: readonly (keyof Settings)[] = [
   'layouts',
@@ -326,6 +327,8 @@ let elevatedApp: string | undefined
 let frontLayout: { layout: string; caps: boolean } | undefined
 let learned: LearnStore
 let translationLog: TranslationLog
+/** The texts copied lately, when the clipboard history is on. */
+let clips: ClipHistory
 let rivals: string[] = []
 let keyboardApps: string[] = []
 let foreignKeys = false
@@ -497,8 +500,8 @@ function saveSettings(patch: Partial<Settings>): void {
   }
   if ('startWithWindows' in patch) applyLoginItem()
   // A key may be Electron's or the keyboard thread's (hotkey.ts isAccelerator): both learn of any change.
-  if ([...ACTION_KEYS, ...DICTATION_KEYS, 'paused', 'dictateHold'].some(k => k in patch)) registerShortcuts()
-  if ([...ACTION_KEYS, ...DICTATION_KEYS, ...KEYBOARD_SETTINGS, 'dictateHold'].some(k => k in patch)) applyKeyboard()
+  if ([...ACTION_KEYS, ...DICTATION_KEYS, 'paused', 'dictateHold', 'clipboardHistory'].some(k => k in patch)) registerShortcuts()
+  if ([...ACTION_KEYS, ...DICTATION_KEYS, ...KEYBOARD_SETTINGS, 'dictateHold', 'clipboardHistory'].some(k => k in patch)) applyKeyboard()
   if ('trayLayout' in patch && !settings.trayLayout) frontLayout = undefined
   // Paused while a phrase is recorded: the phrase is dropped, as Esc would.
   if (patch.paused && settings.paused) dictation?.cancel()
@@ -1382,6 +1385,7 @@ function appView(): AppView {
     ...(elevatedApp ? { elevatedApp } : {}),
     learned: { alwaysFix: [...learned.alwaysFix], myWords: [...learned.myWords] },
     translations: translationLog.list(10),
+    clips: clips.list(),
     rivals,
     keyboardApps,
     foreignKeys,
@@ -1692,6 +1696,18 @@ function onMessage(message: ToHost, page: Page): void {
     case 'unlearn':
       learned.remove(message.list, message.word)
       applyKeyboard()
+      postApp()
+      return
+    case 'clipPin':
+      if (!clips.pin(message.at, message.on)) balloon(t('app.name'), t('clips.pinsFull', { n: PINS_MOST }))
+      postApp()
+      return
+    case 'clipForget':
+      clips.remove(message.at)
+      postApp()
+      return
+    case 'clipsClear':
+      clips.clear()
       postApp()
       return
     case 'forgetLearned':
@@ -3010,6 +3026,7 @@ function onClipboardChange(): void {
       // A copy without a picture is the person's own: the snip is not coming.
       if (!png) {
         endSnip()
+        rememberCopy()
         return doubleCopyChange(now, ctrl)
       }
       snipSince = 0
@@ -3020,7 +3037,41 @@ function onClipboardChange(): void {
     })
     return
   }
+  rememberCopy()
   doubleCopyChange(now, ctrl)
+}
+
+/** A password manager's copy, marked for others to leave alone: on Windows its "do not watch" formats, on a Mac nspasteboard.org's concealed and transient types. */
+function concealedCopy(): boolean {
+  return onMac ? macConcealed() : privateCopy()
+}
+
+/** The person copied something: its text kept in the clipboard history when that is on; never a password manager's copy, nor while Kryakl borrows the clipboard. */
+function rememberCopy(): void {
+  if (!settings.clipboardHistory || settings.paused || concealedCopy()) return
+  afterSettling(async () => {
+    if (clipboardBusy || concealedCopy()) return
+    if (clips.add(await clipboard.readText())) postApp()
+  })
+}
+
+/** The clips the list by the cursor shows at most: the pinned (10 at most), then the newest. */
+const CLIPS_SHOWN = 15
+
+/** The clipboard history's key, or its item in the menu: the list by the text cursor, pressed again it goes; a clip picked is pasted where the keyboard is, the clipboard put back after. */
+function openClips(): void {
+  if (!settings.clipboardHistory) return
+  if (oneKeyMenu?.isOpen) return oneKeyMenu.close()
+  const list = clips.list().slice(0, CLIPS_SHOWN)
+  if (list.length === 0) return keyboard.say(t('clips.nothing'), NOTHING_SAY_MS)
+  oneKeyMenu?.toggle({
+    groups: clipGroups(list, clipLine),
+    foot: t('clips.foot'),
+    run: index => {
+      const clip = list[index]
+      if (clip) typeText(clip.text).catch(error => console.warn('Tyts: could not paste the clip', error))
+    },
+  })
 }
 
 /** The action on the selection whose key is Ctrl+C twice, if one has it (one at most: the settings keep a key for one use). */
@@ -3123,6 +3174,8 @@ function runMenu(action: MenuAction): void {
       return dictation.press('english', via)
     case 'fix':
       return keyboard.fixNow()
+    case 'clipboard':
+      return openClips()
   }
 }
 
@@ -3164,6 +3217,8 @@ function registerShortcuts(): void {
     pause: register(settings.pauseKey, togglePause),
     window: register(settings.windowKey, () => openApp()),
   }
+  // ponytail: not counted among the keys "taken" by another program; add it to keysOk if people hit that
+  if (settings.clipboardHistory) register(settings.clipboardKey, openClips)
   if (onMac) {
     // The menu key is the keyboard thread's on Windows; a Mac has none.
     register(settings.menuKey, menuPressed)
@@ -4303,6 +4358,7 @@ function start(): void {
   words = new WordStore(path.join(userDir(), 'words.json'))
   dictationLog = new DictationLog(path.join(userDir(), 'dictation.json'))
   translationLog = new TranslationLog(path.join(userDir(), 'translations.json'))
+  clips = new ClipHistory(path.join(userDir(), 'clips.json'))
   learned = new LearnStore(path.join(userDir(), 'learning.json'))
   translator = createTranslator(downloads('models'), unpacked('dist', 'mt-worker.js'), {
     loader: unpacked('vendor', 'bergamot', 'bergamot-translator.js'),
@@ -4408,6 +4464,7 @@ function start(): void {
       else if (action === 'text') snip('translate', settings.textKey)
       else if (action === 'window') openApp()
       else if (action === 'menu') menuPressed()
+      else if (action === 'clipboard') openClips()
       else snip('listen', settings.snipKey)
     },
     hotkeyUp: () => dictation.release(),
@@ -4477,7 +4534,7 @@ function start(): void {
     query: pageQuery,
     background: cardColor,
     border: borderColor,
-    groups: () => menuGroups(settings.uiLanguage, !!speech?.installed),
+    groups: () => menuGroups(settings.uiLanguage, !!speech?.installed, settings.clipboardHistory),
     caret: () => {
       const front = foreground()
       return front.tid ? caretOf(front.tid) : undefined

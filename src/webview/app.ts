@@ -66,7 +66,7 @@ function phrases<K extends string>(keys: Record<K, Key>): Record<K, string> {
 }
 
 type Action = 'translate' | 'english' | 'voice' | 'recordings' | 'layout'
-type Page = Action | 'keys' | 'words' | 'mistakes' | 'transcripts' | 'translations' | 'phrases' | 'vocabulary' | 'kept' | 'learned' | 'programs' | 'layouts' | 'settings' | 'models' | 'storage' | 'about' | 'report' | 'search'
+type Page = Action | 'keys' | 'words' | 'mistakes' | 'transcripts' | 'translations' | 'phrases' | 'vocabulary' | 'kept' | 'learned' | 'programs' | 'layouts' | 'settings' | 'models' | 'storage' | 'clipboard' | 'about' | 'report' | 'search'
 
 const ACTIONS: readonly Action[] = ['layout', 'voice', 'recordings', 'translate', 'english']
 /** Each action's icon, in the sidebar. */
@@ -76,6 +76,7 @@ const PARENT: Partial<Record<Page, Action | 'settings'>> = {
   keys: 'settings',
   models: 'settings',
   storage: 'settings',
+  clipboard: 'settings',
   translations: 'translate',
   words: 'english',
   mistakes: 'english',
@@ -107,6 +108,7 @@ const TITLES: Record<Page, string> = phrases({
   keys: 'nav.keys',
   models: 'nav.models',
   storage: 'nav.storage',
+  clipboard: 'nav.clipboard',
   about: 'nav.about',
   report: 'nav.report',
   search: 'nav.search',
@@ -1035,6 +1037,8 @@ function bodyOf(v: AppView): HTMLElement[] {
       return modelsPage(v)
     case 'storage':
       return storagePage(v)
+    case 'clipboard':
+      return clipboardPage(v)
     case 'about':
       return aboutPage(v)
     case 'report':
@@ -1067,6 +1071,7 @@ const SEARCHED: Place[] = [
   { name: 'layouts' },
   { name: 'settings' },
   { name: 'keys' },
+  { name: 'clipboard' },
   { name: 'settings', sub: 'languages' },
   { name: 'models' },
   { name: 'models', sub: 'forTranslate' },
@@ -1219,6 +1224,7 @@ function tryIt(text: string, how: string): HTMLElement {
 
 type KeyName =
   | 'menuKey'
+  | 'clipboardKey'
   | 'selectKey'
   | 'snipKey'
   | 'translateKey'
@@ -1242,6 +1248,7 @@ type KeyName =
 
 const KEY_USE: Record<KeyName, string> = phrases({
   menuKey: 'keys.useMenu',
+  clipboardKey: 'keys.useClipboard',
   selectKey: 'keys.useSelect',
   snipKey: 'keys.useSnip',
   translateKey: 'keys.useTranslate',
@@ -3133,6 +3140,36 @@ function keysPage(v: AppView): HTMLElement[] {
   ]
 }
 
+/** The clipboard history: on or off, its key, and the clips, each to copy again, pin or forget; Clear keeps the pinned. */
+function clipboardPage(v: AppView): HTMLElement[] {
+  const s = v.settings
+  const lines = (pinned: boolean) =>
+    lineList(
+      v.clips
+        .filter(c => !!c.pinned === pinned)
+        .map(c => ({ text: c.text, title: `${c.text}\n\n${whenSaid(c.at, Date.now())}\n${t('clips.copyNote')}`, open: () => copyText(c.text), remove: () => post({ type: 'clipForget', at: c.at }) })),
+    )
+  // Each line gets its Pin or Unpin before the cross.
+  const withPins = (list: HTMLElement, pinned: boolean) => {
+    const clips = v.clips.filter(c => !!c.pinned === pinned)
+    list.querySelectorAll('.ln').forEach((ln, i) => {
+      const c = clips[i]
+      if (c) ln.querySelector('.wdel')?.before(linkBtn(t(pinned ? 'clips.unpin' : 'clips.pin'), () => post({ type: 'clipPin', at: c.at, on: !pinned })))
+    })
+    return list
+  }
+  const pinned = v.clips.filter(c => c.pinned).length
+  const recent = v.clips.length - pinned
+  return [
+    toggleCard('copy', t('clips.on'), s.clipboardHistory, clipboardHistory => save({ clipboardHistory }), t('clips.onNote')),
+    s.clipboardHistory ? keyRow('clipboardKey', t('clips.key'), t('clips.keyNote')) : null,
+    pinned ? grp(t('clips.pinned'), pinned) : null,
+    pinned ? withPins(lines(true), true) : null,
+    grp(t('clips.recent'), recent || undefined, recent ? linkBtn(t('keys.clear'), () => post({ type: 'clipsClear' })) : null),
+    recent ? withPins(lines(false), false) : aside('info', t('clips.empty')),
+  ].filter((n): n is HTMLElement => n !== null)
+}
+
 function settingsPage(v: AppView): HTMLElement[] {
   const s = v.settings
   const keys = HOME_KEYS.filter(k => !k.speech || installed(v))
@@ -3141,6 +3178,7 @@ function settingsPage(v: AppView): HTMLElement[] {
       { icon: 'keyboard', title: TITLES.keys, count: keys.filter(k => s[k.key]).length, open: () => go('keys'), id: 'keys' },
       { icon: 'boxes', title: TITLES.models, open: () => go('models'), id: 'models' },
       { icon: 'hard-drive', title: TITLES.storage, count: v.storage?.parts.length ? speechSize(downloadsMb(v.storage)) : undefined, open: () => go('storage'), id: 'storage' },
+      { icon: 'copy', title: TITLES.clipboard, count: v.settings.clipboardHistory ? v.clips.length : undefined, open: () => go('clipboard'), id: 'clipboard' },
     ]),
     grp(t('act.general')),
     uiLanguageCard(s.uiLanguage, uiLanguage => save({ uiLanguage })),

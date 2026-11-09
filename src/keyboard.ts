@@ -145,6 +145,7 @@ export class KeyboardHelper {
         ['meeting', s.meetingKey],
         ['pause', s.pauseKey],
         ['window', s.windowKey],
+        ['clipboard', s.clipboardHistory ? s.clipboardKey : ''],
       ] as const) {
         // Held to talk, a dictation key is the thread's whatever it is: only the thread sees it go up.
         const held = s.dictateHold && (action === 'dictate' || action === 'english' || action === 'practice') && !!key && !isCopyTwice(key)

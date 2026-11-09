@@ -8,10 +8,10 @@
 import type { UiLanguage } from './i18n'
 
 /** What an item of the menu does (main.ts runMenu). */
-export type MenuAction = 'translate' | 'listen' | 'inPlace' | 'screen' | 'check' | 'talk' | 'dictate' | 'english' | 'fix'
+export type MenuAction = 'translate' | 'listen' | 'inPlace' | 'screen' | 'check' | 'talk' | 'dictate' | 'english' | 'fix' | 'clipboard'
 
-/** An item: what it does, the letter shown, and the key that picks it. */
-export type MenuItem = { id: MenuAction; letter: string; code: string }
+/** An item: what it does, the letter shown, and the key that picks it; `label` in place of the action's name (a clip of the clipboard history). */
+export type MenuItem = { id: MenuAction; letter: string; code: string; label?: string }
 
 type Row = [MenuAction, string, string]
 
@@ -32,7 +32,10 @@ const MENU: Readonly<Record<UiLanguage, readonly (readonly Row[])[]>> = {
       ['dictate', 'Г', 'KeyU'],
       ['english', 'В', 'KeyD'],
     ],
-    [['fix', 'И', 'KeyB']],
+    [
+      ['fix', 'И', 'KeyB'],
+      ['clipboard', 'Б', 'Comma'],
+    ],
   ],
   uk: [
     [
@@ -49,7 +52,10 @@ const MENU: Readonly<Record<UiLanguage, readonly (readonly Row[])[]>> = {
       ['dictate', 'Г', 'KeyU'],
       ['english', 'К', 'KeyR'],
     ],
-    [['fix', 'В', 'KeyD']],
+    [
+      ['fix', 'В', 'KeyD'],
+      ['clipboard', 'Б', 'Comma'],
+    ],
   ],
   en: [
     [
@@ -66,17 +72,20 @@ const MENU: Readonly<Record<UiLanguage, readonly (readonly Row[])[]>> = {
       ['dictate', 'V', 'KeyV'],
       ['english', 'E', 'KeyE'],
     ],
-    [['fix', 'F', 'KeyF']],
+    [
+      ['fix', 'F', 'KeyF'],
+      ['clipboard', 'H', 'KeyH'],
+    ],
   ],
 }
 
 /** The voice's items, which need the speech engine. */
 const VOICE: ReadonlySet<MenuAction> = new Set(['dictate', 'english'])
 
-/** The menu's groups for this language; the voice's items only once the speech engine is installed. */
-export function menuGroups(lang: UiLanguage, speech: boolean): MenuItem[][] {
+/** The menu's groups for this language; the voice's items only once the speech engine is installed, the clipboard history's only when it is on. */
+export function menuGroups(lang: UiLanguage, speech: boolean, clips = false): MenuItem[][] {
   return MENU[lang]
-    .map(group => group.filter(([id]) => speech || !VOICE.has(id)).map(([id, letter, code]) => ({ id, letter, code })))
+    .map(group => group.filter(([id]) => (speech || !VOICE.has(id)) && (clips || id !== 'clipboard')).map(([id, letter, code]) => ({ id, letter, code })))
     .filter(group => group.length > 0)
 }
 
@@ -93,4 +102,14 @@ export function menuKeyOf(code: string, items: readonly MenuItem[], lit: number)
   if (code === 'Enter') return { pick: Math.min(Math.max(lit, 0), n - 1) }
   const i = items.findIndex(it => it.code === code)
   return i >= 0 ? { pick: i } : undefined
+}
+
+/** The clipboard history's list as the menu's items: the pinned, then the others; digits 1–9 pick the first nine. */
+export function clipGroups(clips: readonly { text: string; pinned?: boolean }[], line: (text: string) => string): MenuItem[][] {
+  let n = 0
+  const item = (c: { text: string }): MenuItem => {
+    const digit = ++n <= 9 ? String(n) : ''
+    return { id: 'clipboard', letter: digit, code: digit ? `Digit${digit}` : '', label: line(c.text) }
+  }
+  return [clips.filter(c => c.pinned).map(item), clips.filter(c => !c.pinned).map(item)].filter(g => g.length > 0)
 }

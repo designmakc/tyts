@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { menuGroups, menuKeyOf } from './menu'
+import { clipGroups, menuGroups, menuKeyOf } from './menu'
 import { placeMenu } from './placement'
 
 describe('the items', () => {
@@ -24,6 +24,27 @@ describe('the items', () => {
     expect(code('ru', 'translate')).toBe('KeyG')
     expect(code('ru', 'screen')).toBe('Quote')
     expect(code('uk', 'fix')).toBe('KeyD')
+  })
+})
+
+describe('the clipboard history', () => {
+  test('its item only when it is on, its own key in each language', () => {
+    for (const lang of ['en', 'uk', 'ru'] as const) {
+      const items = menuGroups(lang, true, true).flat()
+      expect(items.at(-1)?.id).toBe('clipboard')
+      expect(new Set(items.map(i => i.code)).size).toBe(items.length)
+    }
+  })
+
+  test('its list: the pinned first, digits for the first nine', () => {
+    const clips = Array.from({ length: 11 }, (_, i) => ({ text: `c${i}`, pinned: i === 5 }))
+    const groups = clipGroups(clips, text => text)
+    expect(groups.map(g => g.length)).toEqual([1, 10])
+    expect(groups[0]?.[0]).toMatchObject({ label: 'c5', letter: '1', code: 'Digit1' })
+    const items = groups.flat()
+    expect(items[8]?.code).toBe('Digit9')
+    expect(items[9]?.letter).toBe('')
+    expect(menuKeyOf('Digit2', items, 0)).toEqual({ pick: 1 })
   })
 })
 

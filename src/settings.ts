@@ -88,6 +88,9 @@ export type Settings = {
   cardHeight: number
   /** One key for every action: it opens Kryakl's menu by the text cursor, a letter picks (menu.ts); empty for none. */
   menuKey: string
+  /** The clipboard history (cliphistory.ts): the texts copied lately kept to paste again; off unless the person turns it on. Its key opens the list by the text cursor. */
+  clipboardHistory: boolean
+  clipboardKey: string
   /**
    * Keys (hotkey.ts; empty for none): listen to the selection (Kryakl copies it), or to a piece of the screen;
    * Ctrl+C twice ("Control+C*2") may be the key of one action on the selection: select, translate, inPlace or check.
@@ -268,6 +271,8 @@ export const DEFAULTS: Settings = {
   cardWidth: 440,
   cardHeight: 0,
   menuKey: '',
+  clipboardHistory: false,
+  clipboardKey: '',
   selectKey: '',
   snipKey: 'Control+Alt+S',
   translateKey: '',
@@ -482,6 +487,8 @@ export function normalize(raw: unknown, native = DEFAULTS.native): Settings {
     cardWidth: within(r.cardWidth, CARD_WIDTH, DEFAULTS.cardWidth),
     cardHeight: r.cardHeight === 0 ? 0 : within(r.cardHeight, CARD_HEIGHT, DEFAULTS.cardHeight),
     menuKey: key(r.menuKey, DEFAULTS.menuKey),
+    clipboardHistory: flag(r.clipboardHistory, DEFAULTS.clipboardHistory),
+    clipboardKey: key(r.clipboardKey, DEFAULTS.clipboardKey),
     selectKey: movedSelectKey(raw, r, key(r.selectKey, DEFAULTS.selectKey)),
     snipKey: key(r.snipKey, DEFAULTS.snipKey),
     translateKey: key(r.translateKey, DEFAULTS.translateKey),

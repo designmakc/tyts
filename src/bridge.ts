@@ -9,9 +9,9 @@ import * as path from 'node:path'
 
 import type { HostCall, ToHost } from './protocol'
 
-export type Page = 'app' | 'calls' | 'edge' | 'card' | 'tray' | 'dictation' | 'talk' | 'menu' | 'bar' | 'capture' | 'other'
+export type Page = 'app' | 'calls' | 'edge' | 'top' | 'card' | 'tray' | 'dictation' | 'talk' | 'menu' | 'bar' | 'capture' | 'other'
 
-const PAGES: Record<string, Page> = { 'app.html': 'app', 'calls.html': 'calls', 'edge.html': 'edge', 'card.html': 'card', 'tray.html': 'tray', 'dictation.html': 'dictation', 'talk.html': 'talk', 'menu.html': 'menu', 'bar.html': 'bar', 'capture.html': 'capture' }
+const PAGES: Record<string, Page> = { 'app.html': 'app', 'calls.html': 'calls', 'edge.html': 'edge', 'top.html': 'top', 'card.html': 'card', 'tray.html': 'tray', 'dictation.html': 'dictation', 'talk.html': 'talk', 'menu.html': 'menu', 'bar.html': 'bar', 'capture.html': 'capture' }
 
 /** The page a window shows, by its file (media/<page>.html, with or without a query); 'other' for anything else. */
 export function pageOf(url: string): Page {
@@ -97,6 +97,9 @@ const BAR_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>(['barReady
 /** Messages only the panel at the top of the screen sends; it may also run the tray's commands and save its switches, nothing else. */
 const EDGE_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>(['edgeReady', 'edgeHeight', 'edgeAct'])
 
+/** The only message the look at the top of the screen sends: it shows, and asks for nothing. */
+const TOP_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>(['topReady'])
+
 /** Messages only the call recording's panel sends, and the only ones it may: how its recording goes. */
 const CAPTURE_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>(['captureState', 'captureDone', 'captureHide', 'captureOpenSettings', 'captureAnswer', 'captureCopyPhrase', 'captureExpand'])
 
@@ -108,6 +111,8 @@ export function messageAllowed(page: Page, type: string): boolean {
   if (page === 'bar') return false
   if (CAPTURE_ONLY.has(type as ToHost['type'])) return page === 'capture'
   if (page === 'capture') return false
+  if (TOP_ONLY.has(type as ToHost['type'])) return page === 'top'
+  if (page === 'top') return false
   if (EDGE_ONLY.has(type as ToHost['type'])) return page === 'edge'
   if (page === 'edge') return type === 'tray' || type === 'saveSettings'
   if (TALK_ONLY.has(type as ToHost['type'])) return page === 'talk'

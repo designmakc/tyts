@@ -1,0 +1,108 @@
+/* The looks at the top of the screen (settings.edgeStyle), shared by the look
+   itself (top.html) and its small preview in Settings (app.html): a glow, a
+   soft cone of warm light with a few sparks falling from the top edge; a drop, a dark
+   bead with a glint that stretches and breathes. Each sits in a `.fx` box and
+   hangs from the middle of its top edge. The sparks' paths are set from the
+   page (--x0, --x1, --y, --d, --w). */
+
+.fx {
+  position: relative;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.fx > * {
+  position: absolute;
+  top: 0;
+  left: 50%;
+}
+
+.fx.glow .cone {
+  width: 220px;
+  height: 96px;
+  margin-left: -110px;
+  background: radial-gradient(ellipse 34% 100% at 50% 0, color-mix(in srgb, var(--accent) 30%, #fff) 0, color-mix(in srgb, var(--accent) 26%, transparent) 30%, transparent 78%);
+  filter: blur(10px);
+  transform-origin: 50% 0;
+  animation: fx-breathe 3.6s ease-in-out infinite;
+}
+
+.fx.glow .core {
+  width: 72px;
+  height: 2px;
+  margin-left: -36px;
+  border-radius: 0 0 2px 2px;
+  background: rgb(255 246 232 / 80%);
+  box-shadow: 0 0 12px 2px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.fx.glow .spark {
+  top: 4px;
+  width: 2px;
+  height: 2px;
+  margin-left: -1px;
+  border-radius: 50%;
+  background: rgb(255 243 222 / 85%);
+  box-shadow: 0 0 4px color-mix(in srgb, var(--accent) 60%, transparent);
+  opacity: 0;
+  animation: fx-fall var(--d, 3s) ease-out var(--w, 0s) infinite;
+}
+
+.fx.drop .bead {
+  width: 96px;
+  height: 16px;
+  margin-left: -48px;
+  border-radius: 0 0 48px 48px / 0 0 16px 16px;
+  background: radial-gradient(ellipse 70% 90% at 40% 10%, rgb(52 48 46 / 88%) 0, rgb(14 12 11 / 88%) 70%);
+  box-shadow:
+    inset 0 -4px 6px -4px rgb(255 255 255 / 22%),
+    0 4px 12px rgb(0 0 0 / 18%);
+  transform-origin: 50% 0;
+  animation: fx-drip 3.8s ease-in-out infinite;
+}
+
+.fx.drop .glint {
+  top: 4px;
+  width: 22px;
+  height: 3px;
+  margin-left: -30px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 30%);
+  filter: blur(1.5px);
+}
+
+.fx.drop .live {
+  top: 6px;
+  width: 4px;
+  height: 4px;
+  margin-left: 18px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 85%, transparent);
+  animation: fx-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes fx-breathe {
+  0%, 100% { opacity: 0.45; transform: scaleY(0.94); }
+  50% { opacity: 0.7; transform: scaleY(1); }
+}
+
+@keyframes fx-fall {
+  0% { opacity: 0; transform: translate(var(--x0, 0), 0); }
+  20% { opacity: 0.7; }
+  100% { opacity: 0; transform: translate(var(--x1, 0), var(--y, 70px)); }
+}
+
+@keyframes fx-drip {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.18); }
+}
+
+@keyframes fx-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.9; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx * { animation: none !important; }
+  .fx.glow .spark { display: none; }
+}

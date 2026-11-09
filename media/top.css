@@ -1,0 +1,83 @@
+/* The look at the top of the screen (top.html): a window with no ground, over
+   every program and under no pointer. While dictation listens: the glow or the
+   drop (topfx.css). While a call records: its draft's last lines on a dark
+   plate, the same over any program, light or dark. */
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: transparent;
+  font-family: var(--font);
+  pointer-events: none;
+  user-select: none;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+}
+
+#root > .fx {
+  flex: none;
+  width: 100%;
+  height: 128px;
+  animation: top-in 0.5s ease-out;
+}
+
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 240px;
+  padding: 8px 12px 9px;
+  border-radius: 0 0 var(--r-sm) var(--r-sm);
+  background: rgb(18 16 15 / 88%);
+  color: #fff;
+  font-size: var(--t-small);
+  line-height: 1.4;
+  animation: top-in 0.5s ease-out;
+}
+
+.lines.glow {
+  border-top: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  box-shadow: 0 -1px 10px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.lines.drop {
+  background: rgb(8 7 6 / 94%);
+  box-shadow: inset 0 -7px 9px -7px rgb(255 255 255 / 30%);
+}
+
+.line {
+  display: flex;
+  gap: 8px;
+}
+
+.line .who {
+  flex: none;
+  color: rgb(255 255 255 / 55%);
+}
+
+.line.me .who {
+  color: #ff8466;
+}
+
+.lines .wait {
+  color: rgb(255 255 255 / 60%);
+}
+
+@keyframes top-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root > .fx,
+  .lines { animation: none; }
+}

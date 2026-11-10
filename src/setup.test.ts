@@ -28,6 +28,7 @@ function view(profile: DeviceProfile, over: Partial<AppView> = {}): AppView {
   const nvidia = profile.gpus.some(g => g.vendor === 'nvidia')
   return {
     settings: { ...DEFAULTS, native: 'Russian', setupDone: false },
+    access: [],
     version: '0.9.0',
     build: '',
     dev: false,

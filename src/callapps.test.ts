@@ -1,9 +1,14 @@
 import { afterEach, describe, expect, test } from 'vitest'
 
 import { setUiLanguage } from './i18n'
-import { callApp, callTitle } from './callapps'
+import { appOf, callApp, callTitle } from './callapps'
+import { CALL_PROGRAMS } from './settings'
 
 describe('the call program running now', () => {
+  test('every program known by its process is on the list the person unticks from', () => {
+    for (const name of ['zoom.us', 'ms-teams', 'telegram', 'discord', 'slack', 'facetime', 'skype', 'webex']) expect(CALL_PROGRAMS).toContain(appOf(name))
+  })
+
   test('one known program, by its process on a Mac or on Windows', () => {
     expect(callApp(['/sbin/launchd', '/Applications/zoom.us.app/Contents/MacOS/zoom.us', '/usr/bin/ssh'])).toBe('Zoom')
     expect(callApp(['explorer.exe', 'Zoom.exe', 'svchost.exe'])).toBe('Zoom')

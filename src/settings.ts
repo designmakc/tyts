@@ -15,6 +15,8 @@ import type { AppPart } from './typist'
 /** A call recording by itself (callwatch.ts): off, asked, or at once. */
 export type CallAuto = 'off' | 'ask' | 'record'
 const CALL_AUTO: readonly CallAuto[] = ['off', 'ask', 'record']
+/** Every call program Tyts knows, as the person sees them (callapps.ts names them by process; Google Meet is known by a browser's window, callwatch.ts): the list to untick from. */
+export const CALL_PROGRAMS: readonly string[] = ['Zoom', 'Microsoft Teams', 'Slack', 'Telegram', 'Discord', 'FaceTime', 'Skype', 'Webex', 'Google Meet']
 
 /** A program by its .exe name (lower case): the parts of the keyboard helper left out there, and the layout it starts in ('' for none). */
 export type AppRule = { exe: string; off: AppPart[]; layout: string }
@@ -183,6 +185,8 @@ export type Settings = {
   callConsentSeen: boolean
   /** A known call program holding the microphone 10 s (callwatch.ts): nothing, a question, or a recording at once. Off by default. */
   callAuto: CallAuto
+  /** The call programs `callAuto` leaves alone (their names from callapps.ts CALL_PROGRAMS): neither asked about nor recorded by themselves. */
+  callAutoSkip: string[]
   /** Where the call panel sits, as `dictationBadge` (its own place, not the badge's). */
   callPanelOffset: { dx: number; dy: number }
   /** A recorded call's summary is made as soon as it is transcribed, when the model is downloaded. */
@@ -335,6 +339,7 @@ export const DEFAULTS: Settings = {
   callLiveTop: false,
   callConsentSeen: false,
   callAuto: 'off',
+  callAutoSkip: [],
   callPanelOffset: { dx: 0, dy: 0 },
   callSummaryAuto: true,
   callTemplate: 'general',
@@ -558,6 +563,7 @@ export function normalize(raw: unknown, native = DEFAULTS.native): Settings {
     callLiveTop: flag(r.callLiveTop, DEFAULTS.callLiveTop),
     callConsentSeen: flag(r.callConsentSeen, DEFAULTS.callConsentSeen),
     callAuto: CALL_AUTO.includes(r.callAuto as CallAuto) ? (r.callAuto as CallAuto) : DEFAULTS.callAuto,
+    callAutoSkip: strings(r.callAutoSkip).filter(name => CALL_PROGRAMS.includes(name)),
     callPanelOffset: badgeOffset(r.callPanelOffset),
     callSummaryAuto: flag(r.callSummaryAuto, DEFAULTS.callSummaryAuto),
     callTemplate: SUMMARY_TEMPLATES.includes(r.callTemplate as SummaryTemplate) ? (r.callTemplate as SummaryTemplate) : DEFAULTS.callTemplate,

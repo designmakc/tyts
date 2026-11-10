@@ -62,6 +62,7 @@ const APP_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>([
   'exportWords',
   'copyWords',
   'openLink',
+  'grantAccess',
   'micRecording',
   'talkOpen',
   'toggleCall',

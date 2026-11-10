@@ -17,7 +17,9 @@ export interface SummaryLine { speaker: string; start: number; text: string }
 export interface SummaryInput { title: string; lines: SummaryLine[]; duration: number; language: string | null; lost?: number; shots?: ScreenText[]; notes?: string }
 export interface ScreenText { at: number; text: string }
 /** `native`: the person's own language by its English name ("Russian"), used when `mine`. */
-export interface SummaryOptions { template: SummaryTemplate; own?: string; mine: boolean; native: string }
+/** `length`: the person asked for this summary again, shorter or longer (the Shorter and Longer buttons); never kept as a setting. */
+export type SummaryLength = 'brief' | 'full'
+export interface SummaryOptions { template: SummaryTemplate; own?: string; mine: boolean; native: string; length?: SummaryLength }
 /** Parts done of `parts`; `parts + 1` while they are joined. */
 export interface SummaryProgress { part: number; parts: number }
 export interface Summary { text: string; template: SummaryTemplate; mine: boolean; language: string | null; made: string }
@@ -206,6 +208,12 @@ const KINDS: Record<SummaryTemplate, string> = {
   own: 'a meeting or a call of any kind',
 }
 
+/** A wish about the length, added last: how much to say, never what may be said. */
+const LENGTHS: Record<SummaryLength, string> = {
+  brief: 'The person asked for a shorter summary: "short" in two sentences, and only the most important decisions, tasks, questions and topics.',
+  full: 'The person asked for a longer summary: "short" in six to eight sentences, and every decision, task, question and topic that was said, each with its details.',
+}
+
 /** The instructions: the rules first, around everything else, the person's own instruction too. */
 export function summaryPrompt(options: SummaryOptions, language: string | null, step: 'whole' | 'part' | 'join', screen = false, notes = false): string {
   const meeting = language && LLM_LANGUAGES[language] ? LLM_LANGUAGES[language] : null
@@ -237,7 +245,8 @@ export function summaryPrompt(options: SummaryOptions, language: string | null, 
     (notes
       ? '\nThe <notes> are what the person who recorded it wrote down: stress what they mark as important, but never put in the summary anything that was not said.'
       : '') +
-    own
+    own +
+    (options.length ? `\n${LENGTHS[options.length]}` : '')
   )
 }
 

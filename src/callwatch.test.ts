@@ -19,6 +19,13 @@ function run(s: CallWatch, from: number, to: number, input: Omit<CallInput, 'now
 const base = { mode: 'record' as const, blocked: false, recording: false, own: OWN }
 
 describe('a call recording that starts by itself', () => {
+  test('a program the person unticked neither starts nor asks; the others still do', () => {
+    const slack: MicUser = { pid: 8, name: 'Slack', titles: [] }
+    expect(run(idleWatch(), 0, 30_000, { ...base, skip: ['Zoom'], users: [zoom] })[1]).toEqual([])
+    expect(run(idleWatch(), 0, 30_000, { ...base, mode: 'ask', skip: ['Zoom'], users: [zoom] })[1]).toEqual([])
+    expect(run(idleWatch(), 0, 14_000, { ...base, skip: ['Zoom'], users: [zoom, slack] })[1]).toEqual(['start@10'])
+  })
+
   test('starts once a call program holds the microphone 10 s in a row, stops 20 s after it lets go', () => {
     let [s, acts] = run(idleWatch(), 0, 14_000, { ...base, users: [zoom] })
     expect(acts).toEqual(['start@10'])

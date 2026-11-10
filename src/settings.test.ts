@@ -17,6 +17,9 @@ describe('Kept as typed', () => {
 describe('normalize', () => {
   test('shows the dictation panel until it is turned off', () => {
     expect(normalize({}).dictationPanel).toBe(true)
+    // The unticked call programs: only names Tyts knows, once each.
+    expect(normalize({}).callAutoSkip).toEqual([])
+    expect(normalize({ callAutoSkip: ['Zoom', 'Zoom', 'Winamp', 7] }).callAutoSkip).toEqual(['Zoom'])
     expect(normalize({ dictationPanel: false }).dictationPanel).toBe(false)
     expect(normalize({ dictationPanel: 'no' }).dictationPanel).toBe(true)
   })

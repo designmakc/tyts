@@ -94,6 +94,11 @@ Owner decisions and what was found, all on 2026-11-10 (an 8 GB M1; nothing here 
 
 Left for later: Tyts does not remove a deleted call's copies (`.md`, `.ogg`) from the calls folder; "Me" is written in English whatever the interface; reading text off screenshots failed here six times (`ocr-mac`), not looked into.
 
+## Since 2026-11-10: the Permissions page
+
+- **Owner request** (2026-11-10): a person who has just installed Tyts and must record a call at once met the system's questions only on pressing Record, and lost the call's first minutes. Every permission is now checked in one place.
+- **Permissions** (`src/access.ts`, tested; `accessNow`, `grantAccess` in `main.ts`; the page in `webview/app.ts`, in the sidebar under Settings with the number still missing). A Mac: Microphone, Screen & System Audio Recording, Accessibility, and Input Monitoring once the keyboard helper has said whether it sees keys. Windows: the microphone's privacy switch. A row is "Allowed", or has a button: "Allow" while the system still shows its own question, "Open settings" where it was refused before. The window reads the system anew when it is shown or comes to the front, so coming back from System Settings shows the change. Home warns while something is missing. Nothing is asked by itself: each question comes from the person's press.
+
 ## Product rules (owner decisions, 2026-11-10): after a second reference app
 
 Compared with a meeting-notes app (`docs/granola-gap.md`, the plan in `docs/granola-plan.md`); nothing is built yet.

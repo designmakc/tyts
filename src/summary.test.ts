@@ -1,7 +1,7 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, test, vi } from 'vitest'
 
 import type { LlmFiles } from './llmfiles'
-import { checkSummary, createSummarizer, renderSummary, screenOf, splitParts, type SummaryInput, type SummaryJson, type SummaryLine } from './summary'
+import { checkSummary, createSummarizer, renderSummary, screenOf, splitParts, summaryPrompt, type SummaryInput, type SummaryJson, type SummaryLine } from './summary'
 
 const line = (start: number, text = 'x'.repeat(100), speaker = 'Me'): SummaryLine => ({ speaker, start, text })
 const empty: SummaryJson = { short: '', decisions: [], tasks: [], questions: [], topics: [] }
@@ -262,3 +262,19 @@ describe('the screen’s text', () => {
     expect(out.text).toContain('(снимок 12:41)')
   })
 })
+
+describe('a shorter or a longer summary', () => {
+  const options = { template: 'general' as const, mine: false, native: 'Russian' }
+
+  test('the same instructions with one wish about the length added, the rules untouched', () => {
+    const plain = summaryPrompt(options, 'en', 'whole')
+    const brief = summaryPrompt({ ...options, length: 'brief' }, 'en', 'whole')
+    const full = summaryPrompt({ ...options, length: 'full' }, 'en', 'whole')
+    expect(brief.startsWith(plain)).toBe(true)
+    expect(full.startsWith(plain)).toBe(true)
+    expect(brief).toContain('two sentences')
+    expect(full).toContain('every decision')
+    expect(brief).not.toBe(full)
+  })
+})
+

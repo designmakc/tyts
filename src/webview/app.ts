@@ -19,10 +19,11 @@
 import { AWAKE_HOURS, type AwakeHours } from '../awake'
 import { NATURAL_PREFIX, NATURAL_VOICES, naturalLabel } from '../natural'
 import { DOUBLE_MS, HotkeyRecorder, hotkeyLabel, onMac, type Recorded } from '../hotkey'
+import { missing } from '../access'
 import type { AppTab, AppView, DiffPart, Feature, KeyboardLayout, MistakeEntry, SavedWord, Settings, StorageId, StoragePart, StorageView, ToView, TutorHost } from '../protocol'
 import { LANGUAGES } from '../languages'
 import { translationAdvice, type LevelFit } from '../hardware'
-import { COPY_TWICE_KEYS, DEFAULTS, EDIT_OWN_MAX, EDIT_STYLES, keptForm, myLanguages, RATES, SUMMARY_OWN_MAX, SWITCH_SOUNDS, TALK_ABOUT_MAX, TALK_LEVELS, type AppRule, type CallAuto, type EdgeStyle, type LlmModel, type TalkLevel, type ThemeMode, type TranslationLevel } from '../settings'
+import { CALL_PROGRAMS, COPY_TWICE_KEYS, DEFAULTS, EDIT_OWN_MAX, EDIT_STYLES, keptForm, myLanguages, RATES, SUMMARY_OWN_MAX, SWITCH_SOUNDS, TALK_ABOUT_MAX, TALK_LEVELS, type AppRule, type CallAuto, type EdgeStyle, type LlmModel, type TalkLevel, type ThemeMode, type TranslationLevel } from '../settings'
 import type { AppPart } from '../typist'
 // app.ts has a languageName of its own (a code's English name); the interface's is langName here.
 import { formatDate, languageName as langName, levelName, setUiLanguage, t, uiLanguage, type Key } from '../i18n'
@@ -71,7 +72,7 @@ function phrases<K extends string>(keys: Record<K, Key>): Record<K, string> {
 }
 
 type Action = 'translate' | 'english' | 'voice' | 'recordings' | 'layout'
-type Page = Action | 'keys' | 'words' | 'mistakes' | 'transcripts' | 'translations' | 'phrases' | 'vocabulary' | 'kept' | 'learned' | 'programs' | 'layouts' | 'settings' | 'models' | 'storage' | 'clipboard' | 'about' | 'report' | 'search'
+type Page = Action | 'keys' | 'words' | 'mistakes' | 'transcripts' | 'translations' | 'phrases' | 'vocabulary' | 'kept' | 'learned' | 'programs' | 'layouts' | 'settings' | 'models' | 'storage' | 'clipboard' | 'access' | 'about' | 'report' | 'search'
 
 const ACTIONS: readonly Action[] = ['layout', 'voice', 'recordings', 'translate', 'english']
 /** Each action's icon, in the sidebar. */
@@ -114,6 +115,7 @@ const TITLES: Record<Page, string> = phrases({
   models: 'nav.models',
   storage: 'nav.storage',
   clipboard: 'nav.clipboard',
+  access: 'nav.access',
   about: 'nav.about',
   report: 'nav.report',
   search: 'nav.search',
@@ -216,7 +218,10 @@ type NavItem = { page: Page | 'home'; icon: LucideName; title: string; value?: (
 const NAV: NavItem[][] = [
   [{ page: 'home', icon: 'house', title: t('nav.home') }],
   ACTIONS.map(a => ({ page: a, icon: ICONS[a], title: TITLES[a] })),
-  [{ page: 'settings', icon: 'settings', title: TITLES.settings }],
+  [
+    { page: 'settings', icon: 'settings', title: TITLES.settings },
+    { page: 'access', icon: 'shield-check', title: TITLES.access, value: v => String(missing(v.access) || '') },
+  ],
   [
     { page: 'about', icon: 'info', title: TITLES.about },
     { page: 'report', icon: 'bug', title: TITLES.report },
@@ -374,6 +379,7 @@ function homeTrouble(v: AppView): HTMLElement[] {
     v.translator === 'failed' ? warn(t('home.troubleTranslator')) : null,
     v.natural.status === 'failed' ? warn(t('home.troubleVoice')) : null,
     installed(v) && v.speech.service === 'down' ? warn(t('home.troubleSpeech')) : null,
+    missing(v.access) ? warn(t('home.troubleAccess'), ' ', linkBtn(t('access.check'), () => go('access'))) : null,
   ]
   return lines.filter(n => n !== null)
 }
@@ -1045,6 +1051,8 @@ function bodyOf(v: AppView): HTMLElement[] {
       return storagePage(v)
     case 'clipboard':
       return clipboardPage(v)
+    case 'access':
+      return accessPage(v)
     case 'about':
       return aboutPage(v)
     case 'report':
@@ -2515,6 +2523,7 @@ function recordingsPage(v: AppView): HTMLElement[] {
     testOffer(v),
     installed(v) ? callRow(v) : null,
     installed(v) ? callAutoRow(v) : null,
+    ...(installed(v) && v.settings.callAuto !== 'off' ? callProgramRows(v) : []),
     keyRow('meetingKey', t('call.record'), t('call.keyNote'), !v.speech.keysOk.meeting),
     installed(v) ? toggleCard('message-square-text', t('call.live'), v.settings.callLive, callLive => save({ callLive }), t('call.liveNote')) : null,
     installed(v) && v.settings.callLive ? toggleCard('message-square-text', t('call.liveTop'), v.settings.callLiveTop, callLiveTop => save({ callLiveTop }), t('call.liveTopNote')) : null,
@@ -2563,6 +2572,15 @@ function callAutoRow(v: AppView): HTMLElement {
     ['record', t('call.autoRecord')],
   ]
   return card('sparkles', t('call.auto'), [t('call.autoNote')], select(v.settings.callAuto, names, callAuto => save({ callAuto })))
+}
+
+/** The call programs watched, one switch each: turned off, a program is neither asked about nor recorded by itself (settings.callAutoSkip). */
+function callProgramRows(v: AppView): HTMLElement[] {
+  const skip = v.settings.callAutoSkip
+  return [
+    grp(t('call.programs')),
+    ...CALL_PROGRAMS.map(name => toggle(name, !skip.includes(name), on => save({ callAutoSkip: on ? skip.filter(n => n !== name) : [...skip, name] }))),
+  ]
 }
 
 /** What a call's summary does by itself: made right away or not, the template, the language. */
@@ -3380,6 +3398,21 @@ const linkChips = (links: [string, string][]) =>
     { class: 'links' },
     ...links.map(([text, url]) => el('a', { class: 'lchip', href: url, onclick: (event: Event) => (event.preventDefault(), post({ type: 'openLink', url })) }, text, lucide('arrow-up-right'))),
   )
+
+/** Permissions: each thing the system must allow, whether it does, and a button that asks for it or opens its settings (access.ts). */
+function accessPage(v: AppView): HTMLElement[] {
+  const names = { mic: ['access.mic', 'access.micNote'], screen: ['access.screen', 'access.screenNote'], access: ['access.access', 'access.accessNote'], input: ['access.input', 'access.inputNote'] } as const
+  return [
+    aside('info', t(missing(v.access) ? 'access.note' : 'access.allOk')),
+    ...v.access.map(r =>
+      row(
+        t(names[r.id][0]),
+        [t(names[r.id][1])],
+        r.state === 'ok' ? el('span', { class: 'chip' }, t('access.ok')) : btn(t(r.state === 'ask' ? 'access.allow' : 'access.openSettings'), () => post({ type: 'grantAccess', id: r.id }), 'primary'),
+      ),
+    ),
+  ]
+}
 
 function aboutPage(v: AppView): HTMLElement[] {
   return [

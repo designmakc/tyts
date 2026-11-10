@@ -6,7 +6,8 @@ import type { WordTime } from './kokoro'
 import type { Gloss } from './lemma'
 import type { NaturalState } from './natural'
 import type { EdgeStyle, LlmModel, Settings, TranslationLevel } from './settings'
-import type { SummaryTemplate } from './summary'
+import type { AccessId, AccessRow } from './access'
+import type { SummaryLength, SummaryTemplate } from './summary'
 import type { TopMode, TopRow } from './toplook'
 import type { SpeechPackState, SpeechPart } from './speechpack'
 import type { Choice, Feature, FeaturePlan, SpeechPlan } from './speechplan'
@@ -250,6 +251,8 @@ export type CallState = 'idle' | 'starting' | 'recording' | 'paused' | 'stopping
 /** Everything the app window shows, sent whole whenever any of it changes. */
 export type AppView = {
   settings: Settings
+  /** What the system lets Tyts do (access.ts), for the Permissions page; read anew each time the window is shown or comes to the front. */
+  access: AccessRow[]
   version: string
   /** When this copy was built, and from which commit ("30 Oct, 07:12 (ff17ba8, changed)"). */
   build: string
@@ -650,7 +653,9 @@ export type ToHost =
   /** From the app window's Recordings page: a call recording started, or stopped and saved. */
   | { type: 'toggleCall' }
   /** Makes (or makes again) a transcript's summary; main saves it in the engine. */
-  | { type: 'summarize'; id: string; template: SummaryTemplate; own?: string; mine: boolean }
+  /** The Permissions page: ask the system for this one, or open its settings where it was refused. */
+  | { type: 'grantAccess'; id: AccessId }
+  | { type: 'summarize'; id: string; template: SummaryTemplate; own?: string; mine: boolean; length?: SummaryLength }
   | { type: 'cancelSummary'; id: string }
   | { type: 'dictationFailed'; message: string }
 

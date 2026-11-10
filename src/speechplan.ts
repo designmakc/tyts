@@ -316,12 +316,12 @@ function forDevice(device: Device, input: PlanInput): Record<Feature, FeaturePla
   return { dictation, transcripts }
 }
 
-/** Dictation's beam: five on the card, two (one for Speed) on the processor. */
+/** The beam: five on the card, two (one for Speed) on the processor, where a recording too is read with it (2026-11-10: five there took far longer for little). */
 const beamOn = (device: Device, input: PlanInput) => (device === 'cuda' ? 5 : input.prefer === 'speed' ? 1 : 2)
 
 const entryOf = (feature: Feature, plan: FeaturePlan, input: PlanInput): EngineEntry => {
   const c = plan.chosen
-  const beam = feature === 'dictation' ? { beam: beamOn(c.device, input) } : {}
+  const beam = feature === 'dictation' || c.device === 'cpu' ? { beam: beamOn(c.device, input) } : {}
   return c.device === 'cpu' ? { model: c.model, ...beam } : { model: c.model, compute: c.compute, ...beam }
 }
 

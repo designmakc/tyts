@@ -21,8 +21,7 @@
   width: 220px;
   height: 96px;
   margin-left: -110px;
-  background: radial-gradient(ellipse 34% 100% at 50% 0, color-mix(in srgb, var(--accent) 30%, #fff) 0, color-mix(in srgb, var(--accent) 26%, transparent) 30%, transparent 78%);
-  filter: blur(10px);
+  background: radial-gradient(ellipse 34% 100% at 50% 0, color-mix(in srgb, var(--accent) 30%, #fff) 0, color-mix(in srgb, var(--accent) 26%, transparent) 30%, transparent 90%);
   transform-origin: 50% 0;
   animation: fx-breathe 3.6s ease-in-out infinite;
 }

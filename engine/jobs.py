@@ -366,8 +366,9 @@ class Worker:
         keep = DICTATION_IDLE["roomy" if ram_gb() >= 12 else "tight"]
 
         # The graphics card is the person's (2026-10-31): a model on it goes after a few idle minutes, as llama.cpp's.
+        # A computer short of memory gets the transcripts' model's back as soon as the card's would be.
         def resting(device: str | None) -> bool:
-            return now - self.last_work > (CARD_IDLE if device == "cuda" else IDLE_UNLOAD)
+            return now - self.last_work > (CARD_IDLE if device == "cuda" or ram_gb() < 12 else IDLE_UNLOAD)
 
         def dictating(device: str | None) -> bool:
             return now - self.last_dictation < (CARD_IDLE if device == "cuda" else keep)
@@ -468,7 +469,9 @@ class Worker:
                 self.yield_to_dictation()
 
         started = time.perf_counter()
-        segments, spoken = t.transcribe(samples, language, vocab.hotwords(settings["vocabulary"], settings["hotwords"]), each)
+        # Whisper alone has a beam: the plan's on the processor (narrower, quicker), its own five without one.
+        beam = self.entry("transcripts", t.device)[1].get("beam") if isinstance(t, Transcriber) and t.device in ("cpu", "cuda") else None
+        segments, spoken = t.transcribe(samples, language, vocab.hotwords(settings["vocabulary"], settings["hotwords"]), each, **({"beam": beam} if beam else {}))
         self.bench.words(t.name, t.device, t.compute, audio.duration(samples), time.perf_counter() - started)
         # Spelled as the vocabulary says before the words are numbered and kept (merge.py), so the
         # kept words, the utterances and a later split by speaker all read the same; in a meeting
@@ -611,10 +614,14 @@ class Worker:
         }
         # A transcript made again keeps what is not made from the sound: the summary, the call's program, its lost chunks.
         before = store.transcript(id) or {}
-        for key in ("app", "lost", "summary"):
+        for key in ("app", "lost", "summary", "notes"):
             value = job.get(key, before.get(key))
             if value:
                 transcript[key] = value
+        # Notes typed while the call recorded (app.py keep_early_notes) become the transcript's.
+        early = store.folder(id) / "notes.txt"
+        if "notes" not in transcript and early.exists():
+            transcript["notes"] = early.read_text("utf-8")
         shots = shots_in(store.folder(id), before.get("shots"))
         if shots:
             transcript["shots"] = shots

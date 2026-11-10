@@ -70,10 +70,12 @@ export function cardText(g: Gpu): string {
  * computer's memory: the 12B on the RTX 2080 SUPER, 12 tokens a second
  * against 3).
  */
-export type LevelFit = { where: 'card' | 'part' | 'processor'; slow: boolean; cuda: boolean }
+export type LevelFit = { where: 'card' | 'part' | 'processor'; slow: boolean; cuda: boolean; /** Off the card, and the computer's memory is too little for it: the page says so. */ tight?: true }
 
 /** The model's own memory on the card, in MB, with its working room (Gemma 4 E4B, q4_0, whose per-layer embeddings stay in the computer's memory: 3.1 GB measured; Gemma 4 12B, q4_0, 7 GB of weights). */
 export const LEVEL_VRAM_MB = { accurate: 3500, most: 9000 }
+/** The computer's memory a model off the card needs, in GB, beside the system and a browser (its file is 5 GB and 7 GB; a guess, 2026-11-10). */
+export const LEVEL_RAM_GB = { accurate: 8, most: 16 }
 
 /** An NVIDIA card llama.cpp's CUDA 12.4 build runs on: compute 5.0, a driver of 551 or newer (as nvidia-smi numbers it). */
 function cudaReady(g: Gpu | undefined): boolean {
@@ -91,20 +93,22 @@ function cudaReady(g: Gpu | undefined): boolean {
  * NVIDIA, AMD and Intel alike; a chip sharing the system's memory does not.
  */
 /** How a model needing `need` MB on the card fits here. */
-function fitter(p: DeviceProfile | undefined): (need: number) => LevelFit {
+function fitter(p: DeviceProfile | undefined): (need: number, ram: number) => LevelFit {
   const vram = p?.gpus.reduce((most, g) => Math.max(most, g.vramMb), 0) ?? 0
   const nvidia = cudaReady(nvidiaCard(p)) && (nvidiaCard(p)?.vramMb ?? 0) === vram
-  return need =>
-    vram >= need
+  return (need, ram) => {
+    const tight = p && p.ramGb > 0 && p.ramGb < ram ? ({ tight: true } as const) : {}
+    return vram >= need
       ? { where: 'card', slow: false, cuda: false }
       : vram >= need / 2
-        ? { where: 'part', slow: true, cuda: nvidia }
-        : { where: 'processor', slow: true, cuda: false }
+        ? { where: 'part', slow: true, cuda: nvidia, ...tight }
+        : { where: 'processor', slow: true, cuda: false, ...tight }
+  }
 }
 
 export function translationAdvice(p: DeviceProfile | undefined): { advised: 'fast' | 'accurate' | 'most'; accurate: LevelFit; most: LevelFit } {
   const fit = fitter(p)
-  const accurate = fit(LEVEL_VRAM_MB.accurate)
-  const most = fit(LEVEL_VRAM_MB.most)
+  const accurate = fit(LEVEL_VRAM_MB.accurate, LEVEL_RAM_GB.accurate)
+  const most = fit(LEVEL_VRAM_MB.most, LEVEL_RAM_GB.most)
   return { advised: most.where === 'card' ? 'most' : accurate.where === 'card' ? 'accurate' : 'fast', accurate, most }
 }

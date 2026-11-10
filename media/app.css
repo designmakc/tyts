@@ -2538,11 +2538,12 @@ button.chip:hover {
 
 .level i {
   display: block;
-  width: 0;
   height: 100%;
   border-radius: inherit;
   background: var(--green);
-  transition: width 80ms linear;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 80ms linear;
 }
 
 /* Files over the window: anywhere is a drop. */
@@ -3555,4 +3556,62 @@ li + li > .ti::before {
   margin-left: -84px;
   transform: scale(0.4);
   transform-origin: 50% 0;
+}
+
+/* A call while it records: the person's notes beside the draft of the words. */
+.recview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.recside {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+}
+
+.recside .tnotes {
+  width: 100%;
+  height: 46vh;
+  min-height: 160px;
+  resize: vertical;
+}
+
+.reclines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 46vh;
+  min-height: 160px;
+  overflow-y: auto;
+  user-select: text;
+}
+
+.lline {
+  font-size: var(--t-body, 14px);
+  line-height: 1.5;
+}
+
+.lline .who {
+  margin-right: 6px;
+  font-weight: 600;
+  color: var(--strong);
+}
+
+.lline.me .who {
+  color: var(--muted);
+}
+
+.lline .at {
+  margin-right: 6px;
+  font: 500 var(--t-small) / 1 var(--mono);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }

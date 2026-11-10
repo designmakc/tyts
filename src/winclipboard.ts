@@ -8,7 +8,6 @@
 // it, which tells Kryakl the paste has landed and the person's clipboard can
 // go back.
 
-import koffi from 'koffi'
 import { loadLib } from './native'
 
 const user32 = loadLib('user32.dll')

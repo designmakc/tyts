@@ -374,6 +374,10 @@ export type EdgeView = {
   speech: boolean
   dictating: boolean
   call: boolean
+  /** A call records (not starting, paused or stopping): a screenshot can be taken. */
+  recording: boolean
+  /** The screenshot just asked for: kept, or not; said for a moment. */
+  shot: '' | 'ok' | 'failed'
   keys: { dictate: string; again: string; call: string; fix: string }
   autoFix: boolean
   switchOn: boolean
@@ -383,7 +387,7 @@ export type EdgeView = {
 }
 
 /** What the panel at the top of the screen does besides the tray's commands; each puts the panel away. */
-export type EdgeAct = { act: 'dictate' } | { act: 'again' } | { act: 'paste'; at: string } | { act: 'openCall'; id: string } | { act: 'setup' }
+export type EdgeAct = { act: 'dictate' } | { act: 'again' } | { act: 'shot' } | { act: 'paste'; at: string } | { act: 'openCall'; id: string } | { act: 'setup' }
 
 /** What the tray's panel can do; each puts the panel away first. */
 export type TrayCommand = 'listenCopied' | 'translateCopied' | 'typeToTranslate' | 'checkEnglish' | 'talk' | 'listenScreen' | 'translateScreen' | 'note' | 'call' | 'transcripts' | 'transcribe' | 'vocabulary' | 'kept' | 'settings' | 'report' | 'open' | 'quit' | 'awake'
@@ -441,8 +445,8 @@ export type ToView =
   /** The phrase is with the local model (text editing). */
   | { type: 'dictationEditing' }
   | { type: 'dictationError'; message: string }
-  /** The call recording's panel (capture.ts): record, under `title` (`app`: the call program running, for the engine; `shots`: a screenshot every 4 s when the screen changed), stop and save, pause or go on, take a screenshot now. */
-  | { type: 'capture'; command: 'start' | 'stop' | 'pause' | 'resume' | 'discard' | 'ask' | 'unask' | 'shot'; title?: string; app?: string; auto?: boolean; shots?: boolean; live?: boolean }
+  /** The call recording's panel (capture.ts): record, under `title` (`app`: the call program running, for the engine; ), stop and save, pause or go on, take a screenshot now. */
+  | { type: 'capture'; command: 'start' | 'stop' | 'pause' | 'resume' | 'discard' | 'ask' | 'unask' | 'shot'; title?: string; app?: string; auto?: boolean; live?: boolean }
   /** The tray's panel was just shown: focus its first command. */
   | { type: 'trayShown' }
   | { type: 'edge'; view: EdgeView; fresh?: boolean }
@@ -640,6 +644,8 @@ export type ToHost =
   | { type: 'captureCopyPhrase' }
   /** The panel opened its draft of the words (taller) or closed it. */
   | { type: 'captureExpand'; open: boolean }
+  /** A screenshot the person asked for was kept, or was not. */
+  | { type: 'captureShot'; ok: boolean }
   /** From the app window's Recordings page: a call recording started, or stopped and saved. */
   | { type: 'toggleCall' }
   /** Makes (or makes again) a transcript's summary; main saves it in the engine. */

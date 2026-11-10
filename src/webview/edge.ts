@@ -1,6 +1,7 @@
 // The panel at the top of the screen (main.ts showEdge, edgepanel.ts): one line
 // for what stands in the way, then a row of buttons: Dictate, Paste the last
-// phrase, Calls, Record a call, and Report, Settings, Quit. The pointer on a
+// phrase, Calls, Record a call, and Report, Settings, Quit (its card: Pause or
+// Quit). The pointer on a
 // button opens its card under the row: the last phrases (a click pastes one),
 // the last calls (a click opens one), the recording, the quick switches. The
 // panel never takes the focus, so what it types goes where the person was.
@@ -26,7 +27,7 @@ const act = (a: EdgeAct) => post({ type: 'edgeAct', ...a })
 const tray = (command: TrayCommand) => post({ type: 'tray', command })
 
 const root = document.getElementById('root') as HTMLDivElement
-type Card = 'dictate' | 'calls' | 'record' | 'settings'
+type Card = 'dictate' | 'calls' | 'record' | 'settings' | 'power'
 let view: EdgeView | undefined
 let open: Card | undefined
 
@@ -53,6 +54,7 @@ function button(icon: LucideName, label: string, run: () => void, card?: Card, o
 }
 
 function statusLine(v: EdgeView): HTMLElement | null {
+  if (v.shot) return el('div', { class: `estatus ${v.shot === 'ok' ? 'good' : 'bad'}` }, lucide(v.shot === 'ok' ? 'check' : 'circle-alert', 's'), el('span', {}, t(v.shot === 'ok' ? 'call.shotKept' : 'call.shotFailed')))
   if (v.problem === 'noEngine') return el('div', { class: 'estatus' }, lucide('circle-alert', 's'), el('span', {}, t('edge.noEngine')), el('button', { class: 'link', onclick: () => act({ act: 'setup' }) }, t('edge.setup')))
   if (v.problem === 'paused')
     return el('div', { class: 'estatus' }, lucide('pause', 's'), el('span', {}, t('edge.paused')), el('button', { class: 'link', onclick: () => post({ type: 'saveSettings', patch: { paused: false } }) }, t('tray.resume')))
@@ -108,6 +110,17 @@ function card(v: EdgeView): HTMLElement | null {
         switchRow('switchOn', t('edge.switchOn'), v.switchOn),
         switchRow('layoutBadge', t('tray.layoutBadge'), v.layoutBadge),
       )
+    case 'power': {
+      // Stop for a while, or for good: the pause keeps Tyts in the tray, doing nothing until it is resumed.
+      const paused = v.problem === 'paused'
+      return el(
+        'div',
+        { class: 'ecard' },
+        head(t('app.name')),
+        el('button', { class: 'erow', onclick: () => post({ type: 'saveSettings', patch: { paused: !paused } }) }, lucide(paused ? 'play' : 'pause', 's'), el('span', { class: 'l' }, t(paused ? 'tray.resume' : 'tray.pause'))),
+        el('button', { class: 'erow', onclick: () => tray('quit') }, lucide('power', 's'), el('span', { class: 'l' }, t('tray.quit'))),
+      )
+    }
     default:
       return null
   }
@@ -134,11 +147,12 @@ function render(): void {
           { class: 'egroup' },
           button('file-text', t('calls.title'), () => tray('transcripts'), 'calls', { off: speech }),
           button('video', v.call ? t('call.stop') : t('call.record'), () => tray('call'), 'record', { on: v.call, off: speech }),
+          ...(v.call ? [button('camera', t('call.shot'), () => act({ act: 'shot' }), undefined, { off: !v.recording })] : []),
         ),
         el('span', { class: 'gap' }),
         button('bug', t('tray.reportTitle'), () => tray('report')),
         button('settings', t('tray.settings'), () => tray('settings'), 'settings'),
-        button('power', t('tray.quit'), () => tray('quit')),
+        button('power', t('tray.quit'), () => tray('quit'), 'power'),
       ),
       card(v),
     ].filter((n): n is HTMLElement => n !== null),

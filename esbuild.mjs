@@ -13,7 +13,8 @@ for (const file of ['codicon.css', 'codicon.ttf']) {
   copyFileSync(`node_modules/@vscode/codicons/dist/${file}`, `media/${file}`)
 }
 
-const node = { bundle: true, platform: 'node', format: 'cjs', target: 'node22', sourcemap: true, logLevel: 'info' }
+// charset utf8: the Ukrainian and Russian phrases as themselves, not \\uXXXX (half the size).
+const node = { bundle: true, platform: 'node', format: 'cjs', target: 'node22', sourcemap: true, logLevel: 'info', charset: 'utf8' }
 
 /** When and from what this build was made: shown beside the version, so a run from source says it is today's. */
 function buildStamp() {
@@ -78,6 +79,10 @@ const card = {
   platform: 'browser',
   format: 'iife',
   target: 'es2022',
+  // Smaller pages open sooner on a slow disk; names stay whole, so an error in tyts.log still reads.
+  charset: 'utf8',
+  minifyWhitespace: true,
+  minifySyntax: true,
   outfile: 'media/card.js',
   logLevel: 'info',
 }

@@ -846,6 +846,39 @@ def live_view(id: str):
     return live.view()
 
 
+# The person's notes typed while the call records (the calls window): kept beside the sound until the
+# transcript is made, which takes them as its notes (jobs.py); after that they are the transcript's (PATCH).
+def early_notes_file(id: str):
+    store = state.get_store()
+    try:
+        row = store.row(id)
+    except KeyError:
+        row = None
+    if row is None:
+        raise HTTPException(404, "No such recording")
+    if store.transcript(id) is not None:
+        raise HTTPException(409, "The transcript is made: its notes are kept with it")
+    return store.folder(id) / "notes.txt"
+
+
+@app.get("/recordings/{id}/notes")
+def early_notes(id: str):
+    file = early_notes_file(id)
+    return {"notes": file.read_text("utf-8") if file.exists() else ""}
+
+
+@app.put("/recordings/{id}/notes", status_code=204)
+def keep_early_notes(id: str, body: dict = Body(...)):
+    file = early_notes_file(id)
+    text = body.get("notes")
+    if not isinstance(text, str):
+        raise HTTPException(400, "notes is the text")
+    if text.strip():
+        file.write_text(text[:NOTES_MAX], "utf-8")
+    else:
+        file.unlink(missing_ok=True)
+
+
 # A call's screenshot (capture.ts): a JPEG of 2 MB at most, while the call records.
 SHOT_MAX = 2 << 20
 SHOT_MS_MAX = 48 * 3600_000

@@ -101,7 +101,7 @@ const EDGE_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>(['edgeRea
 const TOP_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>(['topReady'])
 
 /** Messages only the call recording's panel sends, and the only ones it may: how its recording goes. */
-const CAPTURE_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>(['captureState', 'captureDone', 'captureHide', 'captureOpenSettings', 'captureAnswer', 'captureCopyPhrase', 'captureExpand'])
+const CAPTURE_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>(['captureState', 'captureDone', 'captureHide', 'captureOpenSettings', 'captureAnswer', 'captureCopyPhrase', 'captureExpand', 'captureShot'])
 
 export function messageAllowed(page: Page, type: string): boolean {
   if (page === 'other') return false

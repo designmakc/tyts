@@ -10,7 +10,7 @@ import readline from 'node:readline'
 import { parseMicRegistry, type MicUser } from './callwatch'
 import { system32 } from './system32'
 
-const LOOK_MS = 2000
+const LOOK_MS = 5000
 const RESTART_MS = 10_000
 const MIC_KEY = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\CapabilityAccessManager\\ConsentStore\\microphone'
 

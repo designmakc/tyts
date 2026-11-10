@@ -9,6 +9,7 @@
 import { formatDate, languageName, levelName, t } from '../i18n'
 import type { Answer } from '../ask'
 import { CITE, cited } from '../ask'
+import { liveAnswer, liveRows, type LiveState } from '../calllive'
 import type { AppView } from '../protocol'
 import { NOTES_MAX, SUMMARY_OWN_MAX, SUMMARY_TEMPLATES_MAX, TEMPLATE_NAME_MAX } from '../settings'
 import type { SummaryTemplate } from '../summary'
@@ -217,7 +218,7 @@ window.setInterval(() => {
   const r = tx.recorder
   if (!r) return
   for (const tr of document.querySelectorAll('.mtime')) tr.textContent = clock(r.seconds)
-  for (const l of document.querySelectorAll<HTMLElement>('.level i')) l.style.width = `${Math.round(r.level() * 100)}%`
+  for (const l of document.querySelectorAll<HTMLElement>('.level i')) l.style.transform = `scaleX(${r.level().toFixed(2)})`
 }, 100)
 
 async function startMic(): Promise<void> {
@@ -605,6 +606,99 @@ function notesBlock(tr: Transcript): HTMLElement {
   return el('div', { class: 'notes' }, field, el('small', { class: 'muted' }, t('calls.notesNote')))
 }
 
+// ---------------------------------------------------------------- a call while it records
+// The open recording: the person's notes beside the draft of the words (engine/live.py, with
+// `callLive`). One element kept across the page's redraws, so what is typed, its cursor and the
+// draft's scroll stay. The notes are kept by the engine as they are typed (PUT /recordings/<id>/notes)
+// and become the transcript's; the draft's lines are only shown, never kept or logged.
+
+type Recording = { id: string; root: HTMLElement; lines: HTMLElement; field: HTMLTextAreaElement; saved: string; timer?: number }
+let rec: Recording | undefined
+const NOTES_KEEP_MS = 800
+/** The draft's rows shown: the call's last few minutes. */
+const LIVE_ROWS = 200
+
+function recordingView(r: Row): HTMLElement {
+  if (rec?.id === r.id) return rec.root
+  leaveRecording()
+  const lines = el('div', { class: 'reclines' })
+  const field = el('textarea', { class: 'field report tnotes', maxlength: NOTES_MAX, placeholder: t('calls.notesPlaceholder'), 'aria-label': t('calls.tabNotes') })
+  const root = el(
+    'div',
+    { class: 'recview' },
+    el('div', { class: 'recside' }, el('b', {}, t('calls.tabNotes')), field, el('small', { class: 'muted' }, t('calls.notesWhile'))),
+    el('div', { class: 'recside' }, el('b', {}, el('i', { class: 'dot pulse' }), ' ', t('tr.recording')), lines),
+  )
+  const me: Recording = { id: r.id, root, lines, field, saved: '' }
+  field.addEventListener('input', () => {
+    window.clearTimeout(me.timer)
+    me.timer = window.setTimeout(() => void keepNotes(me), NOTES_KEEP_MS)
+  })
+  field.addEventListener('blur', () => void keepNotes(me))
+  // Notes typed before the window was closed and opened again.
+  void api<{ notes: string }>('GET', `/recordings/${r.id}/notes`)
+    .then(a => {
+      me.saved = a.notes
+      if (!field.value) field.value = a.notes
+    })
+    .catch(() => undefined)
+  rec = me
+  void followLive()
+  return root
+}
+
+/** What is typed goes to the engine; a transcript made meanwhile takes it as its notes. */
+async function keepNotes(me: Recording): Promise<void> {
+  window.clearTimeout(me.timer)
+  const notes = me.field.value
+  if (notes === me.saved) return
+  try {
+    await api('PUT', `/recordings/${me.id}/notes`, { notes })
+    me.saved = notes
+  } catch (error) {
+    if (!(error instanceof SpeechError) || error.status !== 409) return fault(error)
+    await api('PATCH', `/transcripts/${me.id}`, { notes }).then(() => (me.saved = notes), fault)
+  }
+}
+
+/** The recording is no longer the one shown: its last words typed are kept first. */
+function leaveRecording(): void {
+  if (!rec) return
+  void keepNotes(rec)
+  rec = undefined
+}
+
+/** The draft's rows, or why there are none. */
+async function followLive(): Promise<void> {
+  const me = rec
+  if (!me) return
+  let state: LiveState = 'failed'
+  let rows: ReturnType<typeof liveRows> = []
+  try {
+    const got = liveAnswer(await api<unknown>('GET', `/recordings/${me.id}/live`))
+    state = got.state
+    rows = liveRows(got.lines, LIVE_ROWS)
+  } catch {
+    // The engine did not answer: the page's own notice says so; the draft waits.
+  }
+  if (rec !== me) return
+  const off = hooks.view()?.settings.callLive ? t('tr.afterStop') : t('calls.liveOff')
+  const why: Partial<Record<LiveState, string>> = { missing: t('call.liveMissing'), card: t('call.liveCard'), failed: t('call.liveFailed'), off }
+  const said = why[state] ?? (rows.length ? '' : t('call.liveWaiting'))
+  const atEnd = me.lines.scrollHeight - me.lines.scrollTop - me.lines.clientHeight < 40
+  me.lines.replaceChildren(
+    ...(said
+      ? [el('small', { class: 'muted' }, said)]
+      : [
+          ...rows.map(l =>
+            el('div', { class: `lline ${l.who}` }, el('span', { class: 'who' }, t(l.who === 'me' ? 'call.liveMe' : 'call.liveOthers')), el('span', { class: 'at' }, clock(l.at)), el('span', {}, l.gap ? t('call.liveGap') : l.text)),
+          ),
+          el('small', { class: 'muted' }, state === 'paused' ? t('call.livePaused') : t('call.liveDraft')),
+        ]),
+  )
+  if (atEnd) me.lines.scrollTop = me.lines.scrollHeight
+}
+
 function progressCard(r: Row): HTMLElement {
   if (r.status === 'failed') {
     return el(
@@ -627,7 +721,8 @@ function progressCard(r: Row): HTMLElement {
       ),
     )
   }
-  if (r.status === 'recording') return el('div', { class: 'card' }, el('b', {}, el('i', { class: 'dot pulse' }), ' ', t('tr.recording')), el('small', {}, t('tr.afterStop')))
+  if (r.status === 'recording') return recordingView(r)
+  leaveRecording()
   const card = el(
     'div',
     { class: 'card progress' },
@@ -1411,9 +1506,10 @@ window.addEventListener('keydown', event => {
 // The library and an unfinished transcript follow the engine's work.
 window.setInterval(() => {
   const v = hooks.view()
-  if (!v || !running(v) || !hooks.shown()) return
+  if (document.hidden || !v || !running(v) || !hooks.shown()) return
   if (!tx.openId || hooks.beside) void loadRows()
   if (tx.openId && tx.row && tx.row.status !== 'done') void loadTranscript()
+  if (rec) void followLive()
 }, 1500)
 
 /** The page opened: the library is asked for at once. */

@@ -166,6 +166,13 @@ describe('createSummarizer', () => {
     expect(progress).toEqual([{ part: 0, parts: 3 }, { part: 1, parts: 3 }, { part: 2, parts: 3 }, { part: 3, parts: 3 }, { part: 4, parts: 3 }])
   })
 
+  it('keeps the parts’ summaries when the join’s answer is cut short', async () => {
+    const { summarizer, asked } = setup(body => (body.messages[0]!.content.startsWith('You join') ? '{"short": "They' : answer))
+    const out = await summarizer.summarize(long, { template: 'general', mine: false, native: 'Ukrainian' }, () => {})
+    expect(asked.at(-1)!.body.max_tokens).toBeGreaterThan(asked[0]!.body.max_tokens as number)
+    expect(out.text).toContain('They talked. They talked. They talked.')
+  })
+
   it('joins the parts of a very long meeting in groups, each request within the budget', async () => {
     // Four hours: 12 parts, each answered with a long summary; all of them in one join would overflow the model.
     const { summarizer, asked } = setup(() => ({ ...answer, short: 'x'.repeat(2500) }))

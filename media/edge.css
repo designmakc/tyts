@@ -18,6 +18,15 @@ body {
   flex: 1;
 }
 
+/* A screenshot's fate, said for a moment. */
+.estatus.good {
+  color: var(--green);
+}
+
+.estatus.bad {
+  color: var(--red);
+}
+
 .ebar {
   display: flex;
   align-items: center;

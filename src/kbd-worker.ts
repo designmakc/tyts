@@ -209,7 +209,7 @@ function tick(): void {
 
 // The first keys after the start, counted once for tyts.log, so a computer where nothing happens says why.
 const seen = { keys: 0, foreign: 0, own: 0 }
-function look(vk: number, down: boolean, own: boolean, foreign: boolean): void {
+function look(down: boolean, own: boolean, foreign: boolean): void {
   if (seen.keys >= 40 || !down) return
   seen.keys++
   if (own) seen.own++
@@ -256,7 +256,7 @@ const keyboardProc = koffi.register((code: number, wParam: number | bigint, lPar
         send({ type: 'foreignKeys' })
       }
       const down = message === WM_KEYDOWN || message === WM_SYSKEYDOWN
-      look(info.vkCode, down, own, foreign)
+      look(down, own, foreign)
       return typist.key(info.vkCode, info.scanCode, down, own, foreign)
     })
     if (swallow) return 1

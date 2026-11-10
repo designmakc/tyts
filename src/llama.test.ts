@@ -64,7 +64,7 @@ describe('LlamaServer', () => {
   }
 
   it('asks for four sentences at once, every layer on the card for CUDA, the processor only when told', () => {
-    expect(serverArgs(t('m.gguf'), 9001, false)).toEqual(['-m', 'm.gguf', '--host', '127.0.0.1', '--port', '9001', '-c', '8192', '-np', '4', '--kv-unified', '--no-webui', '--no-slots'])
+    expect(serverArgs(t('m.gguf'), 9001, false)).toEqual(['-m', 'm.gguf', '--host', '127.0.0.1', '--port', '9001', '-c', '8192', '-np', '4', '--kv-unified', '--cache-ram', '0', '--no-webui', '--no-slots'])
     expect(serverArgs({ ...t('m.gguf'), allLayers: true }, 9001, false).slice(-2)).toEqual(['-ngl', 'all'])
     expect(serverArgs({ ...t('m.gguf'), allLayers: true }, 9001, true).slice(-2)).toEqual(['--device', 'none'])
   })

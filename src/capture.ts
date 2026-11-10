@@ -145,8 +145,8 @@ export class CallCapture {
         this.state = m.state
         this.id = m.id ?? (m.state === 'idle' ? undefined : this.id)
         this.secondsAt = { seconds: m.seconds ?? 0, at: Date.now() }
-        // Silence from the computer, or the sound refused: shown even when it was hidden.
-        if (m.silent || m.error) this.show()
+        // Silence from the computer, "still there?", or the sound refused: shown even when it was hidden.
+        if (m.silent || m.quiet || m.error) this.show()
         if (m.state !== was) this.o.log(`call: ${m.state}${m.id ? ` ${m.id}` : ''}${m.micMissing ? ', no microphone' : ''}${m.error ? ', the computer’s sound refused' : ''}`)
         // Saved already (captureDone came first), or it never began.
         if (m.state === 'idle') this.settle(null)

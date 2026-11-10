@@ -94,6 +94,15 @@ Owner decisions and what was found, all on 2026-11-10 (an 8 GB M1; nothing here 
 
 Left for later: Tyts does not remove a deleted call's copies (`.md`, `.ogg`) from the calls folder; "Me" is written in English whatever the interface; reading text off screenshots failed here six times (`ocr-mac`), not looked into.
 
+## Product rules (owner decisions, 2026-11-10): after a second reference app
+
+Compared with a meeting-notes app (`docs/granola-gap.md`, the plan in `docs/granola-plan.md`); nothing is built yet.
+
+- **Taken**: "Are you still there?" on a long silence in a call; a list of call programs not to ask about; ready questions to the recordings and Shorter / Longer for a summary; personal numbers (cards, phones, documents) replaced before the text reaches the model for a summary, **on by default**, the transcript untouched; a sound at the start and end of dictation and quieting other sound meanwhile; tasks from calls on one page; names and terms from the screen as hints for dictation; screenshots of a shared screen by themselves; exact speaker names from the call program's window, last.
+- **Recordings for AI helpers**: a local read-only MCP server is allowed, off by default, with a warning that other programs on this computer will see the recordings. This widens "the engine answers only Tyts" for that one switch.
+- **The calendar stays postponed**, as in `meetings-autostart-plan.md`.
+- **Not taken**: pausing music when a call starts; lid-closed and Bluetooth microphone warnings; a follow-up letter draft; "don't record this" by voice; dictating again from kept sound; a writing style per kind of program; a 30-day bin for deleted recordings.
+
 ## Since 2026-11-09: features from a reference app
 
 Features taken after comparing with a reference app; per-program exceptions were already here (Keyboard › Programs, `settings.apps`).

@@ -1558,6 +1558,8 @@ export const en = {
   'call.noSystem': 'The computer’s sound is unavailable: recording only you. Stop and start again to record the others.',
   'call.noMic': 'Microphone unavailable: recording the others only',
   'call.silent': 'I don’t hear the others: check the sound source',
+  'call.stillAsk': 'Quiet for {minutes} min. The recording stops in {time}',
+  'call.stillGoOn': 'Keep recording',
   'call.failed': 'Could not record the computer’s sound: {why}',
   'call.noSound': 'the system gave no sound',
   'call.openSettings': 'Open settings',

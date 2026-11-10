@@ -632,9 +632,10 @@ export type ToHost =
   | { type: 'dictationTuck'; fly: boolean }
   | { type: 'dictationCancelled' }
   // The call recording's panel: how the recording goes (`seconds` recorded; `silent`: no sound from the computer yet in its first minute;
+  // `quiet`: nobody heard for ten minutes, the panel asks before it stops;
   // `micMissing`: the others alone; `error`: the computer's sound could not be had), its end (`id` null when nothing was recorded),
   // hidden by its chevron, or the system's settings asked for (macOS' Screen & System Audio Recording).
-  | { type: 'captureState'; state: CallState; id?: string; seconds?: number; silent?: boolean; micMissing?: boolean; error?: string }
+  | { type: 'captureState'; state: CallState; id?: string; seconds?: number; silent?: boolean; quiet?: boolean; micMissing?: boolean; error?: string }
   | { type: 'captureDone'; id: string | null; lost: number }
   | { type: 'captureHide' }
   | { type: 'captureOpenSettings' }

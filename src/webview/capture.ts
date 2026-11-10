@@ -17,6 +17,7 @@ import { onMac } from '../hotkey'
 import type { CallState, SpeechResult, ToHost, ToView, TutorHost } from '../protocol'
 import { TrackSender } from '../capturesend'
 import { liveAnswer, liveRows, type LiveRow, type LiveState } from '../calllive'
+import { QUIET_MS, quiet } from '../callquiet'
 import { el } from './dom'
 import { lucide } from './lucide'
 import { micTrouble } from './recorder'
@@ -49,6 +50,9 @@ let micMissing = false
 let systemMissing = false
 let silent = false
 let heard = false
+/** When anybody was last heard, me or the others, and the seconds left to answer "still there?" (callquiet.ts); null while nothing is asked. */
+let lastHeard = 0
+let left: number | null = null
 let error = ''
 /** Started by itself (callwatch.ts): the panel says so and offers not to record. */
 let auto = false
@@ -76,7 +80,7 @@ let open = false
 let rows: LiveRow[] = []
 let polling: number | undefined
 const POLL_EVERY = 2000
-let meter: { context: AudioContext; analyser: AnalyserNode; samples: Float32Array<ArrayBuffer> } | undefined
+let meter: { context: AudioContext; taps: { name: 'mic' | 'system'; analyser: AnalyserNode }[]; samples: Float32Array<ArrayBuffer> } | undefined
 
 const speech = <T>(method: string, route: string, body?: unknown) => host.call({ call: 'speech', method, route, body }) as Promise<SpeechResult<T>>
 
@@ -93,7 +97,7 @@ function clock(s: number): string {
 }
 
 function tell(): void {
-  post({ type: 'captureState', state, ...(id ? { id } : {}), seconds: Math.round(seconds()), silent, micMissing, ...(error ? { error } : {}) })
+  post({ type: 'captureState', state, ...(id ? { id } : {}), seconds: Math.round(seconds()), silent, quiet: left !== null, micMissing, ...(error ? { error } : {}) })
 }
 
 function set(next: CallState): void {
@@ -161,6 +165,8 @@ function draw(): void {
     ? el('div', { class: 'note error' }, el('span', {}, error), onMac ? el('button', { class: 'link', onclick: () => post({ type: 'captureOpenSettings' }) }, t('call.openSettings')) : null)
     : systemMissing && (state === 'recording' || state === 'paused')
       ? el('div', { class: 'note warn' }, el('span', {}, t('call.noSystem')), onMac ? el('button', { class: 'link', onclick: () => post({ type: 'captureOpenSettings' }) }, t('call.openSettings')) : null)
+      : left !== null
+        ? el('div', { class: 'note warn' }, t('call.stillAsk', { minutes: String(QUIET_MS / 60_000), time: clock(left) }), link(t('call.stillGoOn'), goOn))
       : silent
         ? el('div', { class: 'note warn' }, t('call.silent'))
       : micMissing
@@ -289,6 +295,7 @@ async function start(title: string, app?: string, byItself = false, words = fals
   systemMissing = false
   silent = false
   heard = false
+  left = null
   before = 0
   since = 0
   set('starting')
@@ -391,38 +398,60 @@ async function start(title: string, app?: string, byItself = false, words = fals
     return { name, stream, recorder, sender }
   })
   // The system cut the computer's sound off (another capture took it, the screen went away): what came is saved.
-  if (theirs) {
-    for (const track of system.getAudioTracks()) track.addEventListener('ended', () => void stop())
-    listen(system)
-  }
+  if (theirs) for (const track of system.getAudioTracks()) track.addEventListener('ended', () => void stop())
   started = Date.now()
+  lastHeard = started
+  listen(begun)
   since = started
   ticking = window.setInterval(draw, 1000)
   set('recording')
 }
 
-/** Is the computer's sound there? Asked twice a second; silent through the first minute, the panel says so. */
-function listen(stream: MediaStream): void {
+/**
+ * Is anybody heard? Asked twice a second of each track. The computer's sound silent through the first
+ * minute: the panel says so. Both tracks quiet for ten minutes: the panel asks and then stops (callquiet.ts).
+ * ponytail: one loudness threshold; a noisy room counts as somebody there and the question never comes.
+ */
+function listen(streams: { name: 'mic' | 'system'; stream: MediaStream }[]): void {
   const context = new AudioContext()
-  const analyser = context.createAnalyser()
-  analyser.fftSize = 1024
-  context.createMediaStreamSource(stream).connect(analyser)
-  meter = { context, analyser, samples: new Float32Array(analyser.fftSize) }
+  const taps = streams.map(({ name, stream }) => {
+    const analyser = context.createAnalyser()
+    analyser.fftSize = 1024
+    context.createMediaStreamSource(stream).connect(analyser)
+    return { name, analyser }
+  })
+  meter = { context, taps, samples: new Float32Array(1024) }
+  const others = taps.some(tap => tap.name === 'system')
   listening = window.setInterval(() => {
     if (!meter || state !== 'recording') return
-    meter.analyser.getFloatTimeDomainData(meter.samples)
-    let sum = 0
-    for (const v of meter.samples) sum += v * v
-    if (Math.sqrt(sum / meter.samples.length) > HEARD) heard = true
-    const next = !heard && Date.now() - started > SILENT_MS
-    if (next !== silent) {
-      silent = next
-      tell()
-      draw()
+    const now = Date.now()
+    for (const tap of meter.taps) {
+      tap.analyser.getFloatTimeDomainData(meter.samples)
+      let sum = 0
+      for (const v of meter.samples) sum += v * v
+      if (Math.sqrt(sum / meter.samples.length) <= HEARD) continue
+      lastHeard = now
+      if (tap.name === 'system') heard = true
     }
-    // Once heard, nothing more to ask.
-    if (heard) window.clearInterval(listening)
+    const asked = quiet(lastHeard, now)
+    if (asked === 'stop') return void stop()
+    const nextSilent = others && !heard && now - started > SILENT_MS
+    const nextLeft = asked === 'fine' ? null : asked.left
+    const told = nextSilent !== silent || (nextLeft === null) !== (left === null)
+    const drawn = told || nextLeft !== left
+    silent = nextSilent
+    left = nextLeft
+    if (told) tell()
+    if (drawn) draw()
   }, 500)
+}
+
+/** "Keep recording": the quiet minutes are counted anew. */
+function goOn(): void {
+  lastHeard = Date.now()
+  left = null
+  tell()
+  draw()
 }
 
 /**
@@ -441,6 +470,7 @@ function resume(): void {
   if (state !== 'paused') return
   for (const track of tracks) for (const s of track.stream.getTracks()) s.enabled = true
   since = Date.now()
+  lastHeard = since
   set('recording')
 }
 
@@ -461,6 +491,7 @@ async function stop(drop = false): Promise<void> {
   if (state !== 'recording' && state !== 'paused') return
   before = seconds()
   since = 0
+  left = null
   set('stopping')
   setDraft(false)
   live = false

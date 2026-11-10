@@ -47,6 +47,8 @@ export type CallInput = {
   /** A call recording runs (any). */
   recording: boolean
   own: { pid: number; exe: string }
+  /** The call programs the person unticked (settings.callAutoSkip): as if they were not call programs. */
+  skip?: readonly string[]
 }
 
 const NONE: CallAct = { do: 'none' }
@@ -113,7 +115,7 @@ export function step(s: CallWatch, input: CallInput): [CallWatch, CallAct] {
   // The person stopped (or dropped) the recording started by itself: nothing more for this call.
   if (s.auto && !input.recording && now - s.startedAt > STARTING_MS) s = { ...s, auto: false }
   const users = (input.users ?? []).filter(u => u.pid !== input.own.pid && own(u.name) !== own(input.own.exe))
-  const held = input.users === null ? null : users.map(callOf).find(c => c !== null) ?? null
+  const held = input.users === null ? null : users.map(callOf).find(c => c !== null && !input.skip?.includes(c.app)) ?? null
 
   if (held) {
     if (s.app !== held.app && !s.handled) s = { ...idleWatch(), app: held.app, since: now }

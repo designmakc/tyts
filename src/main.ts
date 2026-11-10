@@ -48,7 +48,8 @@ import { watchMic } from './micwatch'
 import { CallCapture } from './capture'
 import { createChecker, type Checker } from './checker'
 import { keyShots, shotAt, shownShots, speakerHints, type Shot } from './shots'
-import { createSummarizer, type ScreenText, type SummaryTemplate } from './summary'
+import { accessRows, type AccessId, type AccessRow, type MediaStatus } from './access'
+import { createSummarizer, type ScreenText, type SummaryLength, type SummaryTemplate } from './summary'
 import { createAsker, type Passage } from './ask'
 import { autoSummaryWanted, summaryInput, type SummarySource } from './summaryflow'
 import { createEditor, type Editor } from './dictedit'
@@ -321,6 +322,8 @@ let keyboardTrouble: string | undefined
 let keysUnseen = false
 /** Which Mac permission keysUnseen waits for: 'macAccess' (Accessibility) or 'macInput' (Input Monitoring). */
 let macTrouble = 'macAccess'
+/** What the Mac keyboard helper said of Input Monitoring, for the Permissions page: nothing yet, it sees keys, or modifiers only. */
+let macKeys: 'seen' | 'blocked' | 'unknown' = 'unknown'
 let lastApp: string | undefined
 /** A program run as administrator was in front lately: Windows keeps its keys from Kryakl's hooks. */
 let elevatedApp: string | undefined
@@ -1368,6 +1371,7 @@ async function moveToTyts(): Promise<void> {
 function appView(): AppView {
   return {
     settings,
+    access: accessNow(),
     version: app.getVersion(),
     build: buildText(),
     dev: !app.isPackaged,
@@ -1407,6 +1411,39 @@ function appView(): AppView {
     summaries: Object.fromEntries(summaries),
     dictation: { recent: dictationLog.list(10) },
   }
+}
+
+/** The system's settings where a permission refused before is turned on. */
+const ACCESS_SETTINGS: Record<AccessId, string> = {
+  mic: onMac ? 'x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone' : 'ms-settings:privacy-microphone',
+  screen: 'x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture',
+  access: 'x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility',
+  input: 'x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent',
+}
+
+/** What the system lets Tyts do now (access.ts): asked of the system, nothing remembered. */
+function accessNow(): AccessRow[] {
+  const media = (kind: 'microphone' | 'screen'): MediaStatus => {
+    try {
+      return systemPreferences.getMediaAccessStatus(kind)
+    } catch {
+      return 'unknown'
+    }
+  }
+  return accessRows({ platform: process.platform, mic: media('microphone'), screen: media('screen'), trusted: !onMac || systemPreferences.isTrustedAccessibilityClient(false), keys: macKeys })
+}
+
+/** The Permissions page's button: the system's own question where it still shows one, its settings where it was refused. */
+async function grantAccess(id: AccessId): Promise<void> {
+  const row = accessNow().find(r => r.id === id)
+  if (!row || row.state === 'ok') return postApp()
+  log(`access: ${id} asked for (${row.state})`)
+  if (row.state === 'settings' || !onMac) void shell.openExternal(ACCESS_SETTINGS[id])
+  else if (id === 'mic') await systemPreferences.askForMediaAccess('microphone').catch(() => false)
+  // macOS lists Tyts under Screen & System Audio Recording, and asks, once something asks for the screen.
+  else if (id === 'screen') await desktopCapturer.getSources({ types: ['screen'] }).catch(() => undefined)
+  else systemPreferences.isTrustedAccessibilityClient(true)
+  postApp()
 }
 
 function postApp(): void {
@@ -1460,6 +1497,8 @@ function createAppWindow(): BrowserWindow {
     event.preventDefault()
     win.hide()
   })
+  // Back from the system's settings: the Permissions page shows what was turned on.
+  win.on('focus', postApp)
   win.on('show', postApp)
   win.on('restore', postApp)
   win.on('closed', () => {
@@ -1985,11 +2024,14 @@ function onMessage(message: ToHost, page: Page): void {
       // Copied because the person asked, to paste into the call's chat: a plain copy, as the card's Copy.
       clipboard.writeText(t('call.phrase'))
       return
+    case 'grantAccess':
+      if (message.id === 'mic' || message.id === 'screen' || message.id === 'access' || message.id === 'input') void grantAccess(message.id)
+      return
     case 'toggleCall':
       toggleCall()
       return
     case 'summarize':
-      void makeSummary(message.id, { template: message.template, own: message.own, mine: message.mine })
+      void makeSummary(message.id, { template: message.template, own: message.own, mine: message.mine, ...(message.length === 'brief' || message.length === 'full' ? { length: message.length } : {}) })
       return
     case 'cancelSummary':
       summaryAborts.get(message.id)?.abort()
@@ -3674,7 +3716,7 @@ function applyCallAuto(): void {
 function onMicUsers(users: MicUser[] | null): void {
   if (!capture) return
   const blocked = settings.paused || !speech?.installed || dictation?.state !== 'idle' || micRecording
-  const [next, act] = stepCall(callWatch, { users, now: Date.now(), mode: settings.callAuto, blocked, recording: capture.busy, own: { pid: process.pid, exe: process.execPath } })
+  const [next, act] = stepCall(callWatch, { users, now: Date.now(), mode: settings.callAuto, skip: settings.callAutoSkip, blocked, recording: capture.busy, own: { pid: process.pid, exe: process.execPath } })
   callWatch = next
   callAct(act)
 }
@@ -3717,7 +3759,7 @@ const SUMMARY_WAIT_MS = 6 * 3600_000
  * engine (PUT /transcripts/{id}/summary); the page shows `summaries` meanwhile
  * and reads the summary back when the entry is gone. Nothing of the text is logged.
  */
-async function makeSummary(id: string, o: { template: SummaryTemplate; own?: string; mine: boolean }): Promise<void> {
+async function makeSummary(id: string, o: { template: SummaryTemplate; own?: string; mine: boolean; length?: SummaryLength }): Promise<void> {
   if (!speech || (summaries.has(id) && !summaries.get(id)!.error)) return
   const abort = new AbortController()
   summaryAborts.set(id, abort)
@@ -3738,7 +3780,7 @@ async function makeSummary(id: string, o: { template: SummaryTemplate; own?: str
     if (screen.length) input.shots = screen
     const done = await summarizer.summarize(
       input,
-      { template: o.template, own: o.own?.slice(0, SUMMARY_OWN_MAX), mine: o.mine, native: settings.native },
+      { template: o.template, own: o.own?.slice(0, SUMMARY_OWN_MAX), mine: o.mine, native: settings.native, ...(o.length ? { length: o.length } : {}) },
       p => {
         summaries.set(id, { ...p, started: summaries.get(id)?.started ?? Date.now() })
         postApp()
@@ -4783,6 +4825,7 @@ function start(): void {
       // 'macAccess' (kbdmac-worker.ts) until Accessibility is given; '' once the thread sees keys.
       const unseen = message === 'macAccess' || message === 'macInput'
       if (unseen) macTrouble = message
+      if (onMac) macKeys = message === 'macInput' ? 'blocked' : message === '' ? 'seen' : 'unknown'
       if (unseen !== keysUnseen) {
         keysUnseen = !keysUnseen
         registerShortcuts()

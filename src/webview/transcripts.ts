@@ -12,7 +12,7 @@ import { CITE, cited } from '../ask'
 import { liveAnswer, liveRows, type LiveState } from '../calllive'
 import type { AppView } from '../protocol'
 import { NOTES_MAX, SUMMARY_OWN_MAX, SUMMARY_TEMPLATES_MAX, TEMPLATE_NAME_MAX } from '../settings'
-import type { SummaryTemplate } from '../summary'
+import type { SummaryLength, SummaryTemplate } from '../summary'
 import { shownShots } from '../shots'
 import { secondsLeft, shotIn, topicIn } from '../summaryflow'
 import { el, icon } from './dom'
@@ -123,6 +123,8 @@ const tx = {
   mine: false,
   editing: false,
   replacing: false,
+  /** Shorter or Longer was pressed: the length the summary being asked for (or confirmed) is made with. */
+  length: undefined as SummaryLength | undefined,
   /** The transcript whose summary was being made when last drawn: it is read again once that is over. */
   sumBusy: '',
   /** What an open transcript shows: its lines, the person's notes, or the summary. */
@@ -355,6 +357,20 @@ function askRows(): HTMLElement[] {
     btn(t('tr.askBtn'), () => form.requestSubmit(), 'primary'),
   )
   const out: HTMLElement[] = [form]
+  // The starts of a question, while nothing is asked: one puts its words in the field, the person names the topic.
+  if (!tx.asking && !tx.answer && !tx.askError)
+    out.push(
+      el(
+        'div',
+        { class: 'confirm' },
+        ...(['tr.askStart1', 'tr.askStart2', 'tr.askStart3', 'tr.askStart4'] as const).map(key =>
+          linkBtn(`${t(key)}…`, () => {
+            input.value = `${t(key)} `
+            input.focus()
+          }),
+        ),
+      ),
+    )
   if (tx.asking) out.push(el('p', { class: 'answer muted' }, t('tr.asking')))
   else if (tx.askError) out.push(el('p', { class: 'answer muted' }, tx.askError))
   else if (tx.answer) {
@@ -1226,9 +1242,11 @@ window.setInterval(() => {
 
 function startSummary(tr: Transcript): void {
   tx.replacing = false
+  const length = tx.length
+  tx.length = undefined
   const own = ownAt(tx.template)
   const text = own === undefined ? undefined : hooks.view()?.settings.callTemplates[own]?.text
-  post({ type: 'summarize', id: tr.id, template: text === undefined ? (tx.template as SummaryTemplate) : 'own', ...(text === undefined ? {} : { own: text.slice(0, SUMMARY_OWN_MAX) }), mine: tx.mine })
+  post({ type: 'summarize', id: tr.id, template: text === undefined ? (tx.template as SummaryTemplate) : 'own', ...(text === undefined ? {} : { own: text.slice(0, SUMMARY_OWN_MAX) }), mine: tx.mine, ...(length ? { length } : {}) })
 }
 
 /** `t3` → 3: the person's own template picked; undefined for a built-in one or a new one. */
@@ -1267,12 +1285,15 @@ function saveTemplate(v: AppView, remove = false): void {
 }
 
 function summaryControls(v: AppView, tr: Transcript): HTMLElement {
-  const make = btn(tr.summary ? t('sum.again') : t('sum.make'), () => {
+  // A summary the person corrected is replaced only after a second yes, whatever length was asked for.
+  const again = (length?: SummaryLength) => () => {
+    tx.length = length
     if (tr.summary?.edited && !tx.replacing) (tx.replacing = true), redrawPage()
     else startSummary(tr)
-  }, tr.summary ? '' : 'primary')
+  }
+  const make = el('span', { class: 'confirm' }, ...(tr.summary ? [linkBtn(t('sum.shorter'), again('brief')), linkBtn(t('sum.longer'), again('full'))] : []), btn(tr.summary ? t('sum.again') : t('sum.make'), again(), tr.summary ? '' : 'primary'))
   const ask = tx.replacing
-    ? el('span', { class: 'confirm' }, el('small', {}, t('sum.replaceAsk')), btn(t('sum.replace'), () => startSummary(tr), 'danger'), linkBtn(t('common.cancel'), () => ((tx.replacing = false), redrawPage())))
+    ? el('span', { class: 'confirm' }, el('small', {}, t('sum.replaceAsk')), btn(t('sum.replace'), () => startSummary(tr), 'danger'), linkBtn(t('common.cancel'), () => ((tx.replacing = false), (tx.length = undefined), redrawPage())))
     : make
   const options: [string, string][] = [...TEMPLATES(), ...v.settings.callTemplates.map((o, i): [string, string] => [`t${i}`, ownLabel(o)]), ['new', t('sum.newTemplate')]]
   const writing = tx.template === 'new' || ownAt(tx.template) !== undefined

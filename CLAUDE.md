@@ -41,6 +41,7 @@ Main process `src/main.ts` (tray, windows, flows). Pages in `src/webview/*` with
 - **Speech engine** (`engine/`, Python, 127.0.0.1:8765–8774): `app.py` (API), `asr.py`, `stream.py`, `live.py` (a call's draft while it records), `jobs.py`, `store.py`, `diarize.py`, `vocab.py`, `phantoms.py`, `calls.py`, `auth.py`; installed in parts by `speechpack.ts`, run by `speechservice.ts`, held by `speechhost.ts`; models chosen per computer by `speechplan.ts` from `engine/models.json` and `device.ts` measurements.
 - **Dictation**: `dictation.ts`, `dictedit.ts` (optional editing by the model), `holdtalk.ts`, `webview/dictation.ts`. **Calls**: `capture.ts`, `capturesend.ts`, `callapps.ts`, `summary.ts`, `summaryflow.ts`, `ask.ts`, `shots.ts`, `addressed.ts` (names from how speakers are spoken to).
 - **App window**: `webview/app.ts`, `ui.ts`, `speech.ts`, `transcripts.ts`, `setup.ts` (first run); tray panel `webview/tray.ts`. **Look**: `media/theme.css` (tokens), Lucide icons via `npm run glyphs`, `dwm.ts` (Windows 11 frame).
+- **Permissions** (the page that checks what the system allows, before a call needs it): `access.ts`, `accessNow` / `grantAccess` in `main.ts`.
 - **Other**: `settings.ts` (`normalize` migrates old settings), `backup.ts`, `report.ts` (problem report zip), `log.ts`, `storage.ts`, `hardware.ts`, `i18n/`.
 - **Landing**: `site/` (not part of the app), uk/ru pages generated, published by `.github/workflows/pages.yml`.
 

@@ -340,7 +340,7 @@ async function appShots(theme: 'dark' | 'light', narrow = false): Promise<void> 
     await js(w, `document.querySelector('.pbody')?.scrollTo(0, 1e6)`)
     await sleep(200)
     await shot(w, tag('storage-end'))
-    for (const name of ['about', 'report']) await page(name)
+    for (const name of ['access', 'about', 'report']) await page(name)
     await focused('layout', 'kept')
     // The search, and a find opened with its line lit.
     log.push(`search: ${await js(w, `(() => { const f = document.querySelector('.find input'); f.value = 'caps'; f.dispatchEvent(new Event('input')); return 'ok' })()`)}`)
@@ -375,6 +375,7 @@ async function appShots(theme: 'dark' | 'light', narrow = false): Promise<void> 
     await page('models', ['forTranslate', 'forDictate'])
     await page('translate')
     await page('storage')
+    await page('access')
     await page('about')
   }
   if (!narrow) {

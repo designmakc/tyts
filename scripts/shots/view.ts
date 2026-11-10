@@ -103,6 +103,8 @@ export function appView(over: Partial<AppView['settings']> = {}, fresh = false):
 
 function full(over: Partial<AppView['settings']>, plan: AppView['speech']['plan'], now: number): AppView {
   return {
+    // The Permissions page with each kind of row: allowed, the system's question still to come, refused before.
+    access: [{ id: 'mic', state: 'ok' }, { id: 'screen', state: 'ask' }, { id: 'access', state: 'settings' }, { id: 'input', state: 'ok' }],
     settings: {
       ...DEFAULTS,
       // The interface language the pictures are taken in (harness.ts SHOTS_LANG), so Settings shows it picked.

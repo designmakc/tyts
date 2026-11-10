@@ -1,3 +1,23 @@
+## Tyts 0.5.2
+
+**Permissions in one place (new).** A new page in the sidebar, **Permissions**, lists everything the system must allow and says whether it does: on a Mac the Microphone, Screen & System Audio Recording, Accessibility and Input Monitoring; on Windows the microphone. Each line has **Allow** or **Open settings**, and Home warns while something is missing. Allow it all once after installing, so that no system question comes up in the first minute of a call.
+
+**A call left recording asks "still there?" (new).** When neither you nor the others were heard for 10 minutes, the call panel comes back and counts a minute down; **Keep recording** or any sound goes on, otherwise the recording stops and is saved and transcribed as usual. A pause is yours and is not counted.
+
+**Call programs to leave alone (new).** Under "When a call takes the microphone", each program (Zoom, Teams, Slack, Telegram, Discord, FaceTime, Skype, Webex, Google Meet) has a switch: turned off, Tyts neither asks about it nor records it by itself.
+
+**A shorter or a longer summary (new).** **Shorter** and **Longer** beside "Make again" make the summary anew with the same template. Under "Ask the recordings" there are starts of a question ("What did we decide about…") to finish with your topic.
+
+**Notes while a call records (new).** A call that records has a page of its own in the calls window: your notes beside the draft of the words. The notes are kept as you type, become the transcript's, and the summary stresses what you marked.
+
+**Screenshots only when you ask.** Tyts no longer takes screenshots of a call by itself: the camera on the call panel, on the panel at the top of the screen, and the shot key take one, and each is answered "kept" or "not taken". **Speaker names** are also offered from how the others call a speaker ("Kolya, what about you?").
+
+**Lighter on weak computers.** The pages are half the size, a hidden window does no work, and the local models let go of memory sooner on a computer with under 12 GB.
+
+**Fixed:**
+- A long call's summary is no longer thrown away when its last step runs out of room.
+- A call no longer stays at "Starting…" when the computer's sound cannot be recorded: it records the microphone alone and says so.
+
 ## Tyts 0.5.1
 
 **A look at the top of the screen (new).** Pick how Tyts shows itself at the top edge: **Plain** (as before), **Glow** (a soft cone of warm light with a few sparks) or **Drop** (a dark bead with a glint). The panel at the top comes in that look, and while you dictate the look hangs at the top middle of the screen, so you see that Tyts is listening. It takes no clicks and no focus. Settings › General, "Look at the top of the screen".

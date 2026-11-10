@@ -7,7 +7,6 @@
 import * as os from 'node:os'
 
 import type { BrowserWindow } from 'electron'
-import koffi from 'koffi'
 import { loadLib } from './native'
 
 import { handleOf } from './winclip'

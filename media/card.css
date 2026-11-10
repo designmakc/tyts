@@ -1008,7 +1008,8 @@ span.t.draft {
     background-color: var(--draft);
     background-clip: text;
     color: transparent;
-    animation: draft-shine 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    /* In steps: the text is repainted 12 times a second, not 60, while the model has the processor. */
+    animation: draft-shine 2.2s steps(26) infinite;
   }
 }
 

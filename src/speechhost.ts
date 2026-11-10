@@ -7,7 +7,6 @@
 // depends on changes (the engine's numbers, the downloaded models, the person's
 // choices, the computer) and sent to the engine when it differs.
 
-import * as fs from 'node:fs'
 import * as path from 'node:path'
 
 import { driveOf, fingerprint, freeMb, loadProfile, probeDevice, quickProfile, saveProfile, type DeviceProfile } from './device'

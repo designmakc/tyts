@@ -33,6 +33,9 @@ export type SummaryJson = {
 const PART_SECONDS = 1200
 const PART_CHARS = 12_000
 const MAX_TOKENS = 1500
+/** A join's answer: the parts' decisions, tasks and topics together are longer than one part's (a join cut at 1500 lost a 15-minute summary). */
+const JOIN_TOKENS = 2500
+const NO_SUMMARY = 'The model gave no summary'
 /** One join request's summaries at most, as a part's transcript: room for the instructions and the answer in `-c 8192`. */
 const JOIN_CHARS = 12_000
 /** The screen's text a part is given at most, and of one screenshot: a part keeps under PART_CHARS + SCREEN_CHARS. */
@@ -238,14 +241,23 @@ export function summaryPrompt(options: SummaryOptions, language: string | null, 
   )
 }
 
-type Ask = (system: string, user: string) => Promise<SummaryJson>
+type Ask = (system: string, user: string, maxTokens?: number) => Promise<SummaryJson>
+
+/** The parts' summaries one after another: what a meeting gets when the model's join cannot be read, so the parts' work is not lost. */
+export const mergeSummaries = (parts: readonly SummaryJson[]): SummaryJson => ({
+  short: parts.map(p => p.short).filter(Boolean).join(' '),
+  decisions: parts.flatMap(p => p.decisions),
+  tasks: parts.flatMap(p => p.tasks),
+  questions: parts.flatMap(p => p.questions),
+  topics: parts.flatMap(p => p.topics),
+})
 
 const asJson = (content: unknown): SummaryJson => {
   let answer: Partial<SummaryJson> = {}
   try {
     answer = JSON.parse(typeof content === 'string' ? content : '') as Partial<SummaryJson>
   } catch {
-    throw new Error('The model gave no summary')
+    throw new Error(NO_SUMMARY)
   }
   const strings = (items: unknown) => (Array.isArray(items) ? items.filter((s): s is string => typeof s === 'string' && !!s.trim()) : [])
   const objects = (items: unknown) => (Array.isArray(items) ? (items as Record<string, unknown>[]).filter(i => i && typeof i === 'object') : [])
@@ -267,7 +279,7 @@ export function createSummarizer(o: { files: LlmFiles; model: () => LlmModel; fe
   const { files } = o
   const post = o.fetch ?? fetch
 
-  const asker = (base: string, signal?: AbortSignal): Ask => async (system, user) => {
+  const asker = (base: string, signal?: AbortSignal): Ask => async (system, user, maxTokens = MAX_TOKENS) => {
     signal?.throwIfAborted()
     const response = await post(`${base}/v1/chat/completions`, {
       method: 'POST',
@@ -278,7 +290,7 @@ export function createSummarizer(o: { files: LlmFiles; model: () => LlmModel; fe
           { role: 'user', content: user },
         ],
         temperature: 0,
-        max_tokens: MAX_TOKENS,
+        max_tokens: maxTokens,
         chat_template_kwargs: { enable_thinking: false },
         response_format: { type: 'json_schema', json_schema: { name: 'summary', schema: SCHEMA } },
       }),
@@ -320,15 +332,20 @@ export function createSummarizer(o: { files: LlmFiles; model: () => LlmModel; fe
         onProgress({ part: parts.length + 1, parts: parts.length })
         // Joined in groups that fit one request, then those joined again, until one is left.
         let level = summaries.map((json, i) => ({ from: parts[i]![0]!.start, json }))
+        const join = (of: readonly number[], blocks: readonly string[]) =>
+          ask(summaryPrompt(options, input.language, 'join', screen), of.map(i => blocks[i]).join('\n'), JOIN_TOKENS).catch((e: unknown) => {
+            if (!(e instanceof Error) || e.message !== NO_SUMMARY) throw e
+            return mergeSummaries(of.map(i => level[i]!.json))
+          })
         for (;;) {
           const blocks = level.map(p => `<part from="${clock(p.from)}">\n${JSON.stringify(p.json)}\n</part>`)
           const groups = joinGroups(blocks.map(b => b.length + 1))
-          if (groups.length === 1) return ask(summaryPrompt(options, input.language, 'join', screen), blocks.join('\n'))
+          if (groups.length === 1) return join(groups[0]!, blocks)
           const next: typeof level = []
           for (const group of groups) {
             next.push(group.length === 1
               ? level[group[0]!]!
-              : { from: level[group[0]!]!.from, json: await ask(summaryPrompt(options, input.language, 'join', screen), group.map(i => blocks[i]).join('\n')) })
+              : { from: level[group[0]!]!.from, json: await join(group, blocks) })
           }
           level = next
         }

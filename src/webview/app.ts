@@ -1605,7 +1605,7 @@ function cardText(fit: LevelFit, card: number | undefined): string | null {
 
 /** Where a level runs here and how long it takes: measured, once it has been, else expected. */
 function levelFitText(fit: LevelFit, speed: AppView['modelSpeed'][LlmModel]): string {
-  const where = FIT_WHERE[fit.where]
+  const where = FIT_WHERE[fit.where] + (fit.tight ? `; ${t('models.lowMemory')}` : '')
   const measured = speed?.sentence === undefined ? undefined : { sentence: speed.sentence, start: speed.start }
   if (!measured) return fit.cuda ? `${cudaGuess()}, ${where}` : fit.where === 'card' ? `${FIT_GUESS.card} ${where}` : `${FIT_GUESS[fit.where]}, ${where}`
   return `${t(measured.sentence > SLOW_SENTENCE_S ? 'models.slowHere' : 'models.here')}: ${t('models.perSentence', { time: seconds(measured.sentence) })}, ${where}${startText(measured.start)}`
@@ -1634,7 +1634,7 @@ function llmFitText(fit: LevelFit, speed: AppView['modelSpeed'][LlmModel]): stri
     .filter(Boolean)
     .join(', ')
   const slow = (speed.sentence ?? 0) > SLOW_SENTENCE_S || (speed.text ?? 0) > SLOW_CHECK_S
-  return `${t(slow ? 'models.slowHere' : 'models.here')}: ${times}, ${FIT_WHERE[fit.where]}${startText(speed.start)}`
+  return `${t(slow ? 'models.slowHere' : 'models.here')}: ${times}, ${FIT_WHERE[fit.where]}${startText(speed.start)}${fit.tight ? `; ${t('models.lowMemory')}` : ''}`
 }
 
 const pct = (progress: number) => el('span', { class: 'pct' }, `${Math.round(progress * 100)}%`)
@@ -2516,10 +2516,9 @@ function recordingsPage(v: AppView): HTMLElement[] {
     installed(v) ? callRow(v) : null,
     installed(v) ? callAutoRow(v) : null,
     keyRow('meetingKey', t('call.record'), t('call.keyNote'), !v.speech.keysOk.meeting),
-    installed(v) ? toggleCard('camera', t('call.shots'), v.settings.callShots, callShots => save({ callShots }), t('call.shotsNote')) : null,
     installed(v) ? toggleCard('message-square-text', t('call.live'), v.settings.callLive, callLive => save({ callLive }), t('call.liveNote')) : null,
     installed(v) && v.settings.callLive ? toggleCard('message-square-text', t('call.liveTop'), v.settings.callLiveTop, callLiveTop => save({ callLiveTop }), t('call.liveTopNote')) : null,
-    installed(v) && v.settings.callShots ? toggleCard('camera', t('call.names'), v.settings.callNames, callNames => save({ callNames }), t('call.namesNote')) : null,
+    installed(v) ? toggleCard('camera', t('call.names'), v.settings.callNames, callNames => save({ callNames }), t('call.namesNote')) : null,
     keyRow('shotKey', t('call.shotKey'), t('call.shotKeyNote'), !v.speech.keysOk.shot),
     ...summarySettings(v),
     ...(running(v) ? [grp(t('transcribe.new')), ...newRows(v)] : []),

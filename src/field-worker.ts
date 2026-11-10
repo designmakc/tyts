@@ -6,7 +6,6 @@
 
 import { workerData, type MessagePort } from 'node:worker_threads'
 
-import koffi from 'koffi'
 import { loadLib } from './native'
 
 import { focusedIsPassword } from './uia'

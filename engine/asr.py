@@ -424,8 +424,10 @@ class Transcriber:
         language: str | None = None,
         hotwords: str = "",
         progress: Callable[[float], None] | None = None,
+        beam: int | None = None,
     ) -> tuple[list[dict], str]:
-        """Segments as {start, end, text, words: [{start, end, word}]} and the language spoken (the model loaded first)."""
+        """Segments as {start, end, text, words: [{start, end, word}]} and the language spoken (the model loaded first).
+        `beam`: the plan's for the processor (narrower, quicker); five without one."""
         if isinstance(self._model, MlxWhisper):
             return self._model.transcribe(samples, language, hotwords, progress)
         total = max(len(samples) / RATE, 0.01)
@@ -438,7 +440,7 @@ class Transcriber:
             samples,
             language=language,
             initial_prompt=STYLE.get(language),
-            beam_size=5,
+            beam_size=beam or 5,
             word_timestamps=True,
             vad_filter=True,
             vad_parameters={"min_silence_duration_ms": 700},

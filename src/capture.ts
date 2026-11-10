@@ -59,19 +59,21 @@ export class CallCapture {
     return Math.round(seconds + (this.state === 'recording' && at ? (Date.now() - at) / 1000 : 0))
   }
 
-  /** `auto`: started by itself (callwatch.ts); the panel says so and offers not to record. `shots`: a screenshot every 4 s when the screen changed. `live`: a draft of the words can be opened. */
-  start(title: string, app?: string, auto = false, shots = false, live = false): void {
+  /** `auto`: started by itself (callwatch.ts); the panel says so and offers not to record. `live`: a draft of the words can be opened. */
+  start(title: string, app?: string, auto = false, live = false): void {
     if (this.busy) return
     clearTimeout(this.hiding)
     this.state = 'starting'
     this.o.onChange()
-    this.send({ type: 'capture', command: 'start', title, ...(app ? { app } : {}), ...(auto ? { auto } : {}), ...(shots ? { shots } : {}), ...(live ? { live } : {}) })
+    this.send({ type: 'capture', command: 'start', title, ...(app ? { app } : {}), ...(auto ? { auto } : {}), ...(live ? { live } : {}) })
     this.show()
   }
 
-  /** A screenshot now (the shot key), kept whatever it shows; only while the call records. */
-  shot(): void {
-    if (this.state === 'recording') this.send({ type: 'capture', command: 'shot' })
+  /** A screenshot now (the shot key, the button at the top of the screen); only while the call records, false otherwise. The page answers with `captureShot`. */
+  shot(): boolean {
+    if (this.state !== 'recording') return false
+    this.send({ type: 'capture', command: 'shot' })
+    return true
   }
 
   /** "Record the call?" on the panel, while nothing records; answered through `answered`. */

@@ -206,6 +206,28 @@ def test_exports_without_a_summary_are_as_before():
     assert "Transcript" not in export.to_txt(plain)
 
 
+def test_notes_typed_while_the_call_records_become_the_transcripts_and_survive_a_redo(client, fake_sound):
+    started = client.post("/recordings", headers=KEY, json={"source": "system", "app": "Zoom", "tracks": {"mic": {"startedAt": 0}, "system": {"startedAt": 0}}})
+    id = started.json()["id"]
+    assert client.get(f"/recordings/{id}/notes", headers=KEY).json() == {"notes": ""}
+    assert client.request("PUT", f"/recordings/{id}/notes", headers=KEY, json={"notes": "Send the offer by Friday"}).status_code == 204
+    assert client.get(f"/recordings/{id}/notes", headers=KEY).json() == {"notes": "Send the offer by Friday"}
+    for track in ("mic", "system"):
+        client.request("PUT", f"/recordings/{id}/{track}/0", headers=KEY, content=b"webm")
+    client.post(f"/recordings/{id}/finish", headers=KEY, json={})
+    store = engine.state.get_store()
+    worker()._transcribe(id, store.row(id))
+    assert store.transcript(id)["notes"] == "Send the offer by Friday"
+    # Made: the notes are the transcript's now, and a redo keeps what was changed there.
+    assert client.request("PUT", f"/recordings/{id}/notes", headers=KEY, json={"notes": "x"}).status_code == 409
+    client.request("PATCH", f"/transcripts/{id}", headers=KEY, json={"notes": "Sent"})
+    store.update(id, status="queued", job={"kind": "system", "task": "redo", "keepAudio": True,
+                                           "inputs": [{"path": str(store.folder(id) / "audio.ogg"), "track": "main", "offset": 0, "temp": False}]})
+    worker()._transcribe(id, store.row(id))
+    assert store.transcript(id)["notes"] == "Sent"
+    assert client.get("/recordings/nope/notes", headers=KEY).status_code == 404
+
+
 JPEG = b"\xff\xd8\xff\xe0frame"
 
 

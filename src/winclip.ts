@@ -5,7 +5,6 @@
 
 import { spawn } from 'node:child_process'
 import type { BrowserWindow } from 'electron'
-import koffi from 'koffi'
 import { loadLib } from './native'
 
 import { MAIN_KEYS } from './winkbd'

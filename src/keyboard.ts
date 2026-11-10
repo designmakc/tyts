@@ -8,7 +8,6 @@ import * as path from 'node:path'
 import { MessageChannel, Worker } from 'node:worker_threads'
 
 import { BrowserWindow, screen } from 'electron'
-import koffi from 'koffi'
 import { loadLib } from './native'
 
 import { isAccelerator, isCopyTwice } from './hotkey'

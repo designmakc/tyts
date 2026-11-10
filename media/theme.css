@@ -249,3 +249,14 @@ svg.lu.s {
   width: 16px;
   height: 16px;
 }
+
+/* Windows' "Show animations" off, or a Mac's Reduce motion: nothing moves on any page. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation-duration: 0s !important;
+    animation-iteration-count: 1 !important;
+  }
+}

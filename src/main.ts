@@ -42,6 +42,7 @@ import { Awake } from './awake'
 import { backupSummary, makeBackup, readBackup, type BackupRead } from './backup'
 import { callAllowed, messageAllowed, openable, pageOf, patchAllowed, type Page } from './bridge'
 import { callApp, callTitle, runningProcessNames } from './callapps'
+import { addressHints } from './addressed'
 import { answer as answerCall, idleWatch, keepRecording, step as stepCall, type CallAct, type MicUser } from './callwatch'
 import { watchMic } from './micwatch'
 import { CallCapture } from './capture'
@@ -130,7 +131,7 @@ import { vocabularyFor } from './vocabulary'
 import { VoiceStore, type VoiceManifest } from './voicestore'
 import { wordDiff } from './worddiff'
 import { focus, focusedElement, focusedIsPassword, release, saysNothingSelected, selectedText } from './uia'
-import { allowForeground, ctrlHeld, handleOf, inFront, keysLetGo, macConcealed, pressCopy, pressPaste, pressSelectBack, watchClipboard, watchRendering } from './winclip'
+import { ctrlHeld, handleOf, inFront, keysLetGo, macConcealed, pressCopy, pressPaste, pressSelectBack, watchClipboard, watchRendering } from './winclip'
 import {
   privateCopy,
   readers as clipboardReaders,
@@ -142,7 +143,7 @@ import {
   writeText as writeClipboardText,
   type ClipboardSnapshot,
 } from './winclipboard'
-import { caretOf, exeOf, focusWindow, foreground, fullScreenNow, installedLayouts, layoutTable, press, windowedApps } from './winkbd'
+import { caretOf, exeOf, focusWindow, foreground, fullScreenNow, installedLayouts, layoutTable, windowedApps } from './winkbd'
 import { ankiTsv, WordStore, wordsText } from './words'
 
 const CARD_MIN = 96
@@ -1409,8 +1410,9 @@ function appView(): AppView {
 }
 
 function postApp(): void {
-  const appOpen = appWin && appReady && !appWin.isDestroyed()
-  const callsOpen = callsWin && callsReady && !callsWin.isDestroyed()
+  // A hidden window is sent nothing (it would rebuild its page unseen); showing it sends the view (`show`, `restore`).
+  const appOpen = appWin && appReady && !appWin.isDestroyed() && appWin.isVisible()
+  const callsOpen = callsWin && callsReady && !callsWin.isDestroyed() && callsWin.isVisible()
   if (appOpen || callsOpen) {
     const message = { type: 'app', view: appView() } satisfies ToView
     if (appOpen) appWin!.webContents.send('to-view', message)
@@ -1458,6 +1460,8 @@ function createAppWindow(): BrowserWindow {
     event.preventDefault()
     win.hide()
   })
+  win.on('show', postApp)
+  win.on('restore', postApp)
   win.on('closed', () => {
     appWin = undefined
     appReady = false
@@ -1530,6 +1534,8 @@ function createCallsWindow(): BrowserWindow {
     event.preventDefault()
     win.hide()
   })
+  win.on('show', postApp)
+  win.on('restore', postApp)
   win.on('closed', () => {
     callsWin = undefined
     callsReady = false
@@ -1966,6 +1972,9 @@ function onMessage(message: ToHost, page: Page): void {
       if (micRecording) selectionBar?.gone()
       refreshTray()
       return
+    case 'captureShot':
+      shotDone(message.ok)
+      return
     case 'captureState':
     case 'captureDone':
     case 'captureHide':
@@ -2061,6 +2070,11 @@ function onMessage(message: ToHost, page: Page): void {
       if (edgeWin?.isVisible()) edgeWin.setBounds({ ...edgeWin.getBounds(), height: edgeHeight })
       return
     case 'edgeAct':
+      // A screenshot leaves the panel where it is (it is not in the picture: content protection), and says what became of it.
+      if (message.act === 'shot') {
+        if (!capture?.shot()) shotDone(false)
+        return
+      }
       hideEdge()
       if (message.act === 'dictate') dictation.press('type', settings.dictateKey)
       else if (message.act === 'again') dictation.typeAgain()
@@ -3629,7 +3643,7 @@ export async function startCall(auto?: { app: string; title: string | null }): P
   // Without the microphone the others are still recorded (the panel says so).
   if (onMac) await systemPreferences.askForMediaAccess('microphone').catch(() => false)
   const known = auto?.app ?? callApp(await runningProcessNames())
-  capture.start(auto?.title ?? callTitle(known, new Date()), known ?? undefined, !!auto, settings.callShots, settings.callLive)
+  capture.start(auto?.title ?? callTitle(known, new Date()), known ?? undefined, !!auto, settings.callLive)
 }
 
 // ---------------------------------------------------------------- a call that starts by itself
@@ -3802,15 +3816,15 @@ async function shotLines(tr: CallTranscript, shot: Shot): Promise<string[]> {
 
 /**
  * After a call is transcribed: the screenshots of the moments a speaker points at the screen ("смотрите", "as you can
- * see") are marked key, and with `callNames` each other speaker gets a name read off the shots of their turns, as a
- * hint the page offers (never applied by itself). Only counts are logged.
+ * see") are marked key, and with `callNames` each other speaker gets a name: how the others call them (addressed.ts)
+ * or the one read off the shots of their turns, as a hint the page offers (never applied by itself). Only counts are logged.
  */
 async function markShots(id: string): Promise<void> {
   try {
     const got = await speech?.call<{ transcript: CallTranscript | null }>('GET', `/transcripts/${encodeURIComponent(id)}`)
     const tr = got?.ok ? got.data.transcript : null
-    if (!tr?.shots?.length) return
-    const shots = tr.shots
+    if (!tr) return
+    const shots = tr.shots ?? []
     const keys = keyShots(shots, tr.utterances)
     let hints: Record<string, string> = {}
     if (settings.callNames) {
@@ -3826,7 +3840,8 @@ async function markShots(id: string): Promise<void> {
         seen[speaker] = []
         for (const shot of near.filter((_, i) => i % step === 0)) if (read++ < SHOTS_READ_MAX) seen[speaker].push(await shotLines(tr, shot))
       }
-      hints = speakerHints(seen)
+      // How the others call a speaker (addressed.ts), then the name on the screen, which is the surer.
+      hints = { ...addressHints(tr.utterances), ...speakerHints(seen) }
     }
     const changes = {
       ...(keys.length ? { shots: Object.fromEntries(keys.map(file => [file, { key: true }])) } : {}),
@@ -3918,6 +3933,15 @@ function sendTrayView(): void {
 // else runs. The panel never takes the focus (`focusable: false`), so dictation and
 // a phrase pasted from it go into the program the person was in.
 
+/** The screenshot just asked for, as the panel says it for a moment. */
+let edgeShot: { fate: 'ok' | 'failed'; until: number } = { fate: 'ok', until: 0 }
+const EDGE_SHOT_MS = 2500
+function shotDone(ok: boolean): void {
+  edgeShot = { fate: ok ? 'ok' : 'failed', until: Date.now() + EDGE_SHOT_MS }
+  postEdge()
+  setTimeout(postEdge, EDGE_SHOT_MS + 50)
+}
+
 /** What the panel shows (protocol.ts EdgeView). */
 function edgeView(): EdgeView {
   return {
@@ -3926,6 +3950,8 @@ function edgeView(): EdgeView {
     speech: speech?.installed ?? false,
     dictating: dictation?.state === 'recording',
     call: capture?.busy ?? false,
+    recording: capture?.state === 'recording',
+    shot: Date.now() < edgeShot.until ? edgeShot.fate : '',
     keys: { dictate: settings.dictateKey, again: settings.againKey, call: settings.meetingKey, fix: settings.fixKey },
     autoFix: settings.autoFix,
     switchOn: settings.switchOn,
@@ -3944,7 +3970,8 @@ function postEdge(fresh = false): void {
 function applyEdge(): void {
   clearInterval(edgeTimer)
   edgeTimer = undefined
-  if (settings.edgePanel) edgeTimer = setInterval(edgeTick, EDGE_TICK_MS)
+  // While a call records the panel comes whatever the setting: its camera button takes a screenshot.
+  if (settings.edgePanel || capture?.busy) edgeTimer = setInterval(edgeTick, EDGE_TICK_MS)
   else hideEdge()
 }
 
@@ -3987,6 +4014,8 @@ function createEdgeWindow(): BrowserWindow {
   })
   frameWindow(win, { corner: 'round', border: borderColor() })
   win.setAlwaysOnTop(true, 'pop-up-menu')
+  // Not in a call's screenshot taken from its own button.
+  win.setContentProtection(true)
   win.removeMenu()
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
   win.webContents.on('will-navigate', event => event.preventDefault())
@@ -4771,6 +4800,8 @@ function start(): void {
     onChange: () => {
       refreshTray()
       postApp()
+      applyEdge()
+      postEdge()
     },
     finish: id => speech.call('POST', `/recordings/${id}/finish`, {}),
     openSettings: openScreenSettings,

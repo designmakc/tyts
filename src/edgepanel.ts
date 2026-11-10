@@ -7,7 +7,7 @@
 export type Rect = { x: number; y: number; width: number; height: number }
 export type Point = { x: number; y: number }
 
-export const EDGE_TICK_MS = 100
+export const EDGE_TICK_MS = 150
 export const EDGE_DWELL_MS = 300
 export const EDGE_LEAVE_MS = 400
 /** The spot at the top edge, centred on the screen: as wide as the panel. */

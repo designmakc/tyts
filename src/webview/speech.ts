@@ -581,7 +581,6 @@ const follow = (state: Diarization) => {
  */
 export function speakerRows(v: AppView): HTMLElement[] {
   if (v.speech.speakers.ane) return macSpeakerRows(v)
-  const s = v.speech
   const out: HTMLElement[] = [...speakersDeviceRows(v), ...speakersInstallRows(v)]
   if (!hasPart(v, 'speakers')) return out
   if (!running(v)) return [...out, card('lock', t('speech.voicesModel'), [t('speech.voicesLater')], null)]

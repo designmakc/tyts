@@ -175,8 +175,6 @@ export type Settings = {
   meetingKey: string
   /** A screenshot of the screen now, while a call records (marked manual, always kept). None by default; Electron's keys only (no double taps). */
   shotKey: string
-  /** While a call records, a screenshot every 4 s when the screen changed, beside the sound. Off by default. */
-  callShots: boolean
   /** While a call records, a rough draft of its words on the panel (engine live.py, the dictation model on the processor). Off by default. */
   callLive: boolean
   /** With `callLive`, the draft's last lines at the top of the screen while the call records. Off by default. */
@@ -333,7 +331,6 @@ export const DEFAULTS: Settings = {
   talkKey: '',
   meetingKey: '',
   shotKey: '',
-  callShots: false,
   callLive: false,
   callLiveTop: false,
   callConsentSeen: false,
@@ -557,7 +554,6 @@ export function normalize(raw: unknown, native = DEFAULTS.native): Settings {
     talkKey: key(r.talkKey, DEFAULTS.talkKey),
     meetingKey: key(r.meetingKey, DEFAULTS.meetingKey),
     shotKey: key(r.shotKey, DEFAULTS.shotKey),
-    callShots: flag(r.callShots, DEFAULTS.callShots),
     callLive: flag(r.callLive, DEFAULTS.callLive),
     callLiveTop: flag(r.callLiveTop, DEFAULTS.callLiveTop),
     callConsentSeen: flag(r.callConsentSeen, DEFAULTS.callConsentSeen),

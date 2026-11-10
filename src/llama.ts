@@ -56,10 +56,13 @@ export function freePort(): Promise<number> {
   })
 }
 
-/** The server's arguments: the model, 8192 tokens shared by four sentences at once, no web page, no /slots; where its layers go. */
+/**
+ * The server's arguments: the model, 8192 tokens shared by four sentences at once, no web page, no /slots; where its layers go.
+ * `--cache-ram 0`: no copy of each finished request kept in the computer's memory (up to 8 GB by default), as none is reused for Gemma.
+ */
 export function serverArgs(target: LlamaTarget, port: number, cpu: boolean): string[] {
   const where = cpu ? ['--device', 'none'] : target.allLayers ? ['-ngl', 'all'] : []
-  return ['-m', target.model, '--host', '127.0.0.1', '--port', String(port), '-c', '8192', '-np', '4', '--kv-unified', '--no-webui', '--no-slots', ...where]
+  return ['-m', target.model, '--host', '127.0.0.1', '--port', String(port), '-c', '8192', '-np', '4', '--kv-unified', '--cache-ram', '0', '--no-webui', '--no-slots', ...where]
 }
 
 /**

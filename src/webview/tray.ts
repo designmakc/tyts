@@ -316,7 +316,7 @@ window.addEventListener('message', (event: MessageEvent<ToView>) => {
   const m = event.data
   if (m.type === 'tray') {
     if (keep.mode === 'field') waiting = m.view
-    else render(m.view)
+    else if (JSON.stringify(m.view) !== JSON.stringify(last)) render(m.view)
   } else if (m.type === 'trayShown') {
     byKeys(false)
     // Shown again: the field, or "Kept", is gone.

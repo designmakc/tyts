@@ -107,14 +107,20 @@ def terms(question: str) -> list[str]:
     return out
 
 
-def passages(store: Store, question: str, most: int = 8, chars: int = 6000) -> list[dict]:
-    """The pieces of the transcripts that say most about the question: {id, title, created, at, text}, the best first."""
+# What the Notes page calls a kind of note (src/webview/notes.ts): a dictated note, or anything recorded.
+KINDS = {"note": ("note",), "call": ("meet", "system", "mic", "file")}
+
+
+def passages(store: Store, question: str, most: int = 8, chars: int = 6000, kind: str = "", only: str = "") -> list[dict]:
+    """The pieces of the transcripts that say most about the question: {id, title, created, source, at, text}, the best first.
+
+    `kind`: only the dictated notes or only the recordings; `only`: one transcript by its id."""
     words = terms(question)
     if not words:
         return []
     out: list[dict] = []
     used = 0
-    for id in store.search_ids(" OR ".join(f'"{w}"*' for w in words), most):
+    for id in [only] if only else store.search_ids(" OR ".join(f'"{w}"*' for w in words), most, KINDS.get(kind, ())):
         t = store.transcript(id)
         if not t:
             continue
@@ -134,5 +140,5 @@ def passages(store: Store, question: str, most: int = 8, chars: int = 6000) -> l
             if used + len(text) > chars:
                 return out
             used += len(text)
-            out.append({"id": id, "title": t.get("title", ""), "created": t.get("created", ""), "at": lines[a]["start"], "text": text})
+            out.append({"id": id, "title": t.get("title", ""), "created": t.get("created", ""), "source": t.get("source", ""), "at": lines[a]["start"], "text": text})
     return out

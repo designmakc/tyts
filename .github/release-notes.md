@@ -1,3 +1,13 @@
+## Tyts 0.5.4
+
+**Notes, and a conversation with them (new).** A new page in the sidebar, **Notes**, shows everything you keep as words in one list: the notes you dictated, your calls and recordings, and the Markdown files of your knowledge base folder. Find a word in all of it, or keep to one kind.
+
+Beside the list, **ask the notes**: "What did we decide about the Button component?" Tyts looks through all the notes first, then the model on this computer answers from the places found and marks each sentence with a number. A number opens the call at that moment or the note at that paragraph. A follow-up question ("and who was against it?") keeps the topic, **Stop** ends an answer, and under an open note you can ask about that note alone.
+
+A file of the folder can be renamed by its title, opened in its own program, shown in its folder or moved to the trash.
+
+The search is by the question's words, so name the topic as the notes do. The answer needs a local model (Settings › Models): on a computer with 8 GB of memory pick **Accurate**, the largest model does not fit and the answer may take many minutes.
+
 ## Tyts 0.5.3
 
 **A call is named by what it was about (new).** When a call's summary is ready, the call gets a name of a few words from it ("Bonus Centre discussion") in place of "Zoom · 10 November 14:30". A name you gave yourself is never changed.

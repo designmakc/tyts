@@ -3615,3 +3615,290 @@ li + li > .ti::before {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
+
+/* ---------------------------------------------------------------- notes
+   The Notes page (webview/notes.ts): every note in a list on the left, and beside it the
+   conversation with the notes, or the note open. Each column scrolls by itself; the page does not. */
+
+/* Two columns need the window's width, not the one column of 760 px. */
+.win.wide .main {
+  --side: 32px;
+}
+
+.notes {
+  display: grid;
+  grid-template-columns: minmax(240px, 340px) minmax(0, 1fr);
+  gap: 0 24px;
+  /* The page's height under the bar, less the body's own padding (22 + 40). */
+  height: calc(100vh - var(--bar) - 62px);
+}
+
+.ncol {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.nside {
+  padding-right: 20px;
+  border-right: 1px solid var(--border);
+}
+
+.nchips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 8px;
+}
+
+.nchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.nchip:hover {
+  background: var(--hover);
+}
+
+.nchip.on {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--bg);
+}
+
+.notes .num {
+  font: 500 12px var(--mono);
+  color: var(--muted);
+}
+
+.nchip.on .num {
+  color: inherit;
+}
+
+.nfound,
+.nnote,
+.ncount,
+.nwhere,
+.nback {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.nnote {
+  padding: 16px 0;
+}
+
+.nfound,
+.nback {
+  margin-bottom: 8px;
+}
+
+.nlist,
+.nlog {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden auto;
+}
+
+.nlist {
+  margin: 0 -12px;
+  padding: 0 12px;
+}
+
+.nlist .tl {
+  margin-top: 0;
+}
+
+.ngroup {
+  margin: 12px 0 2px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.notes .ti.on,
+.notes .ti.on:hover {
+  background: var(--selected);
+}
+
+.nfoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-soft);
+  color: var(--muted);
+}
+
+/* An open note's actions take a second line where the column is narrow. */
+.nmain > .confirm {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
+/* The conversation. */
+.nhead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.nhead h2 {
+  margin: 0;
+  color: var(--strong);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.nhead small {
+  color: var(--muted);
+}
+
+.nwhere {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nlog {
+  padding: 16px 4px 16px 0;
+}
+
+.nturns {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.nq {
+  align-self: flex-end;
+  max-width: 75%;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  background: var(--selected);
+  color: var(--strong);
+  font-size: 14px;
+  user-select: text;
+}
+
+.nturn {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 680px;
+}
+
+.nanswer {
+  color: var(--strong);
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  user-select: text;
+}
+
+.nwait {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.nsources {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nsource {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--raised);
+  text-align: left;
+}
+
+.nsource:hover {
+  border-color: var(--muted);
+}
+
+.nsource b {
+  color: var(--strong);
+  font-weight: 500;
+}
+
+.nsource small {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.nsource .snip {
+  color: var(--translation);
+}
+
+.nask {
+  display: flex;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.nask .search {
+  height: 40px;
+}
+
+/* A file of the folder, open: its text, the cited paragraph tinted. */
+.ntext p {
+  margin: 0 0 12px;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  user-select: text;
+}
+
+.ntext p.cited {
+  margin: 0 -10px 12px;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  background: var(--selection);
+}
+
+/* A narrow window: the list, then the conversation, the page scrolling as the others do. */
+@media (max-width: 860px) {
+  .notes {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    height: auto;
+  }
+
+  .nside {
+    max-height: 50vh;
+    padding-right: 0;
+    border-right: 0;
+  }
+
+  .nlog {
+    max-height: 70vh;
+  }
+}

@@ -637,9 +637,11 @@ def put_summary(id: str, body: dict = Body(...)):
 
 
 @app.get("/ask")
-def ask(q: str = ""):
-    """The pieces of the transcripts that answer a question best, for Tyts's local model to answer from."""
-    return calls.passages(state.get_store(), q)
+def ask(q: str = "", kind: str = "", id: str = ""):
+    """The pieces of the transcripts that answer a question best, for Tyts's local model to answer from.
+
+    `kind` ("note" or "call") keeps to the dictated notes or the recordings, `id` to one transcript."""
+    return calls.passages(state.get_store(), q, kind=kind, only=id)
 
 
 @app.post("/transcripts/{id}/speakers")

@@ -47,6 +47,7 @@ import { TOPICS } from '../topics'
 import type { SummaryTemplate } from '../summary'
 import { isBeta, versionText } from '../version'
 import { withMarks } from './marks'
+import { enterNotes, notesBody } from './notes'
 import { backToList, enterTranscripts, leaveTranscripts, libraryFolderCard, newRows, openTranscript, setTranscriptHooks, transcriptOpen, transcriptsBody } from './transcripts'
 
 declare global {
@@ -72,7 +73,7 @@ function phrases<K extends string>(keys: Record<K, Key>): Record<K, string> {
 }
 
 type Action = 'translate' | 'english' | 'voice' | 'recordings' | 'layout'
-type Page = Action | 'keys' | 'words' | 'mistakes' | 'transcripts' | 'translations' | 'phrases' | 'vocabulary' | 'kept' | 'learned' | 'programs' | 'layouts' | 'settings' | 'models' | 'storage' | 'clipboard' | 'access' | 'about' | 'report' | 'search'
+type Page = Action | 'keys' | 'words' | 'mistakes' | 'transcripts' | 'notes' | 'translations' | 'phrases' | 'vocabulary' | 'kept' | 'learned' | 'programs' | 'layouts' | 'settings' | 'models' | 'storage' | 'clipboard' | 'access' | 'about' | 'report' | 'search'
 
 const ACTIONS: readonly Action[] = ['layout', 'voice', 'recordings', 'translate', 'english']
 /** Each action's icon, in the sidebar. */
@@ -103,6 +104,7 @@ const TITLES: Record<Page, string> = phrases({
   words: 'nav.words',
   mistakes: 'nav.mistakes',
   transcripts: 'nav.transcripts',
+  notes: 'nav.notes',
   translations: 'nav.translations',
   phrases: 'nav.phrases',
   vocabulary: 'nav.vocabulary',
@@ -217,7 +219,7 @@ type NavItem = { page: Page | 'home'; icon: LucideName; title: string; value?: (
 /** The groups, split by hairlines. */
 const NAV: NavItem[][] = [
   [{ page: 'home', icon: 'house', title: t('nav.home') }],
-  ACTIONS.map(a => ({ page: a, icon: ICONS[a], title: TITLES[a] })),
+  [...ACTIONS.map(a => ({ page: a as Page, icon: ICONS[a], title: TITLES[a] })), { page: 'notes', icon: 'notebook-pen', title: TITLES.notes }],
   [
     { page: 'settings', icon: 'settings', title: TITLES.settings },
     { page: 'access', icon: 'shield-check', title: TITLES.access, value: v => String(missing(v.access) || '') },
@@ -835,19 +837,23 @@ function show(place: Place | undefined, dir: 1 | -1 | 0, scroll = 0): void {
   if (!view) return
   if (moment) finishMoment()
   const was = open
-  if (was?.name === 'transcripts' && place?.name !== 'transcripts') leaveTranscripts()
+  // The Notes page plays a call's sound too, in the transcript open beside its list.
+  if ((was?.name === 'transcripts' || was?.name === 'notes') && place?.name !== was.name) leaveTranscripts()
   open = place
   keyTrouble = undefined
   if (place?.name !== was?.name) search = ''
   // The search's words stay for Back to the results; the field shows them only there.
   findField.value = place?.name === 'search' ? finding : ''
   if (place?.name === 'transcripts' && was?.name !== 'transcripts') enterTranscripts()
+  if (place?.name === 'notes' && was?.name !== 'notes') (enterTranscripts(), enterNotes())
   if (place?.name === 'programs' && !place.sub) askRunningApps()
   // Sizes are measured each time the page opens: a download or a removal elsewhere changes them (Models says what nothing uses).
   if ((place?.name === 'storage' || place?.name === 'models') && was?.name !== place.name) post({ type: 'storage' })
   if (place?.name !== 'models') recommending = false
   asking = ''
   root.classList.toggle('page-open', !!place)
+  // The Notes page is two columns: it takes the window's width, not the one column of the other pages.
+  root.classList.toggle('wide', place?.name === 'notes')
   fillHeader()
   updateNav()
   if (!place) {
@@ -1027,6 +1033,8 @@ function bodyOf(v: AppView): HTMLElement[] {
       return mistakesPage(v)
     case 'transcripts':
       return transcriptsBody(v)
+    case 'notes':
+      return notesBody(v)
     case 'translations':
       return translationsPage(v)
     case 'phrases':
@@ -3608,7 +3616,8 @@ onRedraw(() => {
 })
 setTranscriptHooks({
   view: () => view,
-  shown: () => open?.name === 'transcripts',
+  // On the Notes page a transcript opens beside the notes' list: the page stays.
+  shown: () => open?.name === 'transcripts' || open?.name === 'notes',
   show: () => go('transcripts'),
   setup: () => go('recordings', 'speakers'),
 })

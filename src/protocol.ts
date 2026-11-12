@@ -1,5 +1,6 @@
 // Messages between the main process and the card, the small window that
 // shows one picked text or one snipped piece of the screen at a time.
+import type { NoteScope, Passage, Turn } from './ask'
 import type { DictationEntry } from './dictationlog'
 import type { DeviceProfile } from './hardware'
 import type { WordTime } from './kokoro'
@@ -671,6 +672,19 @@ export type HostCall =
   | { call: 'runningApps' }
   /** A question to the recorded calls: the engine's passages, answered by the local model (ask.ts); answers Answer. */
   | { call: 'askCalls'; question: string }
+  /** The Notes page: the knowledge base folder's Markdown files (kbnotes.ts), without those Tyts wrote from a transcript the library still has; answers { dir: string; files: KbRow[] }. */
+  | { call: 'kbList'; query: string }
+  /** One of those files: answers { title, created, text }. */
+  | { call: 'kbRead'; path: string }
+  /** A new name in the same folder: answers the new path; throws 'nameTaken' when a file has it. */
+  | { call: 'kbRename'; path: string; name: string }
+  /** To the system's trash, never deleted for good. */
+  | { call: 'kbTrash'; path: string }
+  /** The passages for a question to the notes: the engine's from the transcripts and the folder's files', the best first; `only` keeps to one note, `before` is the question asked before in the conversation. Answers Passage[]. */
+  | { call: 'findPassages'; question: string; scope: NoteScope; only?: { id?: string; file?: string }; before?: string }
+  /** The local model's answer from those passages (ask.ts), as text with [n]; `stopAnswer` ends it early. */
+  | { call: 'answerNotes'; question: string; passages: Passage[]; before: Turn[] }
+  | { call: 'stopAnswer' }
 
 /** What every page has as `window.tutorHost` (preload.ts). */
 export type TutorHost = {

@@ -86,11 +86,15 @@ class Store:
             rows = self._db.execute("select file from transcripts where file is not null union select path from ignored").fetchall()
         return {os.path.normcase(r[0]) for r in rows}
 
-    def search_ids(self, match: str, limit: int) -> list[str]:
-        """The transcripts an FTS5 query matches, the best first; an unreadable query finds nothing."""
+    def search_ids(self, match: str, limit: int, sources: tuple[str, ...] = ()) -> list[str]:
+        """The transcripts an FTS5 query matches, the best first; an unreadable query finds nothing. `sources`: only those made that way."""
+        only = f" and t.source in ({','.join('?' * len(sources))})" if sources else ""
         with self._lock:
             try:
-                rows = self._db.execute("select id from search where search match ? order by bm25(search) limit ?", (match, limit)).fetchall()
+                rows = self._db.execute(
+                    f"select s.id from search s join transcripts t on t.id = s.id where search match ?{only} order by bm25(search) limit ?",
+                    (match, *sources, limit),
+                ).fetchall()
             except sqlite3.OperationalError:
                 return []
         return [r[0] for r in rows]

@@ -136,7 +136,7 @@ type Tab = 'text' | 'notes' | 'summary'
 const DATE: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }
 const DAY: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }
 
-function meta(r: { created: string; duration: number; source: Source; app?: string }, long = false): string {
+export function meta(r: { created: string; duration: number; source: Source; app?: string }, long = false): string {
   const parts = [formatDate(new Date(r.created), long ? DAY : DATE)]
   if (r.duration) parts.push(length(r.duration))
   // A call is named by its program (Zoom) when the engine says which, else by its source.
@@ -303,6 +303,8 @@ async function loadRows(): Promise<void> {
 
 /** A transcript is open, not the library: the bar's crumb then leads back to it. */
 export const transcriptOpen = () => !!tx.openId
+/** The transcript open now, for the Notes page: its id and its title. */
+export const openedTranscript = () => (tx.openId ? { id: tx.openId, title: tx.transcript?.title ?? tx.row?.title ?? '' } : undefined)
 
 export function transcriptsBody(v: AppView): HTMLElement[] {
   if (!installed(v)) return [row(t('tr.needEngine'), [t('tr.needEngineNote')], linkBtn(t('tr.transcribeLink'), () => hooks.setup()))]
@@ -485,7 +487,7 @@ function list(v: AppView): HTMLElement {
 }
 
 /** The search marks the found words with [ ]; they become marks. */
-function snippet(text: string): HTMLElement {
+export function snippet(text: string): HTMLElement {
   const out = el('span', { class: 'snip' })
   for (const part of text.split(/(\[[^\]]*\])/)) {
     if (part.startsWith('[') && part.endsWith(']')) out.append(el('mark', {}, part.slice(1, -1)))

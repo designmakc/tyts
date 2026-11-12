@@ -70,6 +70,8 @@ describe('normalize', () => {
 
   test('one model translates and checks: the level follows it, and an older file takes it from its level', () => {
     expect(normalize({})).toMatchObject({ translationLevel: 'fast', model: 'accurate' })
+    // The notes' own model: empty (Check's) unless it is one of the two.
+    expect([normalize({}).notesModel, normalize({ notesModel: 'most' }).notesModel, normalize({ notesModel: 'big' }).notesModel]).toEqual(['', 'most', ''])
     expect(normalize({ translationLevel: 'most' })).toMatchObject({ translationLevel: 'most', model: 'most' })
     // Picked on the Check page: a level that was the other model moves with it; Fast stays Fast.
     expect(normalize({ translationLevel: 'accurate', model: 'most' })).toMatchObject({ translationLevel: 'most', model: 'most' })

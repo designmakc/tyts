@@ -242,6 +242,13 @@ export type Settings = {
   translationLevel: TranslationLevel
   /** The one local model, Accurate (Gemma 4 E4B) or Most accurate (Gemma 4 12B): Check my English uses it, and translation when it is not Fast. */
   model: LlmModel
+  /**
+   * The model that answers a question to the notes and the recordings (ask.ts), when the person picked
+   * one on the Notes page; empty: `model`. Its own choice (the owner, 2026-11-12): on 8 GB of memory
+   * Most accurate checks English well enough and answers a question in many minutes, so the question
+   * may run on Accurate. Two models are never loaded together: the server holds one (llama.ts).
+   */
+  notesModel: LlmModel | ''
   /** Speech models: the most accurate this computer runs in time, or quicker ones. */
   speechPrefer: Prefer
   /** A speech model the person picked for dictation and for transcripts (models.json names); empty: chosen for this computer. */
@@ -362,6 +369,7 @@ export const DEFAULTS: Settings = {
   corrections: [],
   translationLevel: 'fast',
   model: 'accurate',
+  notesModel: '',
   speechPrefer: 'accuracy',
   dictationModel: '',
   transcriptsModel: '',
@@ -595,6 +603,7 @@ export function normalize(raw: unknown, native = DEFAULTS.native): Settings {
     speechTestDeclinedAt: typeof r.speechTestDeclinedAt === 'number' && Number.isFinite(r.speechTestDeclinedAt) ? r.speechTestDeclinedAt : 0,
     startWithWindows: flag(r.startWithWindows, DEFAULTS.startWithWindows),
     naturalDismissed: flag(r.naturalDismissed, DEFAULTS.naturalDismissed),
+    notesModel: r.notesModel === 'accurate' || r.notesModel === 'most' ? r.notesModel : '',
     shareOfferSeen: strings(r.shareOfferSeen).filter((m): m is LlmModel => m === 'accurate' || m === 'most'),
     introSeen: flag(r.introSeen, DEFAULTS.introSeen),
     paused: flag(r.paused, DEFAULTS.paused),

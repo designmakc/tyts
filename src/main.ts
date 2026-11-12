@@ -2636,6 +2636,9 @@ let llmFiles: LlmFiles
 let checker: Checker
 let summarizer: ReturnType<typeof createSummarizer>
 let asker: ReturnType<typeof createAsker>
+/** The model a question to the notes and the recordings is answered by: the one picked on the Notes page, else Check's. */
+const askModel = () => settings.notesModel || settings.model
+
 /** The answer to a question to the notes being written now: Stop on the Notes page ends it. */
 let answering: AbortController | undefined
 
@@ -4654,7 +4657,7 @@ async function hostCall(request: HostCall): Promise<unknown> {
     case 'askCalls': {
       const question = request.question.trim().slice(0, 500)
       if (!speech || !question) return { text: '', sources: [] }
-      if (llmFiles.state(settings.model).status !== 'ready') throw new Error('needModel')
+      if (llmFiles.state(askModel()).status !== 'ready') throw new Error('needModel')
       const found = await speech.call<Passage[]>('GET', `/ask?q=${encodeURIComponent(question)}`)
       if (!found.ok) throw new Error(found.error)
       if (!found.data.length) return { text: '', sources: [] }
@@ -4686,7 +4689,7 @@ async function hostCall(request: HostCall): Promise<unknown> {
     case 'findPassages': {
       const question = request.question.trim().slice(0, 500)
       if (!question) return []
-      if (llmFiles.state(settings.model).status !== 'ready') throw new Error('needModel')
+      if (llmFiles.state(askModel()).status !== 'ready') throw new Error('needModel')
       // A follow-up ("and who was against it?") is searched with the question before it: its own words name no topic.
       const asked = `${question} ${(request.before ?? '').slice(0, 500)}`.trim()
       const words = terms(asked)
@@ -4782,7 +4785,7 @@ function start(): void {
   setInterval(watchModel, FULL_SCREEN_LOOK_MS)
   checker = createChecker({ files: llmFiles, model: () => settings.model, onTimed: modelTimed })
   summarizer = createSummarizer({ files: llmFiles, model: () => settings.model })
-  asker = createAsker({ files: llmFiles, model: () => settings.model })
+  asker = createAsker({ files: llmFiles, model: askModel })
   editor = createEditor({ files: llmFiles, model: () => settings.model })
   rewriter = createRewriter({ files: llmFiles, model: () => settings.model })
   mistakes = new MistakeStore(path.join(userDir(), 'mistakes.json'))

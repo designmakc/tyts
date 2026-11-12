@@ -1,3 +1,10 @@
+## Tyts 0.5.6
+
+**A model of your choice for questions to the notes (new).** On the Notes page, beside "Look in", pick the model that answers: **Accurate** or **Most accurate**, each with its size or "not downloaded". Until you pick one, the model of Check my English answers, as before. On a computer with 8 GB of memory, Accurate answers much sooner. A model that is not downloaded says where to download it (Settings › Models); nothing downloads by itself.
+
+**Fixed:**
+- A question that could not be answered showed "Error invoking remote method 'host-call'…" in place of the reason. It now says what is wrong, for example that the model is not downloaded yet.
+
 ## Tyts 0.5.5
 
 **Fixed:**

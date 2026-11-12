@@ -6,9 +6,14 @@
 
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
 
+import { hostReason } from './hosterror'
+
 contextBridge.exposeInMainWorld('tutorHost', {
   post: (message: unknown) => ipcRenderer.send('to-host', message),
-  call: (request: unknown) => ipcRenderer.invoke('host-call', request),
+  call: (request: unknown) =>
+    ipcRenderer.invoke('host-call', request).catch((error: unknown) => {
+      throw new Error(hostReason(error instanceof Error ? error.message : String(error)))
+    }),
   pathOf: (file: File) => webUtils.getPathForFile(file),
 })
 

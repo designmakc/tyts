@@ -6,11 +6,12 @@
 // of the folder opens here, to be renamed, shown in its folder or moved to the trash.
 
 import { CITE, cited, type NoteScope, type Passage, type Turn } from '../ask'
-import { formatDate, t } from '../i18n'
+import { formatDate, levelName, t } from '../i18n'
 import type { KbRow } from '../kbnotes'
 import type { AppView, HostCall } from '../protocol'
+import type { LlmModel } from '../settings'
 import { el, icon } from './dom'
-import { api, clock, installed, pickKb, problem, redrawPage, running, toast, type Row } from './speech'
+import { api, clock, installed, pickKb, problem, redrawPage, running, size, toast, type Row } from './speech'
 import { meta, openTranscript, openedTranscript, snippet, transcriptsBody } from './transcripts'
 import { btn, linkBtn, post, select } from './ui'
 
@@ -329,7 +330,7 @@ async function ask(question: string): Promise<void> {
   } catch (error) {
     if (m.stopping) return
     m.state = 'error'
-    m.error = problem(error) === 'needModel' ? t('tr.askNeedModel') : problem(error)
+    m.error = problem(error) === 'needModel' ? t('notes.modelNeeded') : problem(error)
   }
   draw()
 }
@@ -400,7 +401,7 @@ function answer(m: Message): HTMLElement {
   )
 }
 
-function chatPane(): HTMLElement[] {
+function chatPane(v: AppView): HTMLElement[] {
   const field = el('input', { type: 'text', 'data-live': 'notesAsk', placeholder: t('notes.askField'), 'aria-label': t('notes.askField') })
   const form = el(
     'form',
@@ -438,14 +439,25 @@ function chatPane(): HTMLElement[] {
         t('notes.where'),
         select<NoteScope>(ns.scope, [['all', t('notes.scopeAll')], ['note', t('notes.scopeNote')], ['call', t('notes.scopeCall')], ['kb', t('notes.scopeKb')]], scope => ((ns.scope = scope), redrawPage())),
       )
+  // The model that answers: Check's until the person picks another here (settings.notesModel); one not on the disk says so.
+  const model = v.settings.notesModel || v.settings.model
+  const named = (m: LlmModel) => `${levelName(m)} · ${v.models[m].status === 'ready' ? size(v.models[m].size) : t('notes.modelAbsent')}`
+  const which = el(
+    'span',
+    { class: 'nwhere' },
+    t('notes.model'),
+    select<LlmModel>(model, [['accurate', named('accurate')], ['most', named('most')]], notesModel => post({ type: 'saveSettings', patch: { notesModel } })),
+  )
   return [
     el(
       'header',
       { class: 'nhead' },
       el('div', {}, el('h2', {}, t('notes.askTitle')), el('small', {}, t('notes.askNote'))),
       where,
+      which,
       ns.chat.length ? btn(t('notes.newChat'), () => (ns.chat.filter(m => m.state === 'finding' || m.state === 'reading').forEach(stop), (ns.chat = []), redrawPage())) : null,
     ),
+    ...(v.models[model].status === 'ready' ? [] : [el('p', { class: 'nnote' }, t('notes.modelNeeded'))]),
     scroller(el('div', { class: 'nturns' }, ...ns.chat.flatMap(m => [el('p', { class: 'nq' }, m.question), answer(m)]))),
     starts,
     form,
@@ -461,7 +473,7 @@ export function notesBody(v: AppView): HTMLElement[] {
   // A transcript closed (renamed or deleted, maybe, while it was open): the list is read again.
   if (ns.wasOpen && !opened) void load()
   ns.wasOpen = !!opened
-  const right = ns.file ? filePane(ns.file) : opened ? [backLine(), scroller(...transcriptsBody(v)), askOne(opened)] : chatPane()
+  const right = ns.file ? filePane(ns.file) : opened ? [backLine(), scroller(...transcriptsBody(v)), askOne(opened)] : chatPane(v)
   // The columns are drawn anew each time: each keeps the place it was scrolled to, the conversation its end when it moved on.
   window.setTimeout(() => {
     const list = document.querySelector('.nlist')

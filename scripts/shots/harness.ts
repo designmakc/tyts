@@ -74,8 +74,60 @@ const colors = () => (nativeTheme.shouldUseDarkColors ? { bg: '#202020', surface
 /** Seconds of sound the engine has yet to recognize, as its answer to each chunk says (the amber dot past 4). */
 let pending = 0
 let heard = 'Привет, это проверка диктовки: бейдж показывает фразу целиком, пока её слышит движок'
+// The Notes page's fixtures (SHOTS=notes): a library, a folder's files, the places found for a question and the answer from them.
+let notesOn = false
+const NOTE_ROWS = [
+  { id: 'n1', title: 'Идея: подсказки в пустом поле', source: 'note', created: new Date().toISOString(), duration: 21, status: 'done', stage: '', progress: 1, error: '', language: 'ru', speakers_status: '' },
+  { id: 'c1', title: 'Ревью компонентов, часть 2', source: 'system', app: 'Zoom', created: new Date(Date.now() - 3 * 86_400_000).toISOString(), duration: 3120, status: 'done', stage: '', progress: 1, error: '', language: 'ru', speakers_status: '', summarized: 1 },
+  { id: 'c2', title: 'Дизайн-система, синк', source: 'system', app: 'Google Meet', created: '2026-11-04T12:00:00', duration: 2280, status: 'done', stage: '', progress: 1, error: '', language: 'ru', speakers_status: '', summarized: 1 },
+]
+const NOTE_FILES = [
+  { path: '/kb/Button open questions.md', title: 'Button: открытые вопросы', created: new Date(Date.now() - 2 * 86_400_000).toISOString() },
+  { path: '/kb/tokens-naming.md', title: 'Правила именования токенов', created: '2026-10-28T09:00:00' },
+]
+const NOTE_TEXT = 'По Button осталось три вопроса.\n\nЗагрузку берёт Андрей, обещал до четырнадцатого.\n\nИконку справа обсудим на следующем синке.'
+const NOTE_PASSAGES = [
+  { id: 'c2', title: 'Дизайн-система, синк', created: '2026-11-04T12:00:00', source: 'system', at: 760, text: 'Андрей: Оставляем три размера, тридцать шестой никто не использует, убираем.' },
+  { id: 'c1', title: 'Ревью компонентов, часть 2', created: NOTE_ROWS[1]!.created, source: 'system', at: 485, text: 'Оля: ghost переименуем в tertiary, а иконку справа давайте в следующий раз.' },
+  { id: '', file: '/kb/Button open questions.md', title: 'Button: открытые вопросы', created: NOTE_FILES[0]!.created, source: 'kb', at: 0, text: 'Загрузку берёт Андрей, обещал до четырнадцатого.' },
+  { id: '', file: '/kb/tokens-naming.md', title: 'Правила именования токенов', created: '2026-10-28T09:00:00', source: 'kb', at: 0, text: 'Для кнопки: button-bg-hover, никогда не имя цвета.' },
+]
+function notesAnswer(r: { call: string; method?: string; route?: string; query?: string }): unknown {
+  const has = (title: string, q = '') => title.toLowerCase().includes(q.toLowerCase())
+  if (r.call === 'speech' && r.method === 'GET' && r.route?.startsWith('/transcripts?')) {
+    const q = decodeURIComponent(r.route.split('q=')[1] ?? '')
+    return { ok: true, status: 200, data: NOTE_ROWS.filter(row => has(row.title, q)).map(row => (q ? { ...row, snippet: '…у [Button] оставляем три размера…' } : row)) }
+  }
+  if (r.call === 'speech' && r.method === 'GET' && r.route === '/transcripts/c2')
+    return {
+      ok: true,
+      status: 200,
+      data: {
+        row: NOTE_ROWS[2],
+        transcript: {
+          id: 'c2', title: NOTE_ROWS[2]!.title, source: 'system', app: 'Google Meet', created: NOTE_ROWS[2]!.created, duration: 2280, language: 'ru', speakersStatus: 'ok',
+          speakers: { S1: { name: 'Оля' }, S2: { name: 'Андрей' } },
+          utterances: [
+            { speaker: 'S1', start: 725, end: 758, text: 'Давайте про кнопку. У нас сейчас четыре размера, и одним почти не пользуются.' },
+            { speaker: 'S2', start: 760, end: 788, text: 'Оставляем три размера, тридцать шестой никто не использует, убираем.' },
+            { speaker: 'S1', start: 790, end: 810, text: 'Тогда фиксируем: 32, 40 и 48. Идём дальше, отступы в карточках.' },
+          ],
+        },
+      },
+    }
+  if (r.call === 'kbList') return { dir: '/kb', files: NOTE_FILES.filter(f => has(f.title, r.query)).map(f => (r.query ? { ...f, snippet: '…по [Button] осталось три вопроса…' } : f)) }
+  if (r.call === 'kbRead') return { title: NOTE_FILES[0]!.title, created: NOTE_FILES[0]!.created, text: NOTE_TEXT }
+  if (r.call === 'findPassages') return NOTE_PASSAGES
+  if (r.call === 'answerNotes') return 'По кнопке решили три вещи. Размеров остаётся три, тридцать шестой убираем [1]. Вариант ghost переименовываем в tertiary [2]. Состояние загрузки делает Андрей, срок до четырнадцатого [3].\n\nПро иконку справа решения нет: обсуждение отложили [2].'
+  return undefined
+}
+
 ipcMain.handle('host-call', async (_e, r: { call: string; method?: string; route?: string }) => {
   log.push(`host-call ${JSON.stringify(r).slice(0, 120)}`)
+  if (notesOn) {
+    const answer = notesAnswer(r)
+    if (answer !== undefined) return answer
+  }
   if (r.call === 'speech') {
     if (r.method === 'PUT') return { ok: true, status: 200, data: { pending, heard } }
     if (r.route?.endsWith('/finish')) return { ok: true, status: 200, data: { text: heard, language: 'ru', sure: true } }
@@ -400,6 +452,40 @@ async function appShots(theme: 'dark' | 'light', narrow = false): Promise<void> 
   w.destroy()
 }
 
+/** The Notes page (SHOTS=notes): the list, a word found, a question answered with its sources, a file of the folder open at the cited paragraph. */
+async function notesShots(theme: 'dark' | 'light', narrow = false): Promise<void> {
+  nativeTheme.themeSource = theme
+  notesOn = true
+  const w = win('app.html', narrow ? 640 : 1180, 760, colors().bg)
+  await new Promise<void>(r => w.webContents.once('did-finish-load', () => r()))
+  await sleep(400)
+  send(w, { type: 'app', view: appView() })
+  send(w, { type: 'appWindow', maximized: false })
+  await sleep(600)
+  const tag = (n: string) => `notes-${theme}${narrow ? '-narrow' : ''}-${n}`
+  const type = (field: string, text: string) =>
+    js(w, `(() => { const n = document.querySelector('input[data-live="${field}"]'); if (!n) return 'missing ${field}'; n.value = ${JSON.stringify(text)}; n.dispatchEvent(new Event('input', { bubbles: true })); return 'ok' })()`)
+  log.push(`notes: ${await click(w, '.side [data-nav="notes"]')}`)
+  await sleep(700)
+  await shot(w, tag('list'))
+  log.push(`ask: ${await type('notesAsk', 'Что мы решили по компоненту Button?')} ${await click(w, '.nask .btn')}`)
+  await sleep(900)
+  await shot(w, tag('answer'))
+  log.push(`find: ${await type('notesFind', 'button')}`)
+  await sleep(700)
+  log.push(`source: ${await click(w, '.nsources li:nth-child(3) .nsource')}`)
+  await sleep(700)
+  await shot(w, tag('file'))
+  log.push(`back: ${await click(w, '.nback .link')}`)
+  await sleep(500)
+  await shot(w, tag('back'))
+  log.push(`call: ${await click(w, '.nsources li:nth-child(1) .nsource')}`)
+  await sleep(900)
+  await shot(w, tag('call'))
+  notesOn = false
+  w.destroy()
+}
+
 /** The first-run setup: its four steps, Next pressed between them; Download starts nothing here (the host-call answers are stubs). */
 async function setupShots(theme: 'dark' | 'light'): Promise<void> {
   nativeTheme.themeSource = theme
@@ -614,7 +700,7 @@ app.whenReady().then(async () => {
   try {
     await cardShots('dark')
     await cardShots('light')
-    // SHOTS=card: the card alone; SHOTS=tray: the tray panel; SHOTS=menu: the menu on one key; SHOTS=daily: the card, the tray panel, the menu, the badge, the talk window and the setup.
+    // SHOTS=card: the card alone; SHOTS=notes: the Notes page; SHOTS=tray: the tray panel; SHOTS=menu: the menu on one key; SHOTS=daily: the card, the tray panel, the menu, the badge, the talk window and the setup.
     if (process.env.SHOTS === 'tray') {
       await trayShots('dark')
       await trayShots('light')
@@ -624,6 +710,10 @@ app.whenReady().then(async () => {
     } else if (process.env.SHOTS === 'app') {
       await appShots('light')
       await appShots('dark', true)
+    } else if (process.env.SHOTS === 'notes') {
+      await notesShots('light')
+      await notesShots('dark')
+      await notesShots('light', true)
     } else if (process.env.SHOTS === 'daily') {
       await setupShots('dark')
       await trayShots('dark')

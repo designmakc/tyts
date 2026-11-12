@@ -51,6 +51,7 @@ import { keyShots, shotAt, shownShots, speakerHints, type Shot } from './shots'
 import { accessRows, type AccessId, type AccessRow, type MediaStatus } from './access'
 import { createSummarizer, type ScreenText, type SummaryLength, type SummaryTemplate } from './summary'
 import { createAsker, type Passage } from './ask'
+import { best, filePassages, inside, listRows, parseNote, readKb, renamed, terms, type KbNote } from './kbnotes'
 import { autoSummaryWanted, summaryInput, type SummarySource } from './summaryflow'
 import { createEditor, type Editor } from './dictedit'
 import { DoubleCopy } from './clipboard'
@@ -2635,6 +2636,28 @@ let llmFiles: LlmFiles
 let checker: Checker
 let summarizer: ReturnType<typeof createSummarizer>
 let asker: ReturnType<typeof createAsker>
+/** The answer to a question to the notes being written now: Stop on the Notes page ends it. */
+let answering: AbortController | undefined
+
+/** The knowledge base folder's notes, without the files Tyts wrote from a transcript the library still has (the same note twice). */
+async function kbNotes(): Promise<{ dir: string; notes: KbNote[] }> {
+  const dir = speech?.service.health?.kbDir ?? ''
+  if (!dir) return { dir: '', notes: [] }
+  const notes = await readKb(dir)
+  if (!notes.some(n => n.made)) return { dir, notes }
+  const rows = await speech.call<{ created: string }[]>('GET', '/transcripts')
+  const kept = new Set(rows.ok ? rows.data.map(r => r.created.slice(0, 16)) : [])
+  return { dir, notes: notes.filter(n => !n.made || !kept.has(n.made)) }
+}
+
+/** A path the Notes page names, as a Markdown file inside the knowledge base folder; anything else is refused. */
+async function kbFile(p: unknown): Promise<string> {
+  const dir = speech?.service.health?.kbDir ?? ''
+  if (typeof p !== 'string' || !dir) throw new Error('Not a note of the knowledge base')
+  const [base, full] = await Promise.all([fs.promises.realpath(dir), fs.promises.realpath(p)])
+  if (!inside(base, full)) throw new Error('Not a note of the knowledge base')
+  return full
+}
 let editor: Editor
 let rewriter: Rewriter
 let mistakes: MistakeStore
@@ -4639,6 +4662,66 @@ async function hostCall(request: HostCall): Promise<unknown> {
       log(`ask: answered from ${found.data.length} passages`)
       return answer
     }
+    case 'kbList': {
+      const { dir, notes } = await kbNotes()
+      return { dir, files: listRows(notes, String(request.query).slice(0, 200)) }
+    }
+    case 'kbRead': {
+      const file = await kbFile(request.path)
+      const note = parseNote(file, await fs.promises.readFile(file, 'utf8'), (await fs.promises.stat(file)).mtime)
+      return { title: note.title, created: note.created, text: note.body }
+    }
+    case 'kbRename': {
+      const file = await kbFile(request.path)
+      const to = renamed(file, String(request.name))
+      if (to === file) return file
+      // A name another note has is never written over (only a change of letter case is the same file).
+      if (to.toLowerCase() !== file.toLowerCase() && fs.existsSync(to)) throw new Error('nameTaken')
+      await fs.promises.rename(file, to)
+      return to
+    }
+    case 'kbTrash':
+      await shell.trashItem(await kbFile(request.path))
+      return null
+    case 'findPassages': {
+      const question = request.question.trim().slice(0, 500)
+      if (!question) return []
+      if (llmFiles.state(settings.model).status !== 'ready') throw new Error('needModel')
+      // A follow-up ("and who was against it?") is searched with the question before it: its own words name no topic.
+      const asked = `${question} ${(request.before ?? '').slice(0, 500)}`.trim()
+      const words = terms(asked)
+      const { scope, only } = request
+      const found: Passage[] = []
+      if (speech && !only?.file && scope !== 'kb') {
+        const route = `/ask?q=${encodeURIComponent(asked)}&kind=${scope === 'all' ? '' : scope}${only?.id ? `&id=${encodeURIComponent(only.id)}` : ''}`
+        const calls = await speech.call<Passage[]>('GET', route)
+        if (!calls.ok) throw new Error(calls.error)
+        found.push(...calls.data)
+      }
+      if (!only?.id && (scope === 'all' || scope === 'kb')) {
+        const { notes } = await kbNotes()
+        found.push(...filePassages(only?.file ? notes.filter(n => n.path === only.file) : notes, words))
+      }
+      log(`notes: ${found.length} passages found (${scope}${only ? ', one note' : ''})`)
+      return best(found, words)
+    }
+    case 'answerNotes': {
+      const question = request.question.trim().slice(0, 500)
+      const passages = request.passages.slice(0, 12).map(p => ({ ...p, text: String(p.text).slice(0, 1500), title: String(p.title).slice(0, 200) }))
+      if (!question || !passages.length) return ''
+      answering?.abort()
+      const mine = (answering = new AbortController())
+      try {
+        const answer = await asker.ask(question, passages, request.before.slice(-4), mine.signal)
+        log(`notes: answered from ${passages.length} passages`)
+        return answer.text
+      } finally {
+        if (answering === mine) answering = undefined
+      }
+    }
+    case 'stopAnswer':
+      answering?.abort()
+      return null
   }
 }
 

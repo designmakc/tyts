@@ -26,6 +26,8 @@ type Message = {
   /** Every place found is listed, not only those the answer cites. */
   all?: boolean
   stopping?: boolean
+  /** When the model began to read the places: an answer long in coming says why it may be. */
+  since?: number
 }
 type OpenFile = { path: string; title: string; created: string; text?: string; mark?: string; jump?: boolean; deleting?: boolean }
 
@@ -57,6 +59,8 @@ const DAY: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 
 const KINDS: Record<Kind, string> = { note: t('notes.dictated'), call: t('notes.calls'), kb: t('notes.files') }
 
 let findTimer = 0
+/** An answer not here after this long: the page says a large model may not fit this computer's memory. */
+const SLOW_MS = 20_000
 
 async function load(): Promise<void> {
   const query = ns.query
@@ -314,6 +318,8 @@ async function ask(question: string): Promise<void> {
     if (!m.found.length) m.state = 'nothing'
     else {
       m.state = 'reading'
+      m.since = Date.now()
+      window.setTimeout(redrawPage, SLOW_MS + 100)
       draw()
       const text = await host<string>({ call: 'answerNotes', question, passages: m.found, before: turns })
       if (m.stopping) return
@@ -354,6 +360,7 @@ function answer(m: Message): HTMLElement {
       el('i', { class: 'dot pulse' }),
       m.state === 'finding' ? t('notes.finding') : t('notes.reading', { n: m.found.length }),
       btn(t('notes.stop'), () => stop(m)),
+      m.state === 'reading' && Date.now() - (m.since ?? Date.now()) >= SLOW_MS ? el('small', { class: 'nslow' }, t('notes.slow')) : null,
     )
   if (m.state !== 'done') return el('p', { class: 'nnote' }, m.state === 'nothing' ? t('notes.nothingFound') : m.state === 'stopped' ? t('notes.stopped') : (m.error ?? ''))
   const text = el('div', { class: 'nanswer' })

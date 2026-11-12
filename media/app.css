@@ -3819,6 +3819,14 @@ li + li > .ti::before {
   color: var(--muted);
 }
 
+.nwait {
+  flex-wrap: wrap;
+}
+
+.nslow {
+  flex-basis: 100%;
+}
+
 .nsources {
   display: flex;
   flex-direction: column;

@@ -1,3 +1,9 @@
+## Tyts 0.5.5
+
+**Fixed:**
+- Tyts no longer stops with "A JavaScript error occurred in the main process: Gemma 4 E4B is not downloaded yet". It happened while the Most accurate model was loaded and the Accurate one was not on the disk, for example during Clean up on the Models page.
+- **Notes:** when an answer is long in coming, the page says why it may be (a large model may not fit the computer's memory) and where a smaller one is picked. **Stop** now answers at once.
+
 ## Tyts 0.5.4
 
 **Notes, and a conversation with them (new).** A new page in the sidebar, **Notes**, shows everything you keep as words in one list: the notes you dictated, your calls and recordings, and the Markdown files of your knowledge base folder. Find a word in all of it, or keep to one kind.

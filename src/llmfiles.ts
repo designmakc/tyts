@@ -90,6 +90,15 @@ export type LlmFiles = {
   dispose(): void
 }
 
+/**
+ * The model whose file the server has loaded, if it is one of these. A model not downloaded is passed
+ * over: `target` throws for it, and that took the whole app down from a timer when Most accurate was
+ * loaded and Accurate was not on the disk (Clean up, 0.5.4).
+ */
+export function loadedModel(files: Pick<LlmFiles, 'state' | 'target'>, file: string | undefined): LlmModel | undefined {
+  return file ? MODELS.find(m => files.state(m).status === 'ready' && files.target(m).model === file) : undefined
+}
+
 /** Deleted, tried again for a moment while Windows still holds it (a process just ended). */
 function removePath(target: string): void {
   fs.rmSync(target, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 })

@@ -813,6 +813,7 @@ export const en = {
   'notes.reading': 'Places found: {n}. Reading them…',
   'notes.stop': 'Stop',
   'notes.stopped': 'Stopped.',
+  'notes.slow': 'A long wait: a large model may not fit this computer’s memory. A smaller one answers sooner: Settings › Models.',
   'notes.nothingFound': 'Nothing in the notes matches the question.',
   'notes.count': 'Places found: {found} · in the answer: {used}',
   'notes.sources': 'Where it is from',

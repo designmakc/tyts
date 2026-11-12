@@ -78,7 +78,7 @@ import { convertText, layoutsAfter, nextLayout, sourceLayout, type KeyTable } fr
 import { LearnStore } from './learning'
 import { lookup, type Dictionary } from './lemma'
 import { LlamaServer } from './llama'
-import { createLlmFiles, LLM_MODELS, llmPaths, type LlmFiles } from './llmfiles'
+import { createLlmFiles, LLM_MODELS, llmPaths, loadedModel, type LlmFiles } from './llmfiles'
 import { createLlmTranslators, ModelSlow, type LlmTranslators } from './llmtranslator'
 import { BUSY_MS, busyName, slowAfter, tryAgain, type ModelBusy } from './modelbusy'
 import { cardRoom, sharedReading } from './resources'
@@ -2934,7 +2934,7 @@ async function measureCard(): Promise<void> {
   const server = llmFiles.server
   const loaded = server.loaded
   if (!cardSample) {
-    const model = (['accurate', 'most'] as const).find(m => loaded && llmFiles.target(m).model === loaded)
+    const model = loadedModel(llmFiles, loaded)
     if (!model || !loaded || modelSpeeds[model]?.card !== undefined) return
     sampling = true
     const used = await cardMemoryUsed().finally(() => (sampling = false))
@@ -2962,7 +2962,7 @@ const CARD_HELD_MIN_MB = 300
 /** The local model loaded now, for the Models page's "Right now". */
 function llmLoadedView(): { llmLoaded?: { model: LlmModel; onCard: boolean } } {
   const server = llmFiles.server
-  const model = server.loaded && (['accurate', 'most'] as const).find(m => llmFiles.target(m).model === server.loaded)
+  const model = loadedModel(llmFiles, server.loaded)
   return model ? { llmLoaded: { model, onCard: !server.onProcessor } } : {}
 }
 

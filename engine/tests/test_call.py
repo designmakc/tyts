@@ -130,6 +130,12 @@ def test_the_summary_is_kept_searched_and_survives_a_redo(client, fake_sound):
     put = client.request("PUT", f"/transcripts/{id}/summary", headers=KEY, json={"summary": SUMMARY})
     assert put.status_code == 200 and put.json() == {"ok": True}
     assert store.transcript(id)["summary"] == SUMMARY
+    # The summary names the call, until the person names it themselves.
+    client.request("PUT", f"/transcripts/{id}/summary", headers=KEY, json={"summary": {**SUMMARY, "name": "Bonus centre page"}})
+    assert store.transcript(id)["title"] == "Bonus centre page" and store.transcript(id)["summary"] == SUMMARY
+    assert client.request("PATCH", f"/transcripts/{id}", headers=KEY, json={"title": "Mine"}).status_code == 200
+    client.request("PUT", f"/transcripts/{id}/summary", headers=KEY, json={"summary": {**SUMMARY, "name": "Other"}})
+    assert store.transcript(id)["title"] == "Mine"
     assert [r["summarized"] for r in client.get("/transcripts", headers=KEY).json()] == [1]
     assert [r["id"] for r in client.get("/transcripts", headers=KEY, params={"q": "approved"}).json()] == [id]
     # Transcribed again from its saved sound: the summary, the program and the lost chunks stay.

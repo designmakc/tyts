@@ -22,8 +22,11 @@ export type SummaryLength = 'brief' | 'full'
 export interface SummaryOptions { template: SummaryTemplate; own?: string; mine: boolean; native: string; length?: SummaryLength }
 /** Parts done of `parts`; `parts + 1` while they are joined. */
 export interface SummaryProgress { part: number; parts: number }
-export interface Summary { text: string; template: SummaryTemplate; mine: boolean; language: string | null; made: string }
+/** `name`: what the recording was about in a few words, the call's new name (the engine keeps it as the title, never in the summary). */
+export interface Summary { text: string; template: SummaryTemplate; mine: boolean; language: string | null; made: string; name?: string }
 export type SummaryJson = {
+  /** The recording's topic as a short title. */
+  name: string
   short: string
   decisions: string[]
   tasks: { who: string; what: string; due: string }[]
@@ -155,6 +158,7 @@ export function checkSummary(json: SummaryJson, input: SummaryInput, translated 
     return speakers.has(n.toLowerCase()) || ((translated || wordsOf(n).length > 0) && numbersSaid(n) && wordsSaid(n)) ? n : ''
   }
   return {
+    name: numbersSaid(json.name) ? json.name : '',
     short: json.short.split(/(?<=[.!?…])\s+/).filter(numbersSaid).join(' '),
     decisions: json.decisions.filter(numbersSaid),
     tasks: json.tasks
@@ -174,6 +178,7 @@ export function checkSummary(json: SummaryJson, input: SummaryInput, translated 
 const SCHEMA = {
   type: 'object',
   properties: {
+    name: { type: 'string' },
     short: { type: 'string' },
     decisions: { type: 'array', items: { type: 'string' } },
     tasks: {
@@ -196,7 +201,7 @@ const SCHEMA = {
       },
     },
   },
-  required: ['short', 'decisions', 'tasks', 'questions', 'topics'],
+  required: ['name', 'short', 'decisions', 'tasks', 'questions', 'topics'],
   additionalProperties: false,
 }
 
@@ -235,7 +240,7 @@ export function summaryPrompt(options: SummaryOptions, language: string | null, 
     '"who" of a task is the speaker\'s name as it stands before the line, or a name said in the meeting; an empty string when nobody was named. ' +
     '"due" is the deadline exactly as it was said; an empty string when none was said. ' +
     `${writeIn}\n` +
-    'Answer in JSON. "short": three to five sentences on what it was about and how it ended. "decisions": what was decided. "tasks": who does what and by when. ' +
+    'Answer in JSON. "name": what it was about as a title of two to six words, the way a person would name this meeting in a list; no date, no program\'s name, no quotes, no full stop. "short": three to five sentences on what it was about and how it ended. "decisions": what was decided. "tasks": who does what and by when. ' +
     '"questions": what was asked and left open. "topics": the main topics, each with "at", the seconds from the start of the line where it begins (a line\'s time [mm:ss] is minutes and seconds). ' +
     'An empty list for a section with nothing in it.' +
     (screen
@@ -250,10 +255,15 @@ export function summaryPrompt(options: SummaryOptions, language: string | null, 
   )
 }
 
+/** The model's name for a recording as a title: no quotes around it, no full stop, one line, 80 characters at most. */
+export const callName = (name: string): string =>
+  name.replace(/\s+/g, ' ').trim().replace(/^["'«“„]+|["'»”“.]+$/g, '').trim().slice(0, 80)
+
 type Ask = (system: string, user: string, maxTokens?: number) => Promise<SummaryJson>
 
 /** The parts' summaries one after another: what a meeting gets when the model's join cannot be read, so the parts' work is not lost. */
 export const mergeSummaries = (parts: readonly SummaryJson[]): SummaryJson => ({
+  name: parts.find(p => p.name)?.name ?? '',
   short: parts.map(p => p.short).filter(Boolean).join(' '),
   decisions: parts.flatMap(p => p.decisions),
   tasks: parts.flatMap(p => p.tasks),
@@ -272,6 +282,7 @@ const asJson = (content: unknown): SummaryJson => {
   const objects = (items: unknown) => (Array.isArray(items) ? (items as Record<string, unknown>[]).filter(i => i && typeof i === 'object') : [])
   const text = (s: unknown) => (typeof s === 'string' ? s.trim() : '')
   return {
+    name: text(answer.name),
     short: text(answer.short),
     decisions: strings(answer.decisions),
     tasks: objects(answer.tasks).map(t => ({ who: text(t.who), what: text(t.what), due: text(t.due) })).filter(t => t.what),
@@ -367,8 +378,11 @@ export function createSummarizer(o: { files: LlmFiles; model: () => LlmModel; fe
             job.then(resolve, reject)
           })
         : job)
+      const checked = checkSummary(json, input, options.mine && language !== input.language)
+      const name = callName(checked.name)
       return {
-        text: renderSummary(checkSummary(json, input, options.mine && language !== input.language), language, input.lost),
+        ...(name ? { name } : {}),
+        text: renderSummary(checked, language, input.lost),
         template: options.template,
         mine: options.mine,
         language,

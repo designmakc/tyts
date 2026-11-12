@@ -1,3 +1,11 @@
+## Tyts 0.5.3
+
+**A call is named by what it was about (new).** When a call's summary is ready, the call gets a name of a few words from it ("Bonus Centre discussion") in place of "Zoom · 10 November 14:30". A name you gave yourself is never changed.
+
+**Fixed:**
+- **Mac:** a call in Slack, Chrome and other programs that hear through a helper process is noticed again, so the recording starts by itself and stops when the call ends. Tyts took the helper for the program and never saw the call.
+- Voice typing no longer shows nothing for up to half a minute when the speech engine is slow to answer (a computer short of memory): after a second the recording starts anyway and the phrase is typed when you stop, without the words while you speak.
+
 ## Tyts 0.5.2
 
 **Permissions in one place (new).** A new page in the sidebar, **Permissions**, lists everything the system must allow and says whether it does: on a Mac the Microphone, Screen & System Audio Recording, Accessibility and Input Monitoring; on Windows the microphone. Each line has **Allow** or **Open settings**, and Home warns while something is missing. Allow it all once after installing, so that no system question comes up in the first minute of a call.

@@ -35,6 +35,8 @@ const BADGE = { width: 360, min: 64, max: 180 }
 /** How soon after it shows, then how often while it is up, the badge asks whether Windows shows it too. */
 const LOOK_MS = { first: 500, every: 2000 }
 const NOTE_WAIT_MS = 5 * 60_000
+/** A phrase's start waits this long for the engine's session; past it the phrase is recorded whole (no words while it is spoken). */
+export const SESSION_WAIT_MS = 1000
 /** How long the badge says something of a phrase it typed (Fast translated it). */
 const NOTE_SHOWN_MS = 3000
 /** How long the badge takes to fly into the tray, as the page's shrinking (dictation.css), and how often it moves meanwhile. */
@@ -165,12 +167,18 @@ export class Dictation {
     if (mode !== 'note') {
       // Heard while it is spoken (the engine loads its model meanwhile); an engine without sessions gets the phrase whole.
       this.opening = true
+      const asked = Date.now()
+      const call = this.o.speech.call<{ id: string }>('POST', '/dictate/sessions', { expected, strict: true })
       try {
-        const r = await this.o.speech.call<{ id: string }>('POST', '/dictate/sessions', { expected, strict: true })
-        if (r.ok) session = r.data.id
-        else void this.o.speech.call('POST', '/dictate/prepare')
+        // An engine slow to answer (the computer short of memory) is not waited for: the phrase is recorded whole meanwhile.
+        const r = await Promise.race([call, new Promise<null>(resolve => setTimeout(resolve, SESSION_WAIT_MS, null))])
+        if (r?.ok) session = r.data.id
+        else if (r) void this.o.speech.call('POST', '/dictate/prepare')
+        // The session that comes too late is nobody's.
+        else void call.then(late => void (late.ok && this.o.speech.call('DELETE', `/dictate/sessions/${late.data.id}`)))
       } finally {
         this.opening = false
+        log(`dictation: the engine ${session ? 'answered' : 'gave no session'} in ${Date.now() - asked} ms`)
       }
     }
     if (this.state !== 'recording') return

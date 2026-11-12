@@ -57,7 +57,7 @@ vi.mock('./dwm', () => ({ frameWindow: vi.fn() }))
 vi.mock('./winclip', () => ({ handleOf: vi.fn() }))
 vi.mock('./winkbd', () => ({ foreground: () => ({ hwnd: 0 }), putOnTop: vi.fn(), sightOf: vi.fn(), windowRect: vi.fn() }))
 
-import { Dictation, type DictationOptions } from './dictation'
+import { Dictation, SESSION_WAIT_MS, type DictationOptions } from './dictation'
 import type { DictationMode, ToView } from './protocol'
 
 type Inside = {
@@ -263,5 +263,21 @@ describe('the panel while a phrase is dictated', () => {
     expect(badge.bounds.height).toBe(64)
     badge.heard.moved?.()
     expect(badge.bounds.height).toBe(120)
+  })
+})
+
+describe('a phrase started while the engine is slow to answer', () => {
+  afterEach(() => vi.useRealTimers())
+
+  it('starts recording without a session instead of waiting for the engine', async () => {
+    vi.useFakeTimers()
+    const call = vi.fn(() => new Promise(() => undefined))
+    const { d, sent } = setup({ speech: { installed: true, ready: true, call }, warm: vi.fn(), panel: () => true, offset: () => ({ dx: 0, dy: 0 }), expected: () => ['ru'], hold: () => false, page: '', query: () => ({}) } as unknown as Partial<DictationOptions>)
+    d.state = 'idle'
+    d.press('type', 'F9')
+    await vi.advanceTimersByTimeAsync(SESSION_WAIT_MS - 1)
+    expect(sent).toEqual([])
+    await vi.advanceTimersByTimeAsync(1)
+    expect(sent).toEqual([{ type: 'dictation', command: 'start', mode: 'type', key: 'F9', expected: ['ru'] }])
   })
 })

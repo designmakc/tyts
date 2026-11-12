@@ -1419,6 +1419,8 @@ async function reloadSummary(id: string): Promise<void> {
     tx.transcript = r.transcript ?? tx.transcript
     tx.editing = tx.replacing = false
     if (hooks.shown()) redrawPage()
+    // A summary names its call: the list shows the new name.
+    void loadRows()
   } catch (error) {
     fault(error)
   }

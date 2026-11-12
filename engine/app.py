@@ -578,6 +578,8 @@ def patch_transcript(id: str, changes: dict = Body(...)):
         return public(t, id)
     if isinstance(changes.get("title"), str) and changes["title"].strip():
         t["title"] = changes["title"].strip()
+        # The person's own name for it: a summary never renames it again.
+        t["titled"] = True
     for key, name in (changes.get("speakers") or {}).items():
         if key in t["speakers"] and isinstance(name, str) and name.strip():
             t["speakers"][key]["name"] = name.strip()
@@ -599,7 +601,9 @@ def patch_transcript(id: str, changes: dict = Body(...)):
 
 @app.put("/transcripts/{id}/summary")
 def put_summary(id: str, body: dict = Body(...)):
-    """A call's summary, made by Kryakl's local model: {summary: {text, template, mine, language, made, edited?} | null}."""
+    """A call's summary, made by Kryakl's local model: {summary: {text, template, mine, language, made, edited?, name?} | null}.
+
+    `name`, what the call was about in a few words, becomes the call's title unless the person has named it themselves."""
     store = state.get_store()
     row = store.row(id)
     if row is None:
@@ -619,6 +623,10 @@ def put_summary(id: str, body: dict = Body(...)):
                         "made": str(summary.get("made") or now_iso())}
         if isinstance(summary.get("edited"), str):
             t["summary"]["edited"] = summary["edited"]
+        name = summary.get("name")
+        # ponytail: a title the person gave before 0.5.3 has no "titled" mark and is replaced by a summary made again.
+        if isinstance(name, str) and name.strip() and row["source"] in ("system", "meet") and not t.get("titled"):
+            t["title"] = name.strip()[:80]
     store.save(id, t)
     if row.get("file"):
         try:

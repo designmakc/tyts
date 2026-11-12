@@ -4,7 +4,7 @@ import type { LlmFiles } from './llmfiles'
 import { checkSummary, createSummarizer, renderSummary, screenOf, splitParts, summaryPrompt, type SummaryInput, type SummaryJson, type SummaryLine } from './summary'
 
 const line = (start: number, text = 'x'.repeat(100), speaker = 'Me'): SummaryLine => ({ speaker, start, text })
-const empty: SummaryJson = { short: '', decisions: [], tasks: [], questions: [], topics: [] }
+const empty: SummaryJson = { name: '', short: '', decisions: [], tasks: [], questions: [], topics: [] }
 
 describe('splitParts', () => {
   it('cuts a 90-minute meeting into parts of about 20 minutes, every line once, in order', () => {
@@ -24,6 +24,7 @@ describe('splitParts', () => {
 
 describe('renderSummary', () => {
   const json: SummaryJson = {
+    name: 'Budget',
     short: 'The budget is approved.',
     decisions: ['Ship on Friday'],
     tasks: [{ who: 'Olga', what: 'Send the report', due: 'Friday' }, { who: '', what: 'Book a room', due: '' }],
@@ -119,7 +120,7 @@ describe('checkSummary', () => {
 })
 
 describe('createSummarizer', () => {
-  const answer: SummaryJson = { short: 'They talked.', decisions: [], tasks: [], questions: [], topics: [{ title: 'Talk', at: 0 }] }
+  const answer: SummaryJson = { name: '«Bonus centre page».', short: 'They talked.', decisions: [], tasks: [], questions: [], topics: [{ title: 'Talk', at: 0 }] }
 
   function setup(reply: (body: { messages: { content: string }[] }) => unknown = () => answer) {
     const asked: { system: string; user: string; body: Record<string, unknown> }[] = []
@@ -152,6 +153,9 @@ describe('createSummarizer', () => {
     expect(asked[0]!.body).toMatchObject({ temperature: 0, chat_template_kwargs: { enable_thinking: false }, response_format: { type: 'json_schema' } })
     expect(out).toMatchObject({ template: 'general', mine: false, language: 'ru' })
     expect(out.text).toContain('### Коротко\nThey talked.')
+    // The call's name: the model's, without its quotes and full stop, and not a line of the summary.
+    expect(out.name).toBe('Bonus centre page')
+    expect(out.text).not.toContain('Bonus')
     expect(progress).toEqual([{ part: 0, parts: 1 }, { part: 1, parts: 1 }])
   })
 

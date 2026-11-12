@@ -27,7 +27,8 @@ func owner(pid: pid_t, bundle: String) -> NSRunningApplication? {
   let own = NSRunningApplication(processIdentifier: pid)
   if let own, own.activationPolicy == .regular { return own }
   let apps = NSWorkspace.shared.runningApplications.filter { app in
-    guard let id = app.bundleIdentifier, !id.isEmpty else { return false }
+    // Only a real app: Slack's and Chrome's helpers are running "apps" too, and would name themselves.
+    guard app.activationPolicy == .regular, let id = app.bundleIdentifier, !id.isEmpty else { return false }
     return bundle == id || bundle.hasPrefix(id + ".")
   }
   return apps.max { ($0.bundleIdentifier ?? "").count < ($1.bundleIdentifier ?? "").count } ?? own

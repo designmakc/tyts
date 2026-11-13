@@ -1,3 +1,8 @@
+## Tyts 0.5.7
+
+**Fixed:**
+- **Windows:** the Keyboard page no longer says that a program "runs as administrator" when it does not. It happened to a program that opened a window for a moment and ended at once (gcc.exe, for example), and the line stayed until Tyts was restarted.
+
 ## Tyts 0.5.6
 
 **A model of your choice for questions to the notes (new).** On the Notes page, beside "Look in", pick the model that answers: **Accurate** or **Most accurate**, each with its size or "not downloaded". Until you pick one, the model of Check my English answers, as before. On a computer with 8 GB of memory, Accurate answers much sooner. A model that is not downloaded says where to download it (Settings › Models); nothing downloads by itself.

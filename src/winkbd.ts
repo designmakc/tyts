@@ -58,6 +58,7 @@ const SendInput = user32.func('uint32 __stdcall SendInput(uint32 n, KbdInput *in
 const OpenProcess = kernel32.func('intptr __stdcall OpenProcess(uint32 access, bool inherit, uint32 pid)')
 const QueryFullProcessImageNameW = kernel32.func('bool __stdcall QueryFullProcessImageNameW(intptr process, uint32 flags, void *name, _Inout_ uint32 *size)')
 const CloseHandle = kernel32.func('bool __stdcall CloseHandle(intptr handle)')
+const GetExitCodeProcess = kernel32.func('bool __stdcall GetExitCodeProcess(intptr process, _Out_ uint32 *code)')
 const OpenProcessToken = advapi32.func('bool __stdcall OpenProcessToken(intptr process, uint32 access, _Out_ intptr *token)')
 const GetTokenInformation = advapi32.func('bool __stdcall GetTokenInformation(intptr token, int cls, _Out_ uint32 *info, uint32 size, _Out_ uint32 *returned)')
 const SHQueryUserNotificationState = shell32.func('int32 __stdcall SHQueryUserNotificationState(_Out_ int32 *state)')
@@ -82,6 +83,7 @@ const DWMWA_CLOAKED = 14
 
 const WM_INPUTLANGCHANGEREQUEST = 0x0050
 const PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+const STILL_ACTIVE = 259
 const TOKEN_QUERY = 0x0008
 const TOKEN_ELEVATION = 20
 /** SHQueryUserNotificationState: a program on the full screen, a Direct3D one, presentation mode. */
@@ -293,16 +295,14 @@ export function exeOf(pid: number): string {
   return exe
 }
 
-const elevations = new Map<number, boolean>()
-
 /**
  * Whether a process runs as administrator: Windows keeps its keys from the
- * hooks of a program that does not. A process whose token cannot even be read
- * counts as one.
+ * hooks of a program that does not. A running process whose token cannot even
+ * be read counts as one; one that has ended does not (a compiler's console
+ * flashing by has no token left to read: gcc.exe was named so, 2026-11-13).
+ * Asked anew each time, as Windows gives a process number to another program later.
  */
 export function elevated(pid: number): boolean {
-  const known = elevations.get(pid)
-  if (known !== undefined) return known
   let answer = false
   const handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid)
   if (handle) {
@@ -312,11 +312,12 @@ export function elevated(pid: number): boolean {
       const size = [0]
       answer = !!GetTokenInformation(token[0], TOKEN_ELEVATION, info, 4, size) && info[0] !== 0
       CloseHandle(token[0])
-    } else answer = true
+    } else {
+      const code = [0]
+      answer = !!GetExitCodeProcess(handle, code) && code[0] === STILL_ACTIVE
+    }
     CloseHandle(handle)
   }
-  if (elevations.size > 500) elevations.clear()
-  elevations.set(pid, answer)
   return answer
 }
 

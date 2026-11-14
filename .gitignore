@@ -24,3 +24,5 @@ build/speakers-mac/.build/
 # Claude Code: each person's own notes and settings
 CLAUDE.local.md
 .claude/settings.local.json
+# release/ above is the installers' folder; the /release skill is kept
+!.claude/skills/release/

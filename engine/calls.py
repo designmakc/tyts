@@ -75,16 +75,33 @@ def save_call(store: Store, id: str, t: dict) -> str:
     return str(target)
 
 
-def write_md(t: dict, file: str) -> Path:
-    """The text and the summary as Markdown beside the recording, the same name; written over each time."""
+def write_md(t: dict, file: str, root: Path) -> Path | None:
+    """The text and the summary as Markdown beside a recording in the library folder `root`, the same name; its
+    own file is written over each time.
+
+    Nothing is written beside a file that lives elsewhere (one dropped or picked from anywhere on the disk), nor
+    over a Markdown that is not this recording's (a note of the person's own with the same name): None then."""
     media = Path(file)
     path = media.with_suffix(".md")
+    inside = os.path.normcase(os.path.abspath(root)).rstrip(os.sep) + os.sep
+    if not os.path.normcase(os.path.abspath(media)).startswith(inside):
+        return None
+    mark = f'audio: "{media.name}"'
+    if path.exists():
+        try:
+            with path.open("r", encoding="utf-8", errors="replace") as own:
+                start = own.read(2048)
+        except OSError:
+            return None
+        if not start.startswith("---") or mark not in start:
+            log.info("transcripts folder: %s is not this recording's Markdown, left as it is", path.name)
+            return None
     head = notes.frontmatter({
         "created": datetime.fromisoformat(t["created"]).isoformat(timespec="minutes"),
         "duration": export.clock(t.get("duration", 0)),
         "source": export.SOURCES.get(t.get("source", ""), t.get("source", "")),
         "participants": export.participants(t),
-        "audio": f'"{media.name}"',
+        "audio": mark.removeprefix("audio: "),
         "tags": ["call"],
     })
     path.write_text(head + "\n" + export.to_md(t) + "\n", "utf-8")

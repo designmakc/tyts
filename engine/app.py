@@ -630,7 +630,7 @@ def put_summary(id: str, body: dict = Body(...)):
     store.save(id, t)
     if row.get("file"):
         try:
-            calls.write_md(t, row["file"])
+            calls.write_md(t, row["file"], store.root)
         except OSError as error:
             log.warning("transcripts folder: could not write the Markdown: %s", error)
     return {"ok": True}

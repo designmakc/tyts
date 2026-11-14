@@ -436,6 +436,19 @@ export function addKept(list: readonly string[], text: string): string[] | undef
 }
 
 /** The languages a text of the person's is read as, by code: their own, English, then the others they named. */
+/**
+ * What Reset all settings keeps: the person's languages, and what they wrote or taught and no switch gives back
+ * (the words to spell, the remembered fixes of dictation, the words kept as typed, what they told the duck, their
+ * own instructions and templates).
+ */
+const KEPT_ON_RESET = ['native', 'languages', 'uiLanguage', 'vocabulary', 'corrections', 'keepWords', 'talkAbout', 'callOwn', 'callTemplates', 'dictateEditOwn'] as const
+
+/** The settings after Reset all settings: every key, switch and list as it came, the person's own things as they are. */
+export function resetAll(s: Settings): Settings {
+  const kept = Object.fromEntries(KEPT_ON_RESET.map(key => [key, s[key]])) as Pick<Settings, (typeof KEPT_ON_RESET)[number]>
+  return { ...DEFAULTS, ...kept, setupDone: true, introSeen: true }
+}
+
 export function myLanguages(s: Pick<Settings, 'native' | 'languages'>): string[] {
   return [...new Set([findLanguage(s.native)?.code ?? '', 'en', ...s.languages].filter(Boolean))]
 }

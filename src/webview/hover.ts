@@ -261,7 +261,16 @@ export class WordHover {
       el('div', { class: 'wc-sense' }, el('span', { class: 'wc-pos' }, pos), ` ${translations}`)
     let body: HTMLElement[]
     if (!answer || answer === 'pending') body = [el('div', { class: 'wc-note' }, '…')]
-    else if (answer.missing && answer.missing !== 'not-found') body = [el('div', { class: 'wc-note' }, this.note(answer.missing))]
+    else if (answer.missing && answer.missing !== 'not-found') {
+      // A dictionary not on this computer comes only when asked for: Download here, then the word is asked again.
+      const get = answer.missing === 'download-off' || answer.missing === 'download-failed'
+      const download = () => {
+        this.answers.set(lower, 'pending')
+        this.options.post({ type: 'prepareDictionary' })
+        this.options.post({ type: 'lookup', word: hit.word })
+      }
+      body = [el('div', { class: 'wc-note' }, this.note(answer.missing), get ? el('button', { class: 'wc-get', onclick: download }, t(answer.missing === 'download-failed' ? 'common.tryAgain' : 'word.download')) : null)]
+    }
     else if (!gloss) body = [el('div', { class: 'wc-note' }, t('word.notFound'))]
     else
       body = gloss.entries.flatMap((entry, i) =>

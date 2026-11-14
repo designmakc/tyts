@@ -95,7 +95,7 @@ import { placeByTray, placeNear, resize, type Point } from './placement'
 import type { AppTab, AppView, BusyPart, EdgeView, CardKind, CardState, CheckResult, DictationMode, DictionaryStatus, GlossMissing, HostCall, HostVoice, Refused, StorageId, StoragePart, StorageView, TalkWindowView, TextResult, ToHost, ToView, TranslationState, TrayCommand, TrayView, ViewConfig } from './protocol'
 import { draftsIn, englishHtml, textOutHtml, translationHtml } from './render'
 import { issueUrl, mailUrl, makeReport, namesHere, reportName, type ReportFacts } from './report'
-import { addKept, CARD_WIDTH, DEFAULTS, keptForm, LEVEL_NAMES, myLanguages, normalize, SUMMARY_OWN_MAX, TARGET, type LlmModel, type Settings, type TranslationLevel } from './settings'
+import { addKept, CARD_WIDTH, DEFAULTS, keptForm, LEVEL_NAMES, myLanguages, normalize, resetAll, SUMMARY_OWN_MAX, TARGET, type LlmModel, type Settings, type TranslationLevel } from './settings'
 import { Speaker, listHostVoices } from './speech'
 import { SpeechHost } from './speechhost'
 import { minutes as minutesText, MODELS as SPEECH_MODELS } from './speechplan'
@@ -109,6 +109,7 @@ import { Talk } from './talk'
 import { summaryOf, TalkStore } from './talks'
 import {
   drafted,
+  cutLong,
   englishReady,
   languageOf,
   plainText,
@@ -151,6 +152,8 @@ const CARD_MIN = 96
 const CARD_AUTO_SHARE = 0.7
 /** The offline translator takes a few hundred ms a sentence: a longer text is cut. */
 const MAX_TEXT_CHARS = 6000
+/** Said on a card whose text was longer: the end stays as it is (a function, as `t` is the translator's name inside the flows below). */
+const longTextNote = () => t('card.longText')
 /** How long after the snip shortcut a picture on the clipboard counts as the snip. */
 const SNIP_WAIT_MS = 120_000
 /** Programs put a copy on the clipboard in steps; it is read once they are done. */
@@ -693,7 +696,8 @@ function lookupWord(word: string, page: VoicePage = 'card'): void {
   // The natural voice's phonemizer says how the word sounds; it answers as `ipa`.
   if (voiceStore.state.status === 'ready') natural.phonemes(word)
   const miss = (missing: GlossMissing) => post({ type: 'gloss', word, missing, saved: words.has(word) })
-  const state = dictionaries.get(langCode(settings.native), true)
+  // Nothing downloads unasked: a dictionary not here yet is offered on the word's card (Download there asks for it).
+  const state = dictionaries.get(langCode(settings.native), false)
   if (state.status === 'none') return miss('no-dictionary')
   if (state.status === 'downloading') return miss('downloading')
   if (state.status === 'failed') return miss('download-failed')
@@ -881,7 +885,7 @@ async function resetSettings(): Promise<void> {
   }
   const { response } = appWin ? await dialog.showMessageBox(appWin, options) : await dialog.showMessageBox(options)
   if (response !== 0) return
-  saveSettings({ ...DEFAULTS, native: settings.native, languages: settings.languages, uiLanguage: settings.uiLanguage, setupDone: true, introSeen: true })
+  saveSettings(resetAll(settings))
 }
 
 /** Every key back to how it came, after a question: the actions', the layouts' own and the keys turned off (Ctrl+C twice is no action's then). */
@@ -953,6 +957,12 @@ function createCard(): BrowserWindow {
   // Clicking another window puts the card away, unless it is pinned or has only just opened.
   win.on('blur', () => {
     if (!pinned && Date.now() - shownAt > 400) hideCard()
+  })
+  // Closed by the system (Alt+F4, Cmd+W): it hides as on Esc. The window also owns the clipboard's watch, so it lives as long as Tyts does.
+  win.on('close', event => {
+    if (quitting) return
+    event.preventDefault()
+    void closeCard()
   })
   // A double click on the bar (the drag region, Windows' caption) maximizes or restores it, as a window's title bar does.
   const WM_NCLBUTTONDBLCLK = 0x00a3
@@ -1880,6 +1890,8 @@ function onMessage(message: ToHost, page: Page): void {
     case 'captureDone':
     case 'captureHide':
     case 'captureOpenSettings':
+    case 'captureAnswer':
+    case 'captureExpand':
       capture?.message(message)
       return
     case 'captureCopyPhrase':
@@ -2203,8 +2215,9 @@ function every(ms: number, send: () => void): { ask(): void; cancel(): void } {
 async function translateInto(id: number, text: string, kind: CardKind, note?: string, wait = false): Promise<void> {
   last = { id, text, kind, ...(note ? { note } : {}) }
   const native = langCode(settings.native)
-  const split = splitText(text.slice(0, MAX_TEXT_CHARS), settings.native)
-  const notes = [note, text.length > MAX_TEXT_CHARS ? 'Long text: only the beginning is translated.' : undefined].filter(Boolean)
+  const long = cutLong(text, MAX_TEXT_CHARS)
+  const split = splitText(long.head, settings.native)
+  const notes = [note, long.rest ? longTextNote() : undefined].filter(Boolean)
   const noted = notes.length ? { note: notes.join(' ') } : {}
   const early = englishReady(split) ? englishHtml(split.lines) : undefined
   const pending = (translation: Exclude<TranslationState, { status: 'ready' }>) =>
@@ -2409,16 +2422,19 @@ async function translateInPlace(text: string, at: Point, window: bigint, via?: s
   if (missing) return translateWindow(text, at, window, via)
   keyboard.say('…')
   try {
-    const out = await translatePlain(text.slice(0, MAX_TEXT_CHARS), from, to, job.translate, job.t.direct)
+    // A text too long to translate at once: its end goes back as it was, after the translation, and the badge says so.
+    const long = cutLong(text, MAX_TEXT_CHARS)
+    const out = await translatePlain(long.head, from, to, job.translate, job.t.direct)
     keyboard.say('')
     if (!out.trim()) return
-    logTranslation(text, out, from, to)
+    logTranslation(long.head, out, from, to)
     if (foreground().hwnd !== window) return translateWindow(text, at, window, via)
     await keysLetGo()
-    await pasteInto(window, undefined, out)
+    await pasteInto(window, undefined, out + long.rest)
     // Fast did it: said by the cursor, as no card shows.
     const busy = job.busy()
-    if (busy) keyboard.say(t(busy === 'card' ? 'badge.fastCard' : 'badge.fastProcessor'), BUSY_SAY_MS)
+    if (long.rest) keyboard.say(t('badge.longText'), BUSY_SAY_MS)
+    else if (busy) keyboard.say(t(busy === 'card' ? 'badge.fastCard' : 'badge.fastProcessor'), BUSY_SAY_MS)
   } catch (error) {
     keyboard.say('')
     tray?.displayBalloon({ title: t('app.name'), content: t('main.notTranslated', { why: messageOf(error) }) })
@@ -2457,6 +2473,7 @@ async function translateTextCard(id: number, text: string, from: string, to: str
   const current = () => asked === textAsked
   const job = translationJob([from, to], wait)
   const { t } = job
+  const long = cutLong(text, MAX_TEXT_CHARS)
   try {
     set({ status: 'translating' })
     for (const code of [from, to]) {
@@ -2475,11 +2492,12 @@ async function translateTextCard(id: number, text: string, from: string, to: str
       sentences: lines.flatMap(line => line.pairs.map(p => p.src)),
       drafts: draftsIn(lines),
       ...busyOf(job),
+      ...(long.rest ? { rest: long.rest } : {}),
     })
     let now: TextLine[] = []
     const update = every(UPDATE_MS, () => current() && set(ready(now)))
     try {
-      const lines = await translatePairs(text.slice(0, MAX_TEXT_CHARS), from, to, job.translate, t.direct, lines => ((now = lines), update.ask()))
+      const lines = await translatePairs(long.head, from, to, job.translate, t.direct, lines => ((now = lines), update.ask()))
       update.cancel()
       if (current()) set(ready(lines))
     } finally {
@@ -3627,9 +3645,7 @@ function callAct(act: CallAct): void {
 
 /** Stops and saves the call: its transcript's id once the engine has it, null when there was none. */
 export async function stopCall(): Promise<string | null> {
-  const id = (await capture?.stop()) ?? null
-  if (id) void summaryWhenDone(id)
-  return id
+  return (await capture?.stop()) ?? null
 }
 
 // ---------------------------------------------------------------- a call's summary
@@ -4387,6 +4403,9 @@ function balloon(title: string, content: string, click?: () => void): void {
   tray?.displayBalloon({ title, content })
 }
 
+/** Whether the speech engine was installed when its keys were last registered (setUpSpeechEngine's onChange). */
+let speechKeysFor = false
+
 function setUpSpeechEngine(): void {
   speech = new SpeechHost({
     root: localPart('speech'),
@@ -4399,10 +4418,19 @@ function setUpSpeechEngine(): void {
     ...(TEST_HOME ? { testHome: TEST_HOME } : {}),
     settings: () => settings,
     onChange: () => {
+      // The engine's keys are held only while it is installed: back once an update's packages are in (the keys were let go while they synced).
+      const installed = !!speech?.installed
+      if (installed !== speechKeysFor) {
+        speechKeysFor = installed
+        registerShortcuts()
+        // The keyboard helper is made after the engine at start, and takes the keys then.
+        if (keyboard) applyKeyboard()
+      }
       postApp()
       refreshTray()
     },
   })
+  speechKeysFor = speech.installed
   dictation = new Dictation({
     page: path.join(app.getAppPath(), 'media', 'dictation.html'),
     query: pageQuery,
@@ -4783,6 +4811,7 @@ function start(): void {
       callWatch = next
       callAct(act)
     },
+    saved: id => void summaryWhenDone(id),
     log,
   })
   capture.allowCapture(session.defaultSession)

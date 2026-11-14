@@ -116,6 +116,8 @@ export function messageAllowed(page: Page, type: string): boolean {
   if (EDGE_ONLY.has(type as ToHost['type'])) return page === 'edge'
   if (page === 'edge') return type === 'tray' || type === 'saveSettings'
   if (TALK_ONLY.has(type as ToHost['type'])) return page === 'talk'
+  // The word's card (on the card and in the talk window) asks for the dictionary of the person's language: one pinned file, nothing else.
+  if (type === 'prepareDictionary') return full(page) || page === 'card' || page === 'talk'
   // The talk window listens too: the tray shows the red dot meanwhile.
   if (type === 'micRecording') return full(page) || page === 'talk'
   return full(page) || !APP_ONLY.has(type as ToHost['type'])

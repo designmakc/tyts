@@ -31,6 +31,8 @@ export type CaptureOptions = {
   openSettings: () => void
   /** "Record the call?" answered on the panel. */
   answered: (record: boolean) => void
+  /** A recording reached the engine, however it was stopped (the key, the panel's Stop, silence, the page gone): its summary waits for the transcript. */
+  saved: (id: string) => void
   log: (line: string) => void
 }
 
@@ -155,6 +157,7 @@ export class CallCapture {
       }
       case 'captureDone':
         this.o.log(`call: saved ${m.id ?? 'nothing'}, ${m.lost} chunks lost`)
+        if (m.id) this.o.saved(m.id)
         this.settle(m.id)
         this.hideSoon(1500)
         return
@@ -214,7 +217,7 @@ export class CallCapture {
   private lost(reason: string): void {
     const id = this.id
     this.o.log(`call: the panel's page is gone (${reason})${id ? `, ${id} handed to the engine` : ''}`)
-    if (id) void this.o.finish(id).catch(() => undefined)
+    if (id) void this.o.finish(id).then(() => this.o.saved(id), () => undefined)
     this.state = 'idle'
     this.id = undefined
     this.settle(id ?? null)

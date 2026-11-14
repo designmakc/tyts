@@ -1,17 +1,27 @@
+import { createHash } from 'node:crypto'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { gzipSync } from 'node:zlib'
 import { afterEach, describe, expect, test } from 'vitest'
 
-import { DictionaryStore, RETRY_MS, dictionaryUrl } from './dictstore'
+import { DictionaryStore, PINNED, RETRY_MS, dictionaryUrl, type Pin } from './dictstore'
 
 const dirs: string[] = []
 afterEach(() => {
   for (const d of dirs.splice(0)) fs.rmSync(d, { recursive: true, force: true })
 })
 
-function setup(fetchGz: (url: string) => Promise<Uint8Array>) {
+const pinOf = (bytes: Uint8Array): Pin => ({ size: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') })
+
+/** `pins`: what each file must be; left out, whatever the test's download gives is the pinned file. */
+function setup(fetch: (url: string) => Promise<Uint8Array>, pins?: Record<string, Pin>) {
+  let given: Pin | undefined
+  const fetchGz = async (url: string) => {
+    const bytes = await fetch(url)
+    given = pinOf(bytes)
+    return bytes
+  }
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'dictstore-'))
   dirs.push(root)
   const bundledDir = path.join(root, 'bundled')
@@ -24,6 +34,7 @@ function setup(fetchGz: (url: string) => Promise<Uint8Array>) {
     bundledDir,
     cacheDir: path.join(root, 'cache'),
     fetchGz,
+    pins: pins ?? new Proxy({}, { get: () => given }),
     onReady: c => ready.push(c),
     onChange: c => changes.push(`${c} ${store.status(c)}`),
     now: () => now,
@@ -56,6 +67,19 @@ describe('dictionary store', () => {
     expect(ready).toEqual(['de'])
     expect(urls).toEqual([dictionaryUrl('de')])
     expect(store.get('de', true).status).toBe('ready')
+  })
+
+  test('a download that is not the pinned file is refused and not kept', async () => {
+    const real = gzipSync(JSON.stringify({ go: [['verb', 'gehen']] }))
+    const other = gzipSync(JSON.stringify({ go: [['verb', 'something else']] }))
+    const { store, ready, root } = setup(async () => other, { de: pinOf(real) })
+    expect(store.get('de', true).status).toBe('downloading')
+    await flush()
+    expect(store.get('de', false).status).toBe('failed')
+    expect(ready).toEqual([])
+    expect(fs.existsSync(path.join(root, 'cache'))).toBe(false)
+    // Every language offered has its file pinned.
+    for (const pin of Object.values(PINNED)) expect(pin.sha256).toMatch(/^[0-9a-f]{64}$/)
   })
 
   test('a cached dictionary is read from disk without a download', async () => {

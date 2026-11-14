@@ -116,6 +116,24 @@ describe('LlamaServer', () => {
     server.dispose()
   })
 
+  it('a request for another model waits for the answer in flight, never stopping its server', async () => {
+    const { server, started } = setup()
+    let answered = false
+    let killedMidAnswer = false
+    const first = server.run(t('a.gguf'), async () => {
+      await new Promise(resolve => setTimeout(resolve, 60))
+      killedMidAnswer = !!started[0]?.child.killed
+      answered = true
+    })
+    const second = server.run(t('b.gguf'), async () => answered)
+    await first
+    expect(killedMidAnswer).toBe(false)
+    // The other model started only once the first answer was in.
+    expect(await second).toBe(true)
+    expect(started.map(s => s.args[1])).toEqual(['a.gguf', 'b.gguf'])
+    server.dispose()
+  })
+
   it('falls back to the processor when the card cannot take the model, and stays there', async () => {
     const { server, started } = setup(args => !args.includes('none'))
     await expect(server.run(t('a.gguf'), async b => b)).resolves.toBe('http://127.0.0.1:9002')

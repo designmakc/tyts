@@ -151,6 +151,7 @@ export const en = {
   'card.voiceDownloading': 'Downloading the natural voice… {pct}%',
   'card.voiceReady': 'The natural voice is ready. Press Listen to hear it.',
   'card.busyCard': 'The graphics card is busy, so Fast translated this. {level} takes over again once it is free.',
+  'card.longText': 'Long text: the first part is translated, the rest stays as it is.',
   'card.busyProcessor': 'The processor is busy, so Fast translated this. {level} takes over again once it is free.',
   'card.useAnyway': 'Use {level} anyway',
   'card.hideTranslation': 'Hide the {lang} translation',
@@ -214,6 +215,7 @@ export const en = {
   'word.downloading': 'Downloading the {pair} dictionary, once…',
   'word.failed': 'Couldn’t download the {pair} dictionary. Check the internet connection; it tries again in a minute.',
   'word.off': 'The {pair} dictionary isn’t downloaded.',
+  'word.download': 'Download',
 
   // ------------------------------------------------------------ the talk window
   'talk.yourTalks': 'Your talks',
@@ -304,6 +306,7 @@ export const en = {
   'dict.noteFailed': 'The note was not saved',
   'dict.nothingTyped': 'Nothing typed',
   'dict.engineStarting': 'The speech engine is starting. Try again in a few seconds.',
+  'dict.notTranslated': 'Not translated: typed as said',
   'dict.engineDown': 'The speech engine could not start. Click to report the problem.',
   'dict.fastCard': 'Typed with Fast: the graphics card is busy',
   'dict.fastProcessor': 'Typed with Fast: the processor is busy',
@@ -337,6 +340,7 @@ export const en = {
   'edit.keeps': 'Notes, Talk and spoken practice are never edited. What you said stays in Phrases: point at a phrase to see it.',
   'edit.model': 'Model',
   'badge.fastCard': 'Fast · graphics card busy',
+  'badge.longText': 'Long text · the end left as it is',
   'badge.fastProcessor': 'Fast · processor busy',
   'settings.uiLanguage': 'Interface language',
   'settings.uiLanguageNote': 'Tyts’s menus and pages; what it teaches stays English',

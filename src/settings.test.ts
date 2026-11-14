@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { addKept, DEFAULTS, KEYS_VERSION, keptForm, myLanguages, normalize } from './settings'
+import { addKept, DEFAULTS, KEYS_VERSION, keptForm, myLanguages, normalize, resetAll } from './settings'
 
 describe('Kept as typed', () => {
   test('a word is kept trimmed and in lower case', () => {
@@ -144,5 +144,33 @@ describe('normalize', () => {
     expect(s.languages).toEqual(['uk', 'de'])
     expect(myLanguages(s)).toEqual(['ru', 'en', 'uk', 'de'])
     expect(myLanguages(normalize({}))).toEqual(['ru', 'en'])
+  })
+})
+
+describe('Reset all settings', () => {
+  test('keys, switches and lists go back; the languages and what the person wrote or taught stay', () => {
+    const mine = {
+      ...DEFAULTS,
+      native: 'Ukrainian',
+      languages: ['Polish'],
+      uiLanguage: 'uk' as const,
+      vocabulary: ['Tyts (тиц)'],
+      corrections: [{ heard: 'тиц', right: 'Tyts' }],
+      keepWords: ['ghbdtn'],
+      talkAbout: 'I am a designer',
+      callOwn: 'Short, in bullets',
+      callTemplates: [{ name: 'Mine', text: 'Short' }],
+      dictateEditOwn: 'No filler words',
+      dictateKey: 'Control+Alt+J',
+      autoFix: !DEFAULTS.autoFix,
+      apps: [{ exe: 'code.exe' }] as typeof DEFAULTS.apps,
+      setupDone: false,
+    }
+    const after = resetAll(mine)
+    for (const key of ['native', 'languages', 'uiLanguage', 'vocabulary', 'corrections', 'keepWords', 'talkAbout', 'callOwn', 'callTemplates', 'dictateEditOwn'] as const) expect(after[key]).toEqual(mine[key])
+    expect(after.dictateKey).toBe(DEFAULTS.dictateKey)
+    expect(after.autoFix).toBe(DEFAULTS.autoFix)
+    expect(after.apps).toEqual([])
+    expect(after.setupDone).toBe(true)
   })
 })

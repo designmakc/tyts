@@ -587,7 +587,8 @@ function renderText(c: CardView, s: Extract<CardState, { status: 'text' | 'check
   // Fast did it, the local model too slow just now: the notice above says why.
   const busy = s.status === 'text' && s.result.status === 'ready' && !!s.result.busy
   const by = s.status === 'check' ? t('card.checkedBy', { model: s.model }) : improving ? t('card.improving', { level: levelName(c.level) }) : t('card.translatedBy', { level: levelName(busy ? 'fast' : c.level) })
-  textFoot.textContent = s.canPaste ? t('card.newLine', { by }) : by
+  const long = s.status === 'text' && s.result.status === 'ready' && !!s.result.rest
+  textFoot.textContent = long ? t('card.longText') : s.canPaste ? t('card.newLine', { by }) : by
   // Said under a translation, or one on its way; not under nothing, or a failure.
   textFoot.hidden = s.result.status === 'none' || s.result.status === 'failed'
   updateTextButtons()
@@ -662,7 +663,8 @@ function swapLanguages(): void {
   stopTextReading()
   syncLanguages()
   if (s?.status === 'text' && s.result.status === 'ready') {
-    setFieldText(s.result.text)
+    // A long text's end, left untranslated, stays in the field: it is cut again and goes back on Paste.
+    setFieldText(s.result.text + (s.result.rest ?? ''))
     updateTextButtons()
   }
   markRareWords()
@@ -849,7 +851,8 @@ function paste(): void {
   }
   // Check pastes the text set right; a translation whose drafts are still being replaced, once the accurate one is in.
   const drafts = s.status === 'text' && s.result.status === 'ready' && !!s.result.drafts
-  if (s.result.status === 'ready' && !drafts) return post({ type: 'pasteText', id: c.id, text: s.status === 'check' ? s.result.corrected : s.result.text })
+  // A long text's end, left untranslated, goes back after the translation: the selection it is pasted over held it.
+  if (s.result.status === 'ready' && !drafts) return post({ type: 'pasteText', id: c.id, text: s.status === 'check' ? s.result.corrected : s.result.text + (s.result.rest ?? '') })
   if (drafts || s.result.status === 'translating' || s.result.status === 'checking' || s.result.status === 'downloading') pasteWhenReady = true
 }
 

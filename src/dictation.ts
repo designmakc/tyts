@@ -333,7 +333,11 @@ export class Dictation {
         note = english.note ?? note
       }
     } catch (error) {
-      return this.fail(`Could not translate: ${error instanceof Error ? error.message : String(error)}`)
+      // Esc meanwhile (while it was edited or translated): the phrase is gone, as the person asked.
+      if (this.state !== 'working') return
+      // Never lost: what could not be translated is typed as said, and the badge says why.
+      console.warn('Tyts: could not translate the phrase', error)
+      note = t('dict.notTranslated')
     }
     // Said in the badge a moment after it is typed; else the badge goes at once.
     if (note) {

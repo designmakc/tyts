@@ -91,3 +91,36 @@ def test_the_library_moves_where_the_person_chose_with_its_files_and_the_noteboo
     (other / "index.db").write_bytes(b"x")
     assert client.post("/library/move", headers=KEY, json={"to": str(other)}).status_code == 409
     assert engine.state.get_store().root == new
+
+
+def _transcript(**over):
+    return {"created": "2026-11-14T10:00:00", "title": "Meeting", "duration": 5, "source": "file", "utterances": [{"start": 0, "end": 1, "speaker": "S1", "text": "hello budget"}], **over}
+
+
+def test_a_note_of_the_persons_own_beside_a_recording_is_never_written_over(client, folder):
+    media = folder / "Meeting.mp4"
+    media.write_bytes(b"x")
+    own = folder / "Meeting.md"
+    own.write_text("# My notes\nDo not lose this.\n", "utf-8")
+    assert calls.write_md(_transcript(), str(media), folder) is None
+    assert own.read_text("utf-8") == "# My notes\nDo not lose this.\n"
+    # Its own Markdown, written before, is written over as the text changes.
+    other = folder / "Other.mp4"
+    other.write_bytes(b"x")
+    assert calls.write_md(_transcript(), str(other), folder) == folder / "Other.md"
+    assert calls.write_md(_transcript(title="Again"), str(other), folder) == folder / "Other.md"
+    assert "hello budget" in (folder / "Other.md").read_text("utf-8")
+    # A recording in a folder of the library gets its Markdown there too.
+    (folder / "2026").mkdir()
+    deep = folder / "2026" / "Deep.mp4"
+    deep.write_bytes(b"x")
+    assert calls.write_md(_transcript(), str(deep), folder) == folder / "2026" / "Deep.md"
+
+
+def test_no_markdown_is_written_beside_a_file_outside_the_library(client, folder, tmp_path):
+    elsewhere = tmp_path / "Vault"
+    elsewhere.mkdir()
+    media = elsewhere / "Meeting.mp4"
+    media.write_bytes(b"x")
+    assert calls.write_md(_transcript(), str(media), folder) is None
+    assert not (elsewhere / "Meeting.md").exists()

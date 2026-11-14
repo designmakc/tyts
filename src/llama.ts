@@ -80,6 +80,11 @@ const keyOf = (t: LlamaTarget) => `${t.exe}|${t.model}`
 export class LlamaServer {
   private running: Running | undefined
   private busy = 0
+  /** Jobs answering on the server that runs now: a request for another model waits for them, never stopping it mid-answer. */
+  private holders = 0
+  private freed: (() => void)[] = []
+  /** Requests take the server one at a time, in the order they came, so two never switch the model under each other. */
+  private gate: Promise<unknown> = Promise.resolve()
   private idle: NodeJS.Timeout | undefined
   /** When the last request ended, or the server was warmed. */
   private usedAt = 0
@@ -119,14 +124,40 @@ export class LlamaServer {
   async run<T>(target: LlamaTarget, job: (base: string, loaded: boolean) => Promise<T>): Promise<T> {
     this.busy++
     clearTimeout(this.idle)
-    const r = this.running
-    const warm = r !== undefined && r.key === keyOf(target) && r.isReady
     try {
-      return await job(await this.ready(target), !warm)
+      const { base, loaded } = await this.hold(target)
+      try {
+        return await job(base, loaded)
+      } finally {
+        this.holders--
+        if (this.holders === 0) for (const free of this.freed.splice(0)) free()
+      }
     } finally {
       this.busy--
       this.touch()
     }
+  }
+
+  /** The server of `target`, held for one job: another model's server finishes what it is answering first. */
+  private hold(target: LlamaTarget): Promise<{ base: string; loaded: boolean }> {
+    const key = keyOf(target)
+    const warm = () => this.running !== undefined && this.running.key === key && this.running.isReady
+    // Loaded already when asked, and still when its turn came: only then did the job not wait for the model.
+    const before = warm()
+    const mine = this.gate.then(async () => {
+      while (this.running && this.running.key !== key && this.holders > 0) await new Promise<void>(resolve => this.freed.push(resolve))
+      const still = before && warm()
+      this.holders++
+      try {
+        return { base: await this.ready(target), loaded: !still }
+      } catch (error) {
+        this.holders--
+        if (this.holders === 0) for (const free of this.freed.splice(0)) free()
+        throw error
+      }
+    })
+    this.gate = mine.catch(() => undefined)
+    return mine
   }
 
   /**
@@ -177,7 +208,9 @@ export class LlamaServer {
       if (r.cpu || r.stopped) throw error
       // The card could not take it: once more on the processor.
       this.cpuOnly.add(key)
-      if (this.running === r) this.running = undefined
+      // Another model's server took its place meanwhile (a request came while this one was only warming): that one stays.
+      if (this.running && this.running !== r) throw error
+      this.running = undefined
       return this.ready(target)
     }
   }

@@ -883,6 +883,17 @@ button:disabled {
   color: var(--muted);
 }
 
+/* Download, under the line that says the dictionary is not here: a link, as the card's others. */
+.wc-get {
+  display: block;
+  margin-top: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-text);
+  cursor: pointer;
+}
+
 .wc-also {
   margin-top: 8px;
   padding-top: 6px;

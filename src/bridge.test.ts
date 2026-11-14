@@ -21,6 +21,10 @@ describe('a page that shows text from outside opens, removes and exports nothing
   test('the app window may', () => {
     for (const type of dangerous) expect(messageAllowed('app', type), type).toBe(true)
   })
+  test('the word dictionary is asked for from where a word\'s card shows, and nowhere else', () => {
+    for (const page of ['app', 'calls', 'card', 'talk'] as const) expect(messageAllowed(page, 'prepareDictionary'), page).toBe(true)
+    for (const page of ['tray', 'dictation', 'edge', 'top', 'menu', 'bar', 'capture', 'other'] as const) expect(messageAllowed(page, 'prepareDictionary'), page).toBe(false)
+  })
   test('the panel at the top of the screen runs the tray\'s commands and its own, saves its switches, and nothing else', () => {
     expect(pageOf(at('edge.html'))).toBe('edge')
     for (const type of ['edgeReady', 'edgeHeight', 'edgeAct', 'tray', 'saveSettings']) expect(messageAllowed('edge', type), type).toBe(true)

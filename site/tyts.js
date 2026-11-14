@@ -955,7 +955,7 @@ if ('IntersectionObserver' in window) {
   }), { threshold: 0.2 }).observe($('#talk'));
 } else tk.seen = true;
 
-/* ---------- The duck says oldname ---------- */
+/* ---------- The duck says its name ---------- */
 const quack = $('#quack');
 quack.addEventListener('click', () => {
   quietCard();

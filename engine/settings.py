@@ -1,9 +1,7 @@
 r"""The speech engine's settings: %APPDATA%\Tyts\speech.json.
 
 Tyts's own settings (keys, theme) are its settings.json beside it; these are
-the ones the engine acts on. Tyts was OldName until 0.15 and Altype until 0.11: Altype's speech.json
-moves over once, when Tyts itself could not move it. Altscribe, the app this
-engine came from, is adopted once too: its settings and its downloaded models.
+the ones the engine acts on.
 """
 
 from __future__ import annotations
@@ -23,19 +21,13 @@ from vocab import split_items
 
 log = logging.getLogger("tyts.settings")
 
-# A test run gives its own folders; the real ones are Tyts's. ALTYPE_SPEECH_HOME is the old name's.
-TEST_HOME = os.environ.get("TYTS_SPEECH_HOME") or os.environ.get("ALTYPE_SPEECH_HOME")
+# A test run gives its own folders; the real ones are Tyts's.
+TEST_HOME = os.environ.get("TYTS_SPEECH_HOME")
 APP_DIR = Path(TEST_HOME or Path(os.environ.get("APPDATA", Path.home())) / "Tyts")
-# Tyts says where the engine is installed: %LOCALAPPDATA%\Tyts\speech, or an old name's when it could not move.
+# Tyts says where the engine is installed: %LOCALAPPDATA%\Tyts\speech.
 SPEECH_DIR = Path(os.environ.get("TYTS_SPEECH_DIR") or Path(os.environ.get("LOCALAPPDATA", Path.home())) / "Tyts" / "speech")
 MODELS_DIR = SPEECH_DIR / "models"
 SETTINGS_FILE = APP_DIR / "speech.json"
-
-# Altype, an older name: its speech engine settings, and the transcripts folder it gave new users.
-ALTYPE_SETTINGS = Path(os.environ.get("APPDATA", Path.home())) / "Altype" / "speech.json"
-
-OLD_SETTINGS = Path(os.environ.get("APPDATA", Path.home())) / "Altscribe" / "engine.json"
-OLD_MODELS = Path(os.environ.get("LOCALAPPDATA", Path.home())) / "Altscribe" / "models"
 
 # The speech models Tyts can use: engine/models.json, shared with src/speechplan.ts.
 CATALOG = json.loads((Path(__file__).resolve().parent / "models.json").read_text("utf-8"))
@@ -67,16 +59,8 @@ def documents_dir() -> Path:
 
 
 def default_data_dir() -> Path:
-    r"""The transcripts' folder unless the person chose another: Documents\Tyts\Transcripts.
-
-    OldName's and Altype's (Documents\OldName\Transcripts, Documents\Altype\Transcripts) move there at a real start
-    (move_transcripts)."""
+    r"""The transcripts' folder unless the person chose another: Documents\Tyts\Transcripts."""
     return documents_dir() / "Tyts" / "Transcripts"
-
-
-def old_data_dirs() -> list[Path]:
-    r"""The old names' default transcripts folders, newest first: OldName's until 0.15, Altype's until 0.11."""
-    return [documents_dir() / name / "Transcripts" for name in ("OldName", "Altype")]
 
 
 def defaults() -> dict:
@@ -97,39 +81,6 @@ def defaults() -> dict:
         # How fast each model runs here: {fingerprint, at, runs: {"model|device|compute": {phrase, rtf, n, at}}}.
         "bench": {},
     }
-
-
-def adopt_altype(file: Path = SETTINGS_FILE, old: Path = ALTYPE_SETTINGS) -> None:
-    """Altype's speech.json, once, when Tyts did not move it over itself (main.ts moves it at start)."""
-    if file.exists() or not old.exists():
-        return
-    try:
-        file.parent.mkdir(parents=True, exist_ok=True)
-        shutil.move(str(old), str(file))
-        log.info("adopted Altype's speech settings")
-    except OSError as error:
-        log.warning("could not adopt Altype's speech settings: %s", error)
-
-
-def adopt_altscribe(file: Path = SETTINGS_FILE) -> None:
-    """Altscribe's settings (its library folder, knowledge base, Hugging Face key) and models, once."""
-    if TEST_HOME:
-        return
-    adopt_altype(file)
-    if not file.exists() and OLD_SETTINGS.exists():
-        try:
-            file.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(OLD_SETTINGS, file)
-            log.info("adopted Altscribe's settings")
-        except OSError as error:
-            log.warning("could not adopt Altscribe's settings: %s", error)
-    if not MODELS_DIR.exists() and OLD_MODELS.exists():
-        try:
-            MODELS_DIR.parent.mkdir(parents=True, exist_ok=True)
-            shutil.move(str(OLD_MODELS), str(MODELS_DIR))
-            log.info("adopted Altscribe's models")
-        except OSError as error:
-            log.warning("could not adopt Altscribe's models: %s", error)
 
 
 # A transcript still being made: the worker holds its folder and its job's paths (jobs.py finish_recording).
@@ -201,53 +152,6 @@ def _repoint(new: Path, prefixes: set[str]) -> int:
                 con.execute("update transcripts set job=? where id=?", (json.dumps(job, ensure_ascii=False), id))
                 changed += 1
     return changed
-
-
-def move_transcripts(settings: "Settings", old: Path | None = None, new: Path | None = None) -> bool:
-    r"""OldName's or Altype's library (Documents\OldName\Transcripts, Documents\Altype\Transcripts) becomes Tyts's
-    (Documents\Tyts\Transcripts), once, by a rename; with no `old` given, each old name's in turn, newest first.
-
-    Only the old default moves, never a folder the person chose; only into a Tyts folder that is
-    missing or empty; only when no transcript is being made (a failed one's leftover chunks do not
-    hold it; its job's paths are pointed into the new folder). Anything in the way: nothing moves,
-    dataDir stays, and the next start tries again. Run before the library is opened."""
-    if old is None:
-        if TEST_HOME:
-            return False
-        return any(move_transcripts(settings, o, new) for o in old_data_dirs())
-    new = new or default_data_dir()
-    current = Path(settings["dataDir"])
-    # dataDir naming Tyts's own default (a speech.json without dataDir) counts too: the old default showed the old name's there.
-    if not old.is_dir() or not (_same(current, old) or _same(current, new)):
-        return False
-    if new.exists():
-        if not new.is_dir() or any(new.iterdir()):
-            log.info("transcripts stay in %s: %s already holds files", old, new)
-            return False
-    why = _unfinished(old)
-    if why:
-        log.info("transcripts stay in %s for now: %s", old, why)
-        return False
-    prefixes = _prefixes(old)
-    try:
-        if new.exists():
-            new.rmdir()
-        new.parent.mkdir(parents=True, exist_ok=True)
-        os.rename(old, new)
-    except OSError as error:
-        log.warning("transcripts stay in %s for now, the move failed: %s", old, error)
-        return False
-    settings.update({"dataDir": str(new)})
-    try:
-        _repoint(new, prefixes)
-    except (sqlite3.Error, ValueError, OSError) as error:
-        log.warning("moved the transcripts, but their jobs still name %s: %s", old, error)
-    try:
-        old.parent.rmdir()  # Documents\OldName or \Altype, when nothing else is in it
-    except OSError:
-        pass
-    log.info("moved the transcripts from %s to %s", old, new)
-    return True
 
 
 def move_library(settings: "Settings", new: Path, close) -> None:

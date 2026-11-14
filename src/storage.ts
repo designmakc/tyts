@@ -46,11 +46,6 @@ export function isUnder(target: string, dir: string): boolean {
   return rel === '' || (!rel.startsWith('..') && !P.isAbsolute(rel))
 }
 
-/** The downloads Tyts uses from outside its folder `home` (a move that could not finish), marked `away`. */
-export function markAway(parts: readonly StoragePart[], home: string, downloads: readonly StorageId[]): StoragePart[] {
-  return parts.map(p => (downloads.includes(p.id) && p.bytes > 0 && !isUnder(p.path, home) ? { ...p, away: true } : p))
-}
-
 /** Each part measured, in the order given. */
 export async function measureParts(parts: readonly Place[]): Promise<StoragePart[]> {
   const sizeOf = async (p: Place): Promise<Measured> => {

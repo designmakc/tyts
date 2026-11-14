@@ -1,11 +1,11 @@
 # Windows installer: npm run dist → release/Tyts-Setup-<version>.exe
-# Tyts's own id (com.designmakc.tyts, 2026-11-06): a separate program from the original app, in its own folders.
+# Tyts's own id (com.designmakc.tyts, 2026-11-06), in its own folders.
 # An update keeps the folder the app was installed in (NSIS reads InstallLocation
 # from the registry key of this id); a new install goes to
 # Programs\tyts (package.json's name). The program is Tyts.exe.
 appId: com.designmakc.tyts
 productName: Tyts
-copyright: Copyright © 2026 Mykola Onykiichuk; based on the original app, Copyright © 2026 Yevhen Peshynskyi
+copyright: Copyright © 2026 Mykola Onykiichuk
 directories:
   output: release
   buildResources: build

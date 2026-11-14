@@ -112,7 +112,7 @@ function full(over: Partial<AppView['settings']>, plan: AppView['speech']['plan'
       introSeen: true,
       native: 'Russian',
       languages: ['uk'],
-      vocabulary: ['Tyts (кря, края)', 'Peshynskyi (пешинский)', 'Paximizer'],
+      vocabulary: ['Tyts (тиц, тыц)', 'Onykiichuk (оникийчук)', 'Paximizer'],
       apps: [
         { exe: 'code.exe', off: ['fix'], layout: '04090409' },
         { exe: 'windowsterminal.exe', off: ['fix', 'badge'], layout: '' },
@@ -144,7 +144,7 @@ function full(over: Partial<AppView['settings']>, plan: AppView['speech']['plan'
     ],
     update: { status: 'none' },
     keysOk: { snip: true, select: true, translate: true, text: true, inPlace: true, check: true, type: true, typeCheck: true, pause: true, window: true },
-    learned: { alwaysFix: [{ word: 'vs', lang: 'ru' }], myWords: [{ word: 'tyts', lang: 'en' }, { word: 'пешинский', lang: 'ru' }] },
+    learned: { alwaysFix: [{ word: 'vs', lang: 'ru' }], myWords: [{ word: 'tyts', lang: 'en' }, { word: 'оникийчук', lang: 'ru' }] },
     elevatedApp: 'taskmgr.exe',
     translations: [
       { at: new Date(now - 300e3).toISOString(), from: 'ru', to: 'en', text: 'Конечно, пришлю обновлённые макеты до созвона.', translation: 'Of course, I will send the updated layouts before the call.' },

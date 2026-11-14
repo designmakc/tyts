@@ -264,8 +264,8 @@ export class SpeechService {
           if (!this.stopped && !this.child) void this.launch()
           return true
         }
-        // Something else answers on the port without the key (another program, Tyts's engine beside Tyts, another
-        // account's): ours goes to the next port, never sending the key there.
+        // Something else answers on the port without the key (another program, another
+        // account's engine): ours goes to the next port, never sending the key there.
         if (!this.child && !this.launching && !this.stopped && this.taken.size + 1 < SPEECH_PORTS) {
           this.taken.add(this.port)
           void this.launch()

@@ -1,4 +1,4 @@
-// Copies the Lucide icons the original project's pages use (node_modules/lucide-static, MIT) into
+// Copies the Lucide icons Tyts's pages use (node_modules/lucide-static, MIT) into
 // src/webview/lucide.ts: the inner markup of each 24-unit SVG, so the pages draw
 // them inline with no dependency at run time. Run after adding a name below:
 //   node scripts/build-glyphs.mjs

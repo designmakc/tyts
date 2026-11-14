@@ -1,5 +1,5 @@
 // Words to spell: the person's own names and terms, one line each as typed on
-// the Dictate page ("Peshynskyi", "Tyts (тиць, кракл)"). The part
+// the Dictate page ("Onykiichuk", "Tyts (тиц, тыц)"). The part
 // before the parentheses is how the word is written; inside them, what the
 // recognizer may write instead. The engine (engine/vocab.py) tells Whisper the
 // spellings and puts the heard forms right afterwards.

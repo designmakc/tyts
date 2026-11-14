@@ -23,7 +23,7 @@ const listing = execFileSync(ps, ['-NoProfile', '-Command', 'Get-Process | Where
 const repo = path.resolve('.').toLowerCase()
 const mine = JSON.parse(listing).filter(p => {
   const exe = p.Path.toLowerCase()
-  return /\\tyts\.exe$/.test(exe) || (exe.startsWith(repo) && /electron\.exe$/.test(exe)) || /\\llama-server\.exe$/.test(exe) || (/\\(tyts|tyts|oldname|altype)\\speech\\/.test(exe) && /pythonw?\.exe$/.test(exe))
+  return /\\tyts\.exe$/.test(exe) || (exe.startsWith(repo) && /electron\.exe$/.test(exe)) || /\\llama-server\.exe$/.test(exe) || (/\\tyts\\speech\\/.test(exe) && /pythonw?\.exe$/.test(exe))
 })
 const mb = bytes => Math.round(bytes / 1048576)
 console.log('\nTyts\'s processes (private memory):')
@@ -45,7 +45,7 @@ try {
   if (!token || look.proof !== createHmac('sha256', token).update(nonce).digest('hex')) throw new Error('not Tyts\'s engine, or no key here')
   const health = await (await fetch(`${base}/health`, { headers: { 'x-tyts-token': token } })).json()
   const loaded = health.loaded
-  if (!loaded) console.log(`\nThe speech engine (${health.version}) does not say what it has in memory: one of Tyts 0.12.0 or older`)
+  if (!loaded) console.log(`\nThe speech engine (${health.version}) does not say what it has in memory: an older one`)
   else console.log(`\nThe speech engine has in memory: ${loaded.length ? loaded.map(m => `${m.model} (${m.device})`).join(', ') : 'nothing'}`)
   for (const m of loaded ?? []) if (m.device === 'cuda') onCard.push(`the speech engine's ${m.model}`)
 } catch (error) {

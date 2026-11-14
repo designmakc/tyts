@@ -72,7 +72,7 @@ import voices
 
 from bench import Calibrator
 from jobs import SHOT_NAME, Worker, finish_recording
-from settings import ALL_MODELS, APP_DIR, Settings, adopt_altscribe, move_library, move_transcripts
+from settings import ALL_MODELS, APP_DIR, Settings, move_library
 from store import Store, now_iso
 from live import Live, Lives
 from stream import Session, Sessions
@@ -963,14 +963,10 @@ def cancel(id: str):
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type=int, default=int(os.environ.get("TYTS_SPEECH_PORT") or os.environ.get("ALTYPE_SPEECH_PORT") or PORT))
+    parser.add_argument("--port", type=int, default=int(os.environ.get("TYTS_SPEECH_PORT") or PORT))
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
-    # Only a real start adopts Altscribe's folders, never an import (the tests import this module).
-    adopt_altscribe()
     settings.reload()
-    # OldName's and Altype's transcripts into Documents\Tyts, before anything opens the library.
-    move_transcripts(settings)
     worker.start()
     if settings["hfToken"] and not diarize.downloaded():
         setup.start(settings["hfToken"])

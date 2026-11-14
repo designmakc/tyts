@@ -39,8 +39,8 @@ describe('the dictionaries', () => {
       expect(same).toEqual([])
     })
 
-    it(`${name} names the app Тиць, never Tyts, but for a folder's name`, () => {
-      const latin = keys.filter(k => !k.startsWith('about.') && /Tyts(?! › Reports)/.test(JSON.stringify(dict[k])))
+    it(`${name} names the app Тиць, never Tyts in Latin letters, but for a folder's name`, () => {
+      const latin = keys.filter(k => /Tyts(?! › Reports)/.test(JSON.stringify(dict[k])))
       expect(latin).toEqual([])
       expect(dict['app.name']).toBe('Тиць')
     })

@@ -3271,16 +3271,6 @@ li + li > .ti::before {
   margin-left: 0;
 }
 
-/* Storage: parts still in the old folders, and Move to Tyts. Amber, as what waits for the person. */
-.row.notice.old {
-  border-color: color-mix(in srgb, var(--amber) 55%, var(--border));
-  background: color-mix(in srgb, var(--amber) 8%, var(--surface));
-}
-
-.row.notice.old > .lu {
-  color: var(--amber);
-}
-
 /* ---------------------------------------------------------------- talk */
 
 /* What the person tells the duck about themselves: a few lines. */

@@ -1,4 +1,4 @@
-// What each of the original project's pages may ask the main process for. Every page shares one
+// What each of Tyts's pages may ask the main process for. Every page shares one
 // preload (window.tutorHost), so main asks who sent a message before acting on
 // it: the card, the tray panel, the dictation badge and the talk window show
 // text from outside (a copied text, the screen, a model's answer); were one of
@@ -52,7 +52,6 @@ const APP_ONLY: ReadonlySet<ToHost['type']> = new Set<ToHost['type']>([
   'useRecommended',
   'testSpeech',
   'downloadSpeechModel',
-  'moveToTyts',
   'removeStored',
   'cleanUp',
   'restartSpeech',

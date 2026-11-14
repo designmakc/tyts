@@ -1,7 +1,7 @@
 """Words the person wants spelled right: surnames, product names, their own terms.
 
 The vocabulary is a list of {word, heard}: `word` is the spelling, `heard` what
-the recognizer writes instead ("кря", "края" for Tyts). Whisper is
+the recognizer writes instead ("тиц", "тыц" for Tyts). Whisper is
 told the spellings beforehand (`hotwords`), and whatever it still writes its
 own way is put right afterwards (`correct`, `correct_segments`): first what it
 was heard as, then the spelling in another case, then, for a long word, a near

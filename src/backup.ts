@@ -14,8 +14,6 @@ import { t } from './i18n'
 import type { LearnedLists } from './learning'
 
 export const BACKUP_KIND = 'tyts-backup'
-/** The kinds Tyts's and Altype's backups carry: read as Tyts's own. */
-export const OLD_BACKUP_KINDS: readonly unknown[] = ['oldname-backup', 'altype-backup']
 
 export type BackupParts = {
   words: unknown[]
@@ -43,7 +41,7 @@ export function makeBackup(version: string, now: Date, settings: unknown, parts:
 export function readBackup(raw: unknown): BackupRead {
   const r = object(raw)
   if (!r) throw new Error('it holds no settings')
-  if (r.kind !== BACKUP_KIND && !OLD_BACKUP_KINDS.includes(r.kind)) return { settings: r, words: [], mistakes: [], learned: {}, translations: [], dictation: [], talks: [] }
+  if (r.kind !== BACKUP_KIND) return { settings: r, words: [], mistakes: [], learned: {}, translations: [], dictation: [], talks: [] }
   return {
     settings: object(r.settings) ?? {},
     words: list(r.words),

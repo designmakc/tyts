@@ -256,29 +256,4 @@ describe('SpeechPack', () => {
       expect(leftoverPackages(site).map(p => path.basename(p)).sort()).toEqual(['lightning', 'pyannote', 'pyannote_audio-4.0.7.dist-info', 'torchaudio'])
     })
   })
-
-  it.skipIf(process.platform !== 'win32')('finds a launcher left on OldName\'s folder and makes it again in place, the packages kept', async () => {
-    const { root, engineDir, calls, run } = setup()
-    withUv(root)
-    const pack = new SpeechPack({ root, engineDir, platform: 'win32-x64', nvidia: false, open: vi.fn(), run, onChange: () => undefined })
-    await pack.install(['core'])
-    const launcher = (python: string) =>
-      Buffer.concat([Buffer.from('MZ…'), Buffer.from('UV_PYTHON_PATH', 'utf16le'), Buffer.from(path.join(python, 'cpython-3.12-windows-x86_64-none', 'python.exe'))])
-    // uv's launcher as a clean install makes it: its own folder.
-    fs.writeFileSync(pack.python, launcher(path.join(root, 'python')))
-    expect(pack.moved).toBe(false)
-    // As 0.15.0 left it after the move.
-    fs.writeFileSync(pack.python, launcher('C:\\Users\\you\\AppData\\Local\\OldName\\speech\\python'))
-    fs.writeFileSync(path.join(root, 'env', 'pyvenv.cfg'), `home = ${path.join(root, 'python', 'cpython-3.12-windows-x86_64-none')}\nprompt = tyts-speech\n`)
-    fs.writeFileSync(path.join(root, 'env', 'Lib.txt'), 'packages')
-    expect(pack.moved).toBe(true)
-    await pack.relocate()
-    const venv = calls.at(-1)!
-    expect(venv.args.slice(0, 4)).toEqual(['venv', '--allow-existing', '--prompt', 'tyts-speech'])
-    expect(venv.args.slice(-2)).toEqual([path.join(root, 'python', 'cpython-3.12-windows-x86_64-none', 'python.exe'), path.join(root, 'env')])
-    expect(fs.readFileSync(path.join(root, 'env', 'Lib.txt'), 'utf8')).toBe('packages')
-    // A launcher of another program's folder is none of this.
-    fs.writeFileSync(pack.python, launcher('D:\\tools\\python'))
-    expect(pack.moved).toBe(false)
-  })
 })

@@ -3089,9 +3089,7 @@ function storedLine(v: AppView, p: StoragePart): HTMLElement {
   const key = `${p.id}:${p.item ?? ''}`
   const label = el('span', {}, storedName(v, p), p.unused ? el('span', { class: 'chip unused' }, t('storage.notUsed')) : null)
   const size = el('span', { class: 'v num' }, speechSize(p.bytes / 1e6))
-  // A part still outside Tyts's folder says where it is.
-  const where = p.away ? pathNote(p.path) : null
-  if (p.id === 'yours' || p.id === 'transcripts') return row(label, [storedNote(v, p), where], el('span', { class: 'kchg' }, size, linkBtn(t('tray.open'), () => post({ type: 'openPath', path: p.path }))))
+  if (p.id === 'yours' || p.id === 'transcripts') return row(label, [storedNote(v, p)], el('span', { class: 'kchg' }, size, linkBtn(t('tray.open'), () => post({ type: 'openPath', path: p.path }))))
   const remove = () => {
     asking = ''
     post({ type: 'removeStored', id: p.id, item: p.item })
@@ -3103,7 +3101,7 @@ function storedLine(v: AppView, p: StoragePart): HTMLElement {
   const freed = p.id === 'speech' && shared >= 100 ? t('storage.frees', { free: speechSize(p.bytes / 1e6 - shared), shared: speechSize(shared) }) : null
   const ask = !!p.users?.length || p.id === 'speech'
   const x = removable(v, p) ? ib('x', ask ? t('storage.removeAskTitle') : t('storage.removeTitle'), () => (ask ? ((asking = key), renderBody()) : remove())) : null
-  return row(label, [storedNote(v, p), used, freed, where, refusedNote(v, p)], el('span', { class: 'kchg' }, size, x))
+  return row(label, [storedNote(v, p), used, freed, refusedNote(v, p)], el('span', { class: 'kchg' }, size, x))
 }
 
 /** What Tyts keeps and how big it is: what nothing uses first, then the models, the programs that run them, and the person's own things. */
@@ -3115,14 +3113,12 @@ function storagePage(v: AppView): HTMLElement[] {
   const models = of(MODEL_PARTS)
   const programs = of(PROGRAM_PARTS)
   const own = s.parts.filter(p => p.id === 'yours' || p.id === 'transcripts')
-  const away = [...models, ...programs].some(p => p.away)
   return [
-    oldNotice(v, s),
     unusedNotice(v),
     grp(t('storage.downloads')),
     row(
       t('storage.everything', { size: speechSize(downloadsMb(s)) }),
-      [t(away ? 'storage.inFolderAway' : 'storage.inFolder', { free: speechSize(s.freeMb), drive: s.drive }), pathNote(s.root)],
+      [t('storage.inFolder', { free: speechSize(s.freeMb), drive: s.drive }), pathNote(s.root)],
       linkBtn(t('storage.openFolder'), () => post({ type: 'openPath', path: s.root })),
     ),
     grp(t('storage.models')),
@@ -3131,31 +3127,6 @@ function storagePage(v: AppView): HTMLElement[] {
     grp(t('storage.yoursGroup')),
     ...own.map(p => storedLine(v, p)),
   ].filter((n): n is HTMLElement => n !== null)
-}
-
-/**
- * Parts Tyts still uses from outside its folder (the old names' ones, OldName's or Altype's): how much, which, why the last
- * move left them, and Move to Tyts, which stops what uses them, moves them and starts Tyts again.
- */
-function oldNotice(v: AppView, s: StorageView): HTMLElement | null {
-  const away = s.parts.filter(p => p.away)
-  if (!s.old || !away.length) return null
-  const total = speechSize(away.reduce((sum, p) => sum + p.bytes / 1e6, 0))
-  const inOld = away.every(p => p.path.toLowerCase().startsWith(s.old!.dir.toLowerCase()))
-  const names = away.map(p => storedName(v, p)).join(', ')
-  return el(
-    'div',
-    { class: 'row notice old' },
-    lucide('folder'),
-    el(
-      'div',
-      { class: 'l' },
-      t(inOld ? 'storage.inOld' : 'storage.outside', { size: total }),
-      el('small', {}, t('storage.usesThere', { names })),
-      s.old.why ? el('small', { class: 'bad' }, t('storage.notMoved', { why: s.old.why })) : null,
-    ),
-    s.old.moving ? el('span', { class: 'v' }, t('storage.moving')) : btn(t('storage.move'), () => post({ type: 'moveToTyts' }), 'primary'),
-  )
 }
 
 /** A language's name in the interface's language, by its code or English name. */
@@ -3392,7 +3363,6 @@ function settingsPage(v: AppView): HTMLElement[] {
 const AUTHOR_LINKS: [string, string][] = [
   ['Telegram', 'https://t.me/designmakc'],
   ['GitHub', 'https://github.com/designmakc'],
-  ['The original project (Yevhen Peshynskyi)', 'https://github.com/ikstro'],
 ]
 const AUTHOR_MAIL = 'designmakc@gmail.com'
 /** What Tyts is made of, by the names they go by in any language. */
@@ -3425,11 +3395,8 @@ function accessPage(v: AppView): HTMLElement[] {
 function aboutPage(v: AppView): HTMLElement[] {
   return [
     el('div', { class: 'hero' }, tile(48), el('div', { class: 'ht' }, logo(), el('small', {}, t('app.tagline')))),
-    grp(t('about.story')),
-    el('p', { class: 'para' }, t('about.storyText')),
     grp(t('about.authorGroup')),
     row('Mykola Onykiichuk', [t('about.role')]),
-    el('p', { class: 'para' }, t('about.bio')),
     linkChips(AUTHOR_LINKS),
     row(t('about.mail'), [], el('span', { class: 'kchg' }, el('span', { class: 'mail' }, AUTHOR_MAIL), btn(t('about.write'), () => post({ type: 'openLink', url: `mailto:${AUTHOR_MAIL}` })))),
     grp(t('app.name')),

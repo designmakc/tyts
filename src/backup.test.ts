@@ -29,8 +29,6 @@ describe('backup', () => {
   it('refuses a file with no settings, and skips parts that are not lists', () => {
     expect(() => readBackup([1, 2])).toThrow('it holds no settings')
     expect(() => readBackup('text')).toThrow('it holds no settings')
-    expect(readBackup({ kind: 'oldname-backup', settings: [], words: 'many' })).toMatchObject({ settings: {}, words: [] })
-    // A backup Altype made (its old name) is a backup still, not a settings file.
-    expect(readBackup({ kind: 'altype-backup', settings: { native: 'Russian' }, words: [{ word: 'go' }] })).toMatchObject({ settings: { native: 'Russian' }, words: [{ word: 'go' }] })
+    expect(readBackup({ kind: 'tyts-backup', settings: [], words: 'many' })).toMatchObject({ settings: {}, words: [] })
   })
 })

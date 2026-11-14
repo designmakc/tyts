@@ -4,7 +4,7 @@
 
 *Tyts — and done.* A tray app for Windows and Mac (Apple silicon) that fixes the keyboard layout, types what you say, records and sums up calls, translates and helps you practise English. All of it runs on AI models on your own computer: no cloud, no subscription, no account.
 
-Website: [designmakc.github.io/tyts](https://designmakc.github.io/tyts/). Tyts is a fork of the original project by Yevhen Peshynskyi.
+Website: [designmakc.github.io/tyts](https://designmakc.github.io/tyts/).
 
 [![Tyts in 20 seconds: click to watch](docs/media/tyts-en.jpg)](docs/media/tyts-en.mp4)
 
@@ -37,7 +37,7 @@ A call is more than its words: half of it is what was on the screen. Tyts keeps 
 
 **Mac (Apple silicon):** download `Tyts-<version>-arm64.dmg`, drag Tyts to Applications, then right-click it → **Open** the first time. Allow Accessibility (for the keyboard), the microphone and Screen Recording (for calls) when macOS asks.
 
-When a new version is out, Tyts asks at start whether to update. On Windows **Update** downloads it, installs it over the old one and starts Tyts again; on a Mac it downloads the new version and opens it, and you drag Tyts to Applications. Your settings, words and downloads stay. It is a separate program from the original app, in its own folders.
+When a new version is out, Tyts asks at start whether to update. On Windows **Update** downloads it, installs it over the old one and starts Tyts again; on a Mac it downloads the new version and opens it, and you drag Tyts to Applications. Your settings, words and downloads stay.
 
 Models download only when you pick what needs them, once each. All of Tyts wants a decent computer: a graphics card with 4 GB of its own memory for Accurate translation, Practice and summaries, about 12 GB of disk. Layout fixing, Fast translation and a Windows voice work on any computer.
 
@@ -77,4 +77,4 @@ A tag `v<version>` builds the Windows installer in GitHub Actions and drafts the
 
 ## Authors
 
-Mykola Onykiichuk — Telegram [@designmakc](https://t.me/designmakc). Based on the original project by Yevhen Peshynskyi. MIT License; third-party parts in [NOTICE](NOTICE).
+Mykola Onykiichuk — Telegram [@designmakc](https://t.me/designmakc). MIT License; third-party parts in [NOTICE](NOTICE).

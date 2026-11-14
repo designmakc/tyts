@@ -15,15 +15,6 @@ let file = ''
 /** Where the log goes; until this is called, lines go to the console only. */
 export function logTo(dir: string): void {
   file = path.join(dir, 'tyts.log')
-  // A log written under the old name (tyts.log, until 2026-11-07) goes on as this one, its .old.log with it.
-  const was = path.join(dir, 'tyts.log')
-  for (const [from, to] of [[was, file], [oldLog(was), oldLog(file)]] as const) {
-    try {
-      if (fs.existsSync(from) && !fs.existsSync(to)) fs.renameSync(from, to)
-    } catch {
-      // Held or unreadable: a new log starts beside it.
-    }
-  }
 }
 
 /** The log before this one: tyts.log → tyts.old.log. */

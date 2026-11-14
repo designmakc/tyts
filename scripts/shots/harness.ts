@@ -1,4 +1,4 @@
-// `npm run shots`: the original project's pages in offscreen windows with the real preload, fed view.ts's
+// `npm run shots`: Tyts's pages in offscreen windows with the real preload, fed view.ts's
 // fixtures, pictured into .cache/shots/ (every page and second-level page in both themes, the
 // tray panel, the dictation badge with a fake microphone). It never touches the desktop or
 // the installed Tyts, so it runs while that one runs.
@@ -429,25 +429,6 @@ async function appShots(theme: 'dark' | 'light', narrow = false): Promise<void> 
     await page('storage')
     await page('access')
     await page('about')
-  }
-  if (!narrow) {
-    // A move from the old Altype folder that could not finish: two parts used from there, and why.
-    const left = appView()
-    const old = 'C:\\Users\\you\\AppData\\Local\\Altype'
-    left.storage = {
-      ...left.storage!,
-      parts: left.storage!.parts.map(p =>
-        p.id === 'speech' ? { ...p, path: `${old}\\speech`, away: true } : p.id === 'accurate' ? { ...p, path: `${old}\\translate\\models\\5f1e2a3b-gemma-4-E4B-it-qat-q4_0.gguf`, away: true } : p,
-      ),
-      old: { dir: old, why: 'a file in it is in use by python.exe', moving: false },
-    }
-    send(w, { type: 'app', view: left })
-    await sleep(300)
-    await home()
-    await page('storage', [], 'storage-old')
-    send(w, { type: 'app', view: { ...left, storage: { ...left.storage, old: { dir: old, moving: true } } } })
-    await sleep(300)
-    await shot(w, tag('storage-moving'))
   }
   w.destroy()
 }

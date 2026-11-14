@@ -13,7 +13,7 @@ import { driveOf, fingerprint, freeMb, loadProfile, probeDevice, quickProfile, s
 import { langCode } from './languages'
 import { engineMessage } from './i18n/engine'
 import { log } from './log'
-import { freeFolderSoon, runningProcessesSoon } from './oldfolder'
+import { freeFolderSoon, runningProcessesSoon } from './processes'
 import type { SpeechView } from './protocol'
 import { myLanguages, type Settings } from './settings'
 import { DOWNLOAD_MB, hasNvidia, INSTALLED_MB, SPEAKERS_MAC_MB, SpeechPack, type SpeechPart } from './speechpack'
@@ -105,22 +105,9 @@ export class SpeechHost {
     return path.join(this.o.userDir, 'device.json')
   }
 
-  /** The launcher was set right once this run: never again, whatever the check says. */
-  private relocated = false
-
   /** At Tyts's start: the service, when a part is installed; after an update brought other packages, those first. */
   start(): void {
     if (this.pack.state.status !== 'ready') return
-    // Moved from OldName's or Altype's folder, the environment's launcher still names the old place: set right first.
-    if (this.pack.moved && !this.relocated) {
-      this.relocated = true
-      log('speech: the engine moved here; setting its Python launcher right')
-      void this.pack.relocate().then(
-        () => (log('speech: launcher set right'), this.start()),
-        error => (console.warn('Tyts: could not set the speech engine right after the move', error), void this.service.start()),
-      )
-      return
-    }
     if (this.pack.stale) void this.install([])
     else void this.service.start()
   }

@@ -110,7 +110,7 @@ A `callsDir` chosen in 0.3.0 or 0.4.0 is ignored from now on: recordings in that
 
 **A call's sound plays again** when the speech engine runs on a port other than 8765.
 
-**The log is `tyts.log`** (in `%APPDATA%\Tyts` on Windows); the old `tyts.log` there is renamed at the first start. The keyboard now writes in it what it sees, which program is in front and whether it went quiet, so a report says why a key did nothing. Every name left over from Tyts that a person or another program could see is now Tyts's; backups made by older versions still import.
+**The log is `tyts.log`** (in `%APPDATA%\Tyts` on Windows). The keyboard now writes in it what it sees, which program is in front and whether it went quiet, so a report says why a key did nothing.
 
 ## Tyts 0.2.1
 
@@ -126,7 +126,7 @@ A `callsDir` chosen in 0.3.0 or 0.4.0 is ignored from now on: recordings in that
 
 ## Tyts 0.1.0
 
-**The app is now Tyts (Тиць).** A fork of the original project by Yevhen Peshynskyi, open source under the MIT license, made by Mykola Onykiichuk. "Тиць" is a quick tap: one key, and it's done.
+**The app is Tyts (Тиць).** Open source under the MIT license, made by Mykola Onykiichuk. "Тиць" is a quick tap: one key, and it's done.
 
 **A new look.** A new sign, a tap and its ripple on a coral tile, and a coral accent in place of the duck's yellow. The logo is "тиць•" ("Tyts•" in English).
 
@@ -144,4 +144,4 @@ A `callsDir` chosen in 0.3.0 or 0.4.0 is ignored from now on: recordings in that
 
 **Mac:** download `Tyts-<version>-arm64.dmg`, drag Tyts to Applications, then right-click it → Open the first time.
 
-Tyts is a separate program from the original app: it installs into its own folders and does not touch the original app already on the computer. It does not update itself: download the new version here.
+Tyts installs into its own folders. It does not update itself: download the new version here.

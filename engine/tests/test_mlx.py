@@ -20,13 +20,13 @@ def fake_mlx(monkeypatch, tmp_path, result):
 
 
 RESULT = {
-    "text": " Hello there. OldName works.",
+    "text": " Hello there. Tyts works.",
     "language": "en",
     "segments": [
         {"start": 0.0, "end": 1.5, "text": " Hello there.", "avg_logprob": -0.2, "no_speech_prob": 0.01,
          "words": [{"word": " Hello", "start": 0.0, "end": 0.6, "probability": 0.9}, {"word": " there.", "start": 0.6, "end": 1.5, "probability": 0.9}, {"word": " ", "start": 1.5, "end": 1.5, "probability": 0.1}]},
-        {"start": 1.5, "end": 3.0, "text": " OldName works.", "avg_logprob": -0.3, "no_speech_prob": 0.02,
-         "words": [{"word": " OldName", "start": 1.5, "end": 2.0, "probability": 0.8}, {"word": " works.", "start": 2.0, "end": 3.0, "probability": 0.9}]},
+        {"start": 1.5, "end": 3.0, "text": " Tyts works.", "avg_logprob": -0.3, "no_speech_prob": 0.02,
+         "words": [{"word": " Tyts", "start": 1.5, "end": 2.0, "probability": 0.8}, {"word": " works.", "start": 2.0, "end": 3.0, "probability": 0.9}]},
     ],
 }
 
@@ -39,16 +39,16 @@ def test_metal_transcribes_as_faster_whisper_does(monkeypatch, tmp_path):
     t.load("large-v3-turbo", "cpu", "mlx")
     assert (t.device, t.compute, t.loaded) == ("metal", "mlx", True)
     seen = []
-    segments, language = t.transcribe(np.zeros(RATE * 8, np.float32), None, "OldName, Tyts", seen.append)
+    segments, language = t.transcribe(np.zeros(RATE * 8, np.float32), None, "Tyts, Paximizer", seen.append)
     assert language == "en"
     assert segments == [
         {"start": 2.0, "end": 3.5, "text": "Hello there.", "words": [{"start": 2.0, "end": 2.6, "word": " Hello"}, {"start": 2.6, "end": 3.5, "word": " there."}]},
-        {"start": 3.5, "end": 5.0, "text": "OldName works.", "words": [{"start": 3.5, "end": 4.0, "word": " OldName"}, {"start": 4.0, "end": 5.0, "word": " works."}]},
+        {"start": 3.5, "end": 5.0, "text": "Tyts works.", "words": [{"start": 3.5, "end": 4.0, "word": " Tyts"}, {"start": 4.0, "end": 5.0, "word": " works."}]},
     ]
     assert seen == [1.0]
     kw = calls[0]
     assert kw["word_timestamps"] and kw["language"] is None and kw["path_or_hf_repo"] == str(tmp_path)
-    assert kw["initial_prompt"] == "OldName, Tyts"
+    assert kw["initial_prompt"] == "Tyts, Paximizer"
 
 
 def test_a_long_call_goes_batch_by_batch(monkeypatch, tmp_path):
@@ -61,7 +61,7 @@ def test_a_long_call_goes_batch_by_batch(monkeypatch, tmp_path):
     seen = []
     segments, language = t.transcribe(np.zeros(RATE * 80, np.float32), None, "", seen.append)
     assert seen == [0.5, 1.0] and language == "en" and len(calls) == 2
-    assert calls[1]["language"] == "en" and calls[1]["initial_prompt"] == "Hello there. OldName works."
+    assert calls[1]["language"] == "en" and calls[1]["initial_prompt"] == "Hello there. Tyts works."
     assert [s["start"] for s in segments] == [0.0, 1.5, 40.0, 41.5]
 
 

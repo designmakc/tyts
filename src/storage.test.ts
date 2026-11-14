@@ -5,7 +5,7 @@ import * as path from 'node:path'
 import { afterEach, expect, test } from 'vitest'
 
 import type { StoragePart } from './protocol'
-import { cleanable, folderSize, isUnder, markAway, measureParts, partPackages, speechModelDir, splitSpeech, withUse, type UseContext } from './storage'
+import { cleanable, folderSize, isUnder, measureParts, partPackages, speechModelDir, splitSpeech, withUse, type UseContext } from './storage'
 
 const made: string[] = []
 afterEach(() => made.splice(0).forEach(dir => fs.rmSync(dir, { recursive: true, force: true })))
@@ -35,23 +35,6 @@ test('a file hard-linked from elsewhere (uv\'s cache) counts as shared', async (
   fs.linkSync(path.join(root, 'cache', 'torch.dll'), path.join(root, 'env', 'torch.dll'))
   fs.writeFileSync(path.join(root, 'env', 'own.dll'), Buffer.alloc(7))
   expect(await folderSize(path.join(root, 'env'))).toEqual({ bytes: 57, shared: 50 })
-})
-
-test('a download used from outside Tyts\'s folder is marked away; the person\'s own things and what is not there are not', () => {
-  const home = 'C:\\Users\\you\\AppData\\Local\\Tyts'
-  const parts = markAway(
-    [
-      { id: 'speech', path: 'C:\\Users\\you\\AppData\\Local\\Altype\\speech', bytes: 7e9, shared: 0 },
-      { id: 'voice', path: 'c:\\users\\you\\appdata\\local\\tyts\\voice', bytes: 2e8, shared: 0 },
-      { id: 'dict', path: 'C:\\Users\\you\\AppData\\Local\\Tyts2\\dict', bytes: 3e6, shared: 0 },
-      { id: 'most', path: 'C:\\Users\\you\\AppData\\Local\\Altype\\translate\\models\\m.gguf', bytes: 0, shared: 0 },
-      { id: 'yours', path: 'C:\\Users\\you\\AppData\\Roaming\\Tyts', bytes: 1e6, shared: 0 },
-    ],
-    home,
-    ['speech', 'voice', 'dict', 'most'],
-  )
-  expect(parts.filter(p => p.away).map(p => p.id)).toEqual(['speech', 'dict'])
-  expect(isUnder(home, home)).toBe(true)
 })
 
 test('parts are measured in the order given', async () => {

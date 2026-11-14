@@ -175,7 +175,7 @@ export default {
     [`<p>Tyts never updates itself. You download a new installer from GitHub when you want it.</p>`, `<p>Тиць ніколи не оновлюється сам. Ви завантажуєте новий інсталятор з GitHub, коли захочете.</p>`],
     // Install
     [`<h2 id="in-h">Three steps to the tray.</h2>`, `<h2 id="in-h">Три кроки до трею.</h2>`],
-    [`<p class="sec-lead">Free, open source, about a minute to set up. It installs into its own folders and leaves the original app alone.</p>`, `<p class="sec-lead">Безкоштовно, з відкритим кодом, налаштування — близько хвилини. Встановлюється у власні папки й не чіпає початкову програму.</p>`],
+    [`<p class="sec-lead">Free, open source, about a minute to set up.</p>`, `<p class="sec-lead">Безкоштовно, з відкритим кодом, налаштування — близько хвилини.</p>`],
     [`<h3>Download the installer</h3><p>Get <b>Tyts-Setup.exe</b> for Windows or <b>Tyts-arm64.dmg</b> for Mac from the latest release on GitHub.</p>`, `<h3>Завантажте інсталятор</h3><p>Візьміть <b>Tyts-Setup.exe</b> для Windows або <b>Tyts-arm64.dmg</b> для Mac з останнього релізу на GitHub.</p>`],
     [`<h3>Run it anyway</h3><p>The installer isn't signed, but its code is open on GitHub. Windows warns once: <b>More info → Run anyway</b>. On a Mac drag Tyts into Applications; the first time, <b>System Settings → Privacy &amp; Security → Open Anyway</b>, then allow <b>Accessibility</b> and <b>Input Monitoring</b>.</p>`, `<h3>Усе одно запустіть</h3><p>Інсталятор не підписаний, але його код відкритий на GitHub. Windows попередить один раз: відкрийте подробиці й запустіть (в англійській Windows — <b>More info → Run anyway</b>). На Mac перетягніть Тиць у «Програми»; першого разу — <b>Системні параметри → Приватність і безпека → Усе одно відкрити</b>, потім дозвольте <b>Універсальний доступ</b> і <b>Моніторинг вводу</b>.</p>`],
     [`<h3>Find Tyts in the tray</h3><p>Tyts starts with your computer. The first translation downloads your language pair once: about <b>58 MB</b> for Ukrainian ↔ English.</p>`, `<h3>Знайдіть Тиць у треї</h3><p>Він запускається разом з комп’ютером. Перший переклад один раз завантажує вашу мовну пару: близько <b>58 МБ</b> для української ↔ англійської.</p>`],
@@ -186,7 +186,7 @@ export default {
     // The end and the footer
     [`aria-label="Tyts!"`, `aria-label="Тиць!"`],
     [`<p>Give reading aloud a key, Ctrl+C twice if you like, and select any text. Or press your Talk key and say hello. The rest is a key away.</p>`, `<p>Призначте клавішу для читання вголос, хоч би й Ctrl+C двічі, і виділіть будь-який текст. Або натисніть свою клавішу розмови й привітайтеся. Решта за одну клавішу.</p>`],
-    [`<p>Made by Mykola Onykiichuk · <a href="https://t.me/designmakc">Telegram</a><br>Based on the original project by Yevhen Peshynskyi. Open source under the MIT license.</p>`, `<p>Зробив Mykola Onykiichuk · <a href="https://t.me/designmakc">Telegram</a><br>На основі the original project Євгена Пешинського. Відкритий код за ліцензією MIT.</p>`],
+    [`<p>Made by Mykola Onykiichuk · <a href="https://t.me/designmakc">Telegram</a><br>Open source under the MIT license.</p>`, `<p>Зробив Mykola Onykiichuk · <a href="https://t.me/designmakc">Telegram</a><br>Відкритий код за ліцензією MIT.</p>`],
     [`aria-label="Links"`, `aria-label="Посилання"`],
     [`<a href="https://github.com/designmakc/tyts/releases">Releases</a>`, `<a href="https://github.com/designmakc/tyts/releases">Релізи</a>`],
   ],

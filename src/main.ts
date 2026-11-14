@@ -17,7 +17,7 @@
 // The speech engine (speechhost.ts: Python, installed in parts when first
 // wanted) serves Dictate (dictation.ts), Transcribe and the calls.
 //
-// %APPDATA%\Tyts\ (moved over from OldName's, Altype's, 2Talker's or tu-talk's folder, once: oldfolder.ts)
+// %APPDATA%\Tyts\
 //   settings.json   see settings.ts
 //   words.json      the word notebook (words.ts)
 //   dictation.json  the phrases dictated lately, 30 days at most (dictationlog.ts)
@@ -27,14 +27,13 @@
 //   dict\           word dictionaries for languages other than Russian
 //   models\         the translator's models, one folder per language pair
 //   speech.json     the speech engine's settings (engine/settings.py), speech.log
-// %LOCALAPPDATA%\Tyts\ (moved over from OldName's and Altype's, once; a part that could not move is used there)
 // %LOCALAPPDATA%\Tyts\speech\   the speech engine's Python, packages and models
 // %LOCALAPPDATA%\Tyts\translate\   llama.cpp and the Gemma 4 models (Accurate, Most accurate)
 
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-import { execFile, execFileSync, spawn } from 'node:child_process'
+import { execFile, spawn } from 'node:child_process'
 
 import { app, BrowserWindow, clipboard, desktopCapturer, dialog, globalShortcut, ipcMain, nativeImage, nativeTheme, Notification, powerMonitor, powerSaveBlocker, screen, session, shell, systemPreferences, Tray, type Rectangle } from 'electron'
 
@@ -87,7 +86,6 @@ import { log, logTo } from './log'
 import { NATURAL_PREFIX, systemVoiceName, type NaturalState } from './natural'
 import { recognize, recognizeMac } from './ocr'
 import { pickLines } from './ocrpick'
-import { adoptLocalFolder, adoptOldFolders, freeFolder, hasToMove, healSpeech, leftIn, moveDownloads, OLD_LOCAL_FOLDERS, partDir, removeOldUpdaterCaches, type LeftPart, type Warn } from './oldfolder'
 import { paragraphsOf } from './ocrtext'
 import { clipGroups, menuGroups, rewriteGroups, type BarAction, type MenuAction } from './menu'
 import { createRewriter, REWRITE_MOST_CHARS, type Rewriter, type RewriteStyle } from './rewrite'
@@ -103,7 +101,7 @@ import { SpeechHost } from './speechhost'
 import { minutes as minutesText, MODELS as SPEECH_MODELS } from './speechplan'
 import { SPEECH_PORT } from './speechservice'
 import { recommendedModels } from './setup'
-import { cleanable, markAway, measureParts, partPackages, speechModelDir, splitSpeech, withUse, type Place, type UseContext } from './storage'
+import { cleanable, measureParts, partPackages, speechModelDir, splitSpeech, withUse, type Place, type UseContext } from './storage'
 import { leftoverPackages } from './speechpack'
 import { NaturalSpeaker } from './synth'
 import { system32 } from './system32'
@@ -219,8 +217,6 @@ const LINKS = new Set([
   'https://github.com/designmakc/tyts/releases',
   'https://github.com/designmakc/tyts/blob/main/NOTICE',
   'mailto:designmakc@gmail.com',
-  // Tyts, the app Tyts is based on (About).
-  'https://github.com/ikstro',
   // The steps to the speakers' model: an account, the model's terms, a Read token.
   'https://huggingface.co/join',
   'https://huggingface.co/pyannote/speaker-diarization-community-1',
@@ -237,21 +233,19 @@ const DICTATION_KEYS: readonly (keyof Settings)[] = ['dictateKey', 'englishKey',
 // folder first, before a test run moves to its own. A second copy (another start, `npm start`, a test
 // run) hands its arguments to the first and quits; the first opens its window.
 const theOnlyOne = app.requestSingleInstanceLock()
-// A test run (TYTS_TEST_HOME; ALTYPE_TEST_HOME, the old name, still read) keeps to its own folders and port; the installed Tyts is quit first.
-const TEST_HOME = process.env.TYTS_TEST_HOME || process.env.ALTYPE_TEST_HOME || undefined
+// A test run (TYTS_TEST_HOME) keeps to its own folders and port; the installed Tyts is quit first.
+const TEST_HOME = process.env.TYTS_TEST_HOME || undefined
 if (TEST_HOME) app.setPath('userData', TEST_HOME)
-const speechPort = TEST_HOME ? Number(process.env.TYTS_TEST_PORT || process.env.ALTYPE_TEST_PORT) || 8797 : SPEECH_PORT
+const speechPort = TEST_HOME ? Number(process.env.TYTS_TEST_PORT) || 8797 : SPEECH_PORT
 
 const userDir = () => app.getPath('userData')
 const localAppData = () => process.env.LOCALAPPDATA ?? path.join(app.getPath('appData'), '..', 'Local')
 /** %LOCALAPPDATA%\Tyts: what is big and downloaded (the speech engine, the translation models), never roamed. */
 const localDir = () => TEST_HOME ?? path.join(localAppData(), 'Tyts')
-/** %LOCALAPPDATA%\OldName and \Altype, the old names' folders, newest first: a part that could not move out of one is used there (oldfolder.ts adoptLocalFolder). */
-const oldLocalDirs = () => (TEST_HOME ? [] : OLD_LOCAL_FOLDERS.map(name => path.join(localAppData(), name)))
 /** A part of localDir (speech, translate), or the old folder's when it is still there. */
-const localPart = (name: string) => partDir(name, localDir(), ...oldLocalDirs())
-/** A download's folder (the Firefox models, the voice, the word meanings): in localDir, beside the rest (oldfolder.ts moveDownloads); else where its move left it. */
-const downloads = (name: string) => partDir(name, localDir(), ...oldLocalDirs(), userDir())
+const localPart = (name: string) => path.join(localDir(), name)
+/** A download's folder (the Firefox models, the voice, the word meanings): in localDir, beside the rest. */
+const downloads = (name: string) => localPart(name)
 const settingsFile = () => path.join(userDir(), 'settings.json')
 /** A file the packaged app keeps outside its archive: the workers run as separate processes. */
 const unpacked = (...parts: string[]) => path.join(app.getAppPath(), ...parts).replace(/app\.asar([\\/])/, 'app.asar.unpacked$1')
@@ -414,83 +408,6 @@ function systemNative(): string {
   return defaultNative([app.getLocale(), ...app.getPreferredSystemLanguages()], TARGET)
 }
 
-/**
- * The app was called OldName until 0.15, Altype until 0.11, 2Talker and tu-talk before: its things move over once,
- * %APPDATA%'s item by item, %LOCALAPPDATA%'s whole when it can (the speech engine's Python set right
- * for its new place). A test run keeps to its own folder and moves nothing. Returns what moved, for the log.
- */
-function adoptOldFolder(): Moved {
-  if (TEST_HOME) return { moved: [], stopped: [], left: [] }
-  const warn = (message: string, error: unknown) => console.warn(message, error)
-  const moved = adoptOldFolders(app.getPath('appData'), userDir(), warn)
-  const local = moveLocalFolder()
-  if (app.isPackaged) removeOldUpdaterCaches(localAppData(), warn)
-  return { ...local, moved: [...moved, ...local.moved] }
-}
-
-/** What stayed in one old folder after a move, and why. */
-type LeftIn = { dir: string; parts: LeftPart[] }
-
-/** What a move from the old folders did: what moved, the programs stopped to let go of their files, what stayed and why. */
-type Moved = { moved: string[]; stopped: string[]; left: LeftIn[] }
-
-/**
- * %LOCALAPPDATA%\OldName and \Altype into Tyts's folder (oldfolder.ts adoptLocalFolder), newest first, and the
- * downloads from %APPDATA%\Tyts (moveDownloads). Programs run from inside an old folder (the speech engine's
- * Python, llama-server, left by OldName, Altype or a run from source) keep its files in use, so they are stopped
- * first, only while it holds something to move.
- */
-function moveLocalFolder(): Moved {
-  const moved: string[] = []
-  const stopped: string[] = []
-  const left: LeftIn[] = []
-  for (const old of oldLocalDirs()) {
-    const errors = new Map<string, unknown>()
-    const warn: Warn = (message, error, from) => {
-      console.warn(message, error)
-      if (from) errors.set(path.basename(from), error)
-    }
-    const freed = hasToMove(old, localDir()) ? freeFolder(old, undefined, warn) : { stopped: [], holding: [] }
-    moved.push(...adoptLocalFolder(old, localDir(), warn).map(name => `local/${path.basename(old)}/${name}`))
-    stopped.push(...freed.stopped.map(p => `${p.name} (${p.pid})`))
-    const parts = leftIn(old, localDir(), errors, freed.holding)
-    if (parts.length) left.push({ dir: old, parts })
-  }
-  moved.push(...moveDownloads(userDir(), localDir(), (message, error) => console.warn(message, error)).map(name => `downloads/${name}`))
-  leftOld = left
-  return { moved, stopped, left }
-}
-
-/** What the last move left in the old folders and why: the Storage page says it beside Move to Tyts. */
-let leftOld: LeftIn[] = []
-
-/** The log's lines for a move: what was stopped for it, what stayed in each old folder and why. */
-function logMoved(r: Moved): void {
-  if (r.moved.length) log(`moved over from the old folders: ${r.moved.join(', ')}`)
-  if (r.stopped.length) log(`stopped to free the old folders: ${r.stopped.join(', ')}`)
-  for (const { dir, parts } of r.left) log(`left in ${dir}: ${parts.map(p => `${p.name} (${p.why})`).join(', ')}`)
-}
-
-/** The old names' programs, with the folder that says each was installed here: while one runs, its folders are in use. */
-const OLD_APPS = [
-  { exe: 'OldName.exe', folder: 'OldName', name: 'OldName' },
-  { exe: 'Altype.exe', folder: 'Altype', name: 'Altype' },
-]
-
-/** The old name's program still running (OldName.exe or Altype.exe, an older install), so this start gives way; its name, else undefined. */
-function oldAppRunning(): string | undefined {
-  if (TEST_HOME) return undefined
-  for (const old of OLD_APPS) {
-    if (!fs.existsSync(path.join(app.getPath('appData'), old.folder, 'settings.json'))) continue
-    try {
-      const out = execFileSync(system32('tasklist.exe'), ['/FI', `IMAGENAME eq ${old.exe}`, '/FO', 'CSV', '/NH'], { encoding: 'utf8', windowsHide: true, timeout: 5000 })
-      if (out.toLowerCase().includes(`"${old.exe.toLowerCase()}"`)) return old.name
-    } catch {
-      // Windows did not answer: this start goes on.
-    }
-  }
-  return undefined
-}
 
 function readSettings(): Settings {
   try {
@@ -533,10 +450,7 @@ function saveSettings(patch: Partial<Settings>): void {
 function applyLoginItem(): void {
   // A development run would register electron.exe itself.
   if (!app.isPackaged) return
-  // Registered under the app's id, the one 2Talker used too: this replaces its entry.
   app.setLoginItemSettings({ openAtLogin: settings.startWithWindows })
-  // tu-talk's entry had its own name and points at a program long gone.
-  app.setLoginItemSettings({ openAtLogin: false, name: 'com.ikstro.tu-talk' })
 }
 
 /** The uninstaller asks its one question in the interface's language (build/installer.nsh reads it here); a run from source or a test run leaves the registry alone. */
@@ -1196,8 +1110,8 @@ function measureStorage(): void {
   postApp()
   measureParts(storagePlaces())
     .then(measured => {
-      const parts = markAway(splitSpeech(measured), root, DOWNLOADED)
-      storage = { measuring: false, root, drive: driveOf(root), freeMb: freeMb(root), parts, ...oldFolderView(parts) }
+      const parts = splitSpeech(measured)
+      storage = { measuring: false, root, drive: driveOf(root), freeMb: freeMb(root), parts }
     })
     .catch(error => console.warn('Tyts: could not measure the storage', error))
     .finally(() => {
@@ -1213,9 +1127,6 @@ function measureStorage(): void {
 
 /** Measured again after a removal, when the page has been opened. */
 const remeasure = () => (storage ? measureStorage() : postApp())
-
-/** Tyts's downloads, which belong in its one folder; the person's own things live elsewhere. */
-const DOWNLOADED: readonly StorageId[] = ['fast', 'dict', 'voice', 'accurate', 'most', 'unused', 'llama', 'speechModel', 'speech', 'gpu', 'speakers', 'speakersOld']
 
 /** What the parts serve now (storage.ts withUse): the settings, the build the model runs on here, the speech plan with its reserve on the other device. */
 function useContext(): UseContext {
@@ -1324,48 +1235,6 @@ function useRecommended(): void {
       () => (registerShortcuts(), applyKeyboard()),
       error => console.warn('Tyts: the speech engine did not install', error),
     )
-}
-/** Move to Tyts is under way: the page shows it, and a second press waits. */
-let movingToTyts = false
-
-/** A download used from outside Tyts's folder: the old one's place, and why the last move left it there. */
-function oldFolderView(parts: readonly StoragePart[]): Pick<StorageView, 'old'> {
-  const away = parts.find(p => p.away)
-  if (!away) return {}
-  const dir = oldLocalDirs().find(d => away.path.toLowerCase().startsWith(d.toLowerCase() + path.sep)) ?? path.dirname(away.path)
-  const reasons = leftOld.find(l => l.dir === dir)?.parts ?? []
-  const why = [...new Set(reasons.filter(p => p.why !== 'Tyts has its own').map(p => p.why))].join('; ')
-  return { old: { dir, moving: movingToTyts, ...(why ? { why } : {}) } }
-}
-
-/**
- * The Storage page's Move to Tyts: what still lives in the old folders goes into Tyts's. The speech engine,
- * the model's server, the voice and Firefox's translator let go of their files first; the programs run from the
- * old folder are stopped (moveLocalFolder). Each part keeps its place from Tyts's start, so Tyts starts again on
- * the Storage page once anything moved; when nothing could, the engine comes back and the page says why.
- */
-async function moveToTyts(): Promise<void> {
-  if (movingToTyts || TEST_HOME) return
-  movingToTyts = true
-  if (storage) storage = { ...storage, ...oldFolderView(storage.parts) }
-  postApp()
-  speech.service.stop()
-  await llmFiles.server.stop()
-  natural.dispose()
-  translator.dispose()
-  // The page's "moving" is drawn before the move holds the main process for a second or two.
-  await new Promise(resolve => setTimeout(resolve, 300))
-  const r = moveLocalFolder()
-  log('move to Tyts: pressed on the Storage page')
-  logMoved(r)
-  if (r.moved.length) {
-    app.relaunch({ args: [...process.argv.slice(1).filter(a => a !== '--storage'), '--storage'] })
-    app.quit()
-    return
-  }
-  movingToTyts = false
-  speech.start()
-  measureStorage()
 }
 
 /** A download of Tyts's own deleted from the Storage page; each downloads again when it is wanted next. */
@@ -1831,14 +1700,6 @@ function onMessage(message: ToHost, page: Page): void {
       return
     case 'storage':
       measureStorage()
-      return
-    case 'moveToTyts':
-      void moveToTyts().catch(error => {
-        movingToTyts = false
-        leftOld = oldLocalDirs().map(dir => ({ dir, parts: [{ name: path.basename(dir), why: messageOf(error) }] }))
-        console.warn('Tyts: could not move the old folder', error)
-        remeasure()
-      })
       return
     case 'removeStored':
       refused = []
@@ -4508,11 +4369,6 @@ function runCommand(argv: readonly string[]): boolean {
     openCalls()
     return true
   }
-  // Started again by Move to Tyts: back on the Storage page, measured anew.
-  if (argv.includes('--storage')) {
-    openApp('storage')
-    return true
-  }
   return false
 }
 
@@ -4532,9 +4388,6 @@ function balloon(title: string, content: string, click?: () => void): void {
 }
 
 function setUpSpeechEngine(): void {
-  // A move whose repair failed (0.15.0) left the Python's link on the old folder: set right before the engine starts.
-  const healed = healSpeech(localPart('speech'), (message, error) => console.warn(message, error))
-  if (healed.length) log(`speech: the Python's link pointed at its own folder again (${healed.join(', ')})`)
   speech = new SpeechHost({
     root: localPart('speech'),
     userDir: userDir(),
@@ -4729,13 +4582,6 @@ async function hostCall(request: HostCall): Promise<unknown> {
 }
 
 function start(): void {
-  const running = oldAppRunning()
-  if (running) {
-    dialog.showMessageBoxSync({ type: 'info', title: 'Tyts', message: `${running} is still running`, detail: `Tyts is ${running}'s new name. Quit ${running} from its tray menu, then start Tyts: it takes over your settings, words and downloads.` })
-    app.quit()
-    return
-  }
-  const adopted = adoptOldFolder()
   // tyts.log beside the settings: the warnings, and what the windows did.
   logTo(userDir())
   const warn = console.warn.bind(console)
@@ -4749,8 +4595,6 @@ function start(): void {
   app.on('render-process-gone', (_event, contents, details) => log(`a page's process is gone (${pageOf(contents.getURL())}): ${details.reason}, exit ${details.exitCode}`))
   app.on('child-process-gone', (_event, details) => log(`${details.type}${details.name ? ` (${details.name})` : ''} process is gone: ${details.reason}, exit ${details.exitCode}`))
   log(`start: Tyts ${app.getVersion()}, Electron ${process.versions.electron}, ${onMac ? 'macOS' : 'Windows'} ${process.getSystemVersion()}${TEST_HOME ? ', test home' : ''}`)
-  // Everything downloaded in one folder (moveLocalFolder): what 0.10.0 and before kept in %APPDATA% moves over too.
-  logMoved(adopted)
   const firstRun = !fs.existsSync(settingsFile())
   settings = readSettings()
   setUiLanguage(settings.uiLanguage)

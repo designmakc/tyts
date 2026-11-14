@@ -1,6 +1,6 @@
-Kryakl (formerly Altype and 2Talker)
-Code: MIT License (see LICENSE). Parts of it come from the Language Tutor panel
-(https://github.com/ikstro/cc-translator), MIT License, same author.
+Tyts
+Code: MIT License (see LICENSE). Based on Kryakl by ikstro (https://github.com/ikstro/kryakl), MIT License;
+parts of it come from the same author's Language Tutor panel (https://github.com/ikstro/cc-translator), MIT License.
 
 Translator (vendor/bergamot, shipped; models downloaded on first use from Mozilla's servers)
   Firefox Translations by Mozilla: the Bergamot translator built to WebAssembly
@@ -20,7 +20,7 @@ Icons: @vscode/codicons, Creative Commons Attribution 4.0 (fonts) / MIT (code).
 
 Layout switch sounds (media/switch): glass and pluck are glass_002 and pluck_002 of Interface Sounds
 by Kenney (https://kenney.nl/assets/interface-sounds), Creative Commons CC0 1.0 (public domain),
-made quieter and pitched lower for the other layouts; string and duck are Kryakl's own, synthesized.
+made quieter and pitched lower for the other layouts; string and duck are the app's own, synthesized.
 
 Common words (media/common-en.txt: the 3000 most frequent English words, for the dotted line under the others;
 media/layout/{en,ru,uk}.txt: the most frequent English, Russian and Ukrainian words, which tell the keyboard layout a word was meant for;
@@ -33,7 +33,7 @@ media/lang-words.json: the 200 most frequent words of 25 languages, which tell t
 Natural voice (downloaded on request from the cc-translator voice-1 release, not shipped)
   Kokoro-82M by hexgrad (https://huggingface.co/hexgrad/Kokoro-82M), Apache License 2.0;
     ONNX export by onnx-community. Text rules in src/kokoro.ts follow kokoro-js (Apache License 2.0).
-  ONNX Runtime by Microsoft (https://onnxruntime.ai), MIT License; Kryakl bundles the
+  ONNX Runtime by Microsoft (https://onnxruntime.ai), MIT License; Tyts bundles the
     JavaScript of onnxruntime-node and downloads its native library.
   phonemizer.js by Xenova (https://github.com/xenova/phonemizer.js), Apache License 2.0, which
     contains eSpeak NG (https://github.com/espeak-ng/espeak-ng), GNU General Public License v3.0.

@@ -229,7 +229,7 @@ export type Settings = {
   /**
    * Words dictation and transcripts spell as written, one line each as the
    * person typed it: the word, then what it may be heard as in parentheses
-   * ("Tyts (тиць, кракл)"); vocabulary.ts reads them.
+   * ("Tyts (тиц, тыц)"); vocabulary.ts reads them.
    */
   vocabulary: string[]
   /** What dictation learned from the person's fixes of a phrase (corrections.ts): put right before a phrase is typed. */

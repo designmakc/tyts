@@ -17,7 +17,6 @@ import * as path from 'node:path'
 
 import { fetchPinned } from './download'
 import { log } from './log'
-import { OLD_LOCAL_FOLDERS } from './oldfolder'
 import speakersManifest from './speakers-manifest.json'
 
 export type SpeechPart = 'core' | 'gpu' | 'speakers'
@@ -364,45 +363,6 @@ export class SpeechPack {
     const wanted = extrasFor(parts, this.o.gpuSpeakers?.() ?? true, this.platform)
     if (m?.extras && m.parts.join() === parts.join() && (!moveSpeakers || speakersOf(m.extras) === speakersOf(wanted))) return m.extras
     return wanted
-  }
-
-  /**
-   * The environment's python.exe is uv's launcher, which keeps the absolute path of the Python it starts in its own
-   * file: a speech folder moved from OldName's or Altype's leaves it on the old place, and the engine never starts
-   * ("uv trampoline failed to spawn Python child process", 0.15.0). True when it names a Python outside this folder.
-   */
-  get moved(): boolean {
-    try {
-      const exe = fs.readFileSync(this.python)
-      if (!exe.includes(Buffer.from('UV_PYTHON_PATH', 'utf16le'))) return false
-      const text = exe.toString('latin1').toLowerCase()
-      const here = Buffer.from(path.join(this.o.root, 'python') + path.sep, 'utf8').toString('latin1').toLowerCase()
-      // Only a launcher that names an old name's folder: a clean install is never touched, whatever its path holds.
-      return !text.includes(here) && OLD_LOCAL_FOLDERS.some(name => text.includes(path.join(name.toLowerCase(), 'speech', 'python') + path.sep))
-    } catch {
-      return false
-    }
-  }
-
-  /**
-   * The launchers made again for this folder (`uv venv --allow-existing`, the Python pyvenv.cfg names, which the
-   * move set right): the packages stay and nothing downloads. Should uv refuse, the environment is made again from
-   * the download cache (a sync, the models kept).
-   */
-  async relocate(): Promise<void> {
-    const env = path.join(this.o.root, 'env')
-    const cfg = fs.readFileSync(path.join(env, 'pyvenv.cfg'), 'utf8')
-    const home = /^home\s*=\s*(.+?)\s*$/m.exec(cfg)?.[1]
-    const prompt = /^prompt\s*=\s*(.+?)\s*$/m.exec(cfg)?.[1]
-    const job = home
-      ? this.runner(this.uvExe, ['venv', '--allow-existing', ...(prompt ? ['--prompt', prompt] : []), '--python', path.join(home, 'python.exe'), env], this.uvEnv())
-      : undefined
-    // uv done is enough: a check that still finds the old place must not cost the person a reinstall at every start.
-    if (job && (await job.exit) === 0) return
-    log(`speech: could not set the launcher right (${job?.output().trim().split('\n').at(-1) ?? 'no home in pyvenv.cfg'}): installing the environment again`)
-    const parts = this.marker()?.parts ?? ['core']
-    fs.rmSync(env, { recursive: true, force: true })
-    await this.install(parts)
   }
 
   private uvEnv(): Record<string, string> {

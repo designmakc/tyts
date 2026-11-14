@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+You are the owner and long-term maintainer of this codebase, and its design is up to you.
+
 Tyts (Тиць): a tray app for Windows and Mac (Apple silicon, the `mac` branch and `npm run dist:mac`), Electron + TypeScript, with a local Python speech engine. It fixes keyboard layouts, types what you say, records and sums up calls, translates, reads aloud and helps practise English. Everything runs on this computer: no cloud, no account. A fork; much of the code and `docs/history.md` still say Tyts, OldName, Altype, 2Talker or tu-talk.
 
 **`docs/history.md` is the full record** (every owner decision with its date, measurements, reasons, the details of each module). Read the part you need there before changing a feature; this file is only the map and the rules that always hold. Other docs: `docs/backlog.md` (backlog, bugs, the resource contract), `docs/roadmap.md`, `docs/meetings-tz.md`, `docs/adr/`.
@@ -34,15 +36,17 @@ Main process `src/main.ts` (tray, windows, flows). Pages in `src/webview/*` with
 
 - **Selection and clipboard**: `winclip.ts`, `clipboard.ts` (Ctrl+C twice), `clipguard.ts` + `winclipboard.ts` (every borrowing of the clipboard is put back; Tyts's writes are hidden from Win+V and the cloud clipboard); `cliphistory.ts` (the clipboard history, off by default, its list in the menu's window).
 - **Screen text**: `ocr.ts` (Windows.Media.Ocr), `ocrpick.ts`, `ocrtext.ts`; on a Mac `build/ocr.swift`.
-- **Translation**: `translate.ts` (direction, language guess, pairs), `sentences.ts`, `render.ts`; Fast = Firefox's Bergamot (`engine.ts`, `mt-worker.ts`, `src/mt-manifest.json`); Accurate / Most accurate = Gemma 4 through llama.cpp (`llama.ts`, `llmtranslator.ts`, `llmfiles.ts`, `src/llm-manifest.json`). Fast drafts first, the model replaces it (`sweep.ts`); a busy card falls back to Fast with a notice (`modelbusy.ts`, `resources.ts`).
+- **Translation**: `translate.ts` (direction, language guess, pairs), `sentences.ts`, `render.ts`; Fast = Firefox's Bergamot (`engine.ts`, `mt-worker.ts`, `src/mt-manifest.json`); Accurate / Most accurate = Gemma 4 through llama.cpp (`llama.ts`, `llmtranslator.ts`, `llmfiles.ts`, `src/llm-manifest.json`). Fast drafts first, the model replaces it (`webview/sweep.ts`); a busy card falls back to Fast with a notice (`modelbusy.ts`, `resources.ts`).
 - **Check my English**: `checker.ts`, `worddiff.ts`, `mistakes.ts`. **Talk**: `duck.ts`, `topics.ts`, `talk.ts`, `talks.ts`, `webview/talk.ts`.
-- **Card** (Listen and Translate, one card of two halves): `webview/card.ts`, `halves.ts`, `player.ts`, `hover.ts`, `rare.ts`. **Voice**: `synth.ts`, `voice-worker.ts`, `kokoro.ts`, `natural.ts`.
-- **Keyboard**: `keyboard.ts` → `kbd-worker.ts` (Windows hooks) or `kbdmac-worker.ts` + `build/kbd-mac.swift`; all decisions in `typist.ts` (tested with a simulated field); `layoutfix.ts` (word lists `media/layout/*.txt`), `learning.ts`, `hotkey.ts` (key notation), `field-worker.ts` + `uia.ts` (password fields), `menu.ts` + `menuwindow.ts` (the menu on one key).
-- **Speech engine** (`engine/`, Python, 127.0.0.1:8765–8774): `app.py` (API), `asr.py`, `stream.py`, `live.py` (a call's draft while it records), `jobs.py`, `store.py`, `diarize.py`, `vocab.py`, `phantoms.py`, `calls.py`, `auth.py`; installed in parts by `speechpack.ts`, run by `speechservice.ts`, held by `speechhost.ts`; models chosen per computer by `speechplan.ts` from `engine/models.json` and `device.ts` measurements.
-- **Dictation**: `dictation.ts`, `dictedit.ts` (optional editing by the model), `holdtalk.ts`, `webview/dictation.ts`. **Calls**: `capture.ts`, `capturesend.ts`, `callapps.ts`, `summary.ts`, `summaryflow.ts`, `ask.ts`, `shots.ts`, `addressed.ts` (names from how speakers are spoken to).
+- **Card** (Listen and Translate, one card of two halves): `webview/card.ts`, `halves.ts`, `player.ts`, `hover.ts`, `rare.ts`; a word looked up and the word notebook: `dictstore.ts`, `lemma.ts`, `words.ts`. **Voice**: `synth.ts`, `voice-worker.ts`, `kokoro.ts`, `natural.ts`, `voicestore.ts`.
+- **Keyboard**: `keyboard.ts` → `kbd-worker.ts` (Windows hooks) or `kbdmac-worker.ts` + `build/kbd-mac.swift`; `winkbd.ts` (Windows layouts and typing; a Mac's keys in the same terms: `kbdmac.ts`); all decisions in `typist.ts` (tested with a simulated field); `layoutfix.ts` (word lists `media/layout/*.txt`), `learning.ts`, `hotkey.ts` (key notation), `field-worker.ts` + `uia.ts` (password fields), `menu.ts` + `menuwindow.ts` (the menu on one key).
+- **Speech engine** (`engine/`, Python, 127.0.0.1:8765–8774): `app.py` (API), `asr.py`, `stream.py`, `live.py` (a call's draft while it records), `jobs.py`, `store.py`, `diarize.py`, `vocab.py`, `phantoms.py`, `calls.py`, `auth.py`, `settings.py`, `audio.py`, `merge.py` (who said what), `export.py`, `voices.py` (voices known from earlier calls), `bench.py` (how fast each model runs here); installed in parts by `speechpack.ts`, run by `speechservice.ts`, held by `speechhost.ts`; models chosen per computer by `speechplan.ts` from `engine/models.json` and `device.ts` measurements.
+- **Dictation**: `dictation.ts`, `dictedit.ts` (optional editing by the model), `holdtalk.ts`, `vocabulary.ts` + `corrections.ts` (the person's words and remembered fixes), `dictationlog.ts`, `webview/dictation.ts`, `webview/recorder.ts` (the microphone). **Calls**: `capture.ts`, `webview/capture.ts` (the recording panel), `capturesend.ts`, `callapps.ts`, `callwatch.ts` + `micwatch.ts` (a recording that starts by itself), `callquiet.ts` ("still there?"), `calllive.ts` (the words while it records), `summary.ts`, `summaryflow.ts`, `ask.ts`, `shots.ts`, `addressed.ts` (names from how speakers are spoken to), `webview/calls.ts` (the calls window).
+- **Notes** (dictated notes, calls and the knowledge base folder's Markdown files in one list, and questions to them): `webview/notes.ts`, `kbnotes.ts`, `ask.ts`, `engine/notes.py`.
+- **Over other programs**: the panel at the top of the screen (`edgepanel.ts`, `webview/edge.ts`), the look there while dictation listens or a call records (`toplook.ts`, `webview/top.ts`), the bar by a selection (`barwindow.ts`, `webview/bar.ts`), quick actions on a selection by the local model (`rewrite.ts`), `placement.ts` (where a window opens).
 - **App window**: `webview/app.ts`, `ui.ts`, `speech.ts`, `transcripts.ts`, `setup.ts` (first run); tray panel `webview/tray.ts`. **Look**: `media/theme.css` (tokens), Lucide icons via `npm run glyphs`, `dwm.ts` (Windows 11 frame).
 - **Permissions** (the page that checks what the system allows, before a call needs it): `access.ts`, `accessNow` / `grantAccess` in `main.ts`.
-- **Other**: `settings.ts` (`normalize` migrates old settings), `backup.ts`, `report.ts` (problem report zip), `log.ts`, `storage.ts`, `hardware.ts`, `i18n/`.
+- **Other**: `settings.ts` (`normalize` migrates old settings), `backup.ts`, `report.ts` (problem report zip), `log.ts`, `storage.ts`, `hardware.ts`, `awake.ts` (keeps the computer awake), `i18n/`.
 - **Landing**: `site/` (not part of the app), uk/ru pages generated, published by `.github/workflows/pages.yml`.
 
 ## Rules that always hold
@@ -58,3 +62,14 @@ Main process `src/main.ts` (tray, windows, flows). Pages in `src/webview/*` with
 - **Look**: neutral greys, duck yellow `--accent` as a fill, ink for text and links on light; Inter for text, JetBrains Mono only for keys, times and numbers; Lucide icons only in the sidebar and on Home; 6 px corners.
 - **Words**: every line says what it does in plain words; model names only in brackets or on About.
 - **Before a test or a fix that touches the running app**, quit the installed Tyts. Tests in `*.test.ts` beside each module; pure logic gets one.
+
+## Working here
+
+- After an edit, run `npm run typecheck` and the tests of the modules you touched (`npx vitest run src/<module>.test.ts`), and show their output; "done" alone is not a report.
+- When a change spans several files or the approach is unclear, plan first, then write the code.
+- After a notable feature, run `/code-review` or a reviewer subagent on the diff, and ask it only for correctness bugs and breaches of this file's rules, not style.
+- When the context is compacted, keep the list of changed files and the commands that check them.
+
+## Finishing work
+
+Do not stop while work that was asked for is still owed. An ordinary obstacle (an error, a timeout, a tool that failed) is diagnosed first and worked around with the access you have. A deliberate ban (a rule of this file, a file marked not to be touched) is not worked around: say what you found. Risky or irreversible actions still wait for a yes.

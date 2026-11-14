@@ -20,3 +20,7 @@ vendor/kbd-mac
 vendor/mic-mac
 vendor/speakers-mac
 build/speakers-mac/.build/
+
+# Claude Code: each person's own notes and settings
+CLAUDE.local.md
+.claude/settings.local.json

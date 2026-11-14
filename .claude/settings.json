@@ -1,9 +1,35 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git push origin --delete:*)",
       "Bash(git push origin v*)",
-      "mcp__claude-code-remote__delete_trigger"
+      "mcp__claude-code-remote__delete_trigger",
+      "Bash(npm test)",
+      "Bash(npm run typecheck)",
+      "Bash(npm run build)",
+      "Bash(npx vitest run *)",
+      "Bash(npm run test:engine)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)"
+    ],
+    "ask": [
+      "Bash(git push origin --delete:*)"
     ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/typecheck-on-stop.mjs"]
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "typescript-lsp@claude-plugins-official": true
   }
 }

@@ -113,6 +113,16 @@ describe('dictionary store', () => {
     expect(asked).toBe(2)
   })
 
+  test('asked for by the person, a failed download is tried again at once', async () => {
+    let asked = 0
+    const { store } = setup(() => (asked++, Promise.reject(new Error('offline'))))
+    store.ask('pl')
+    await flush()
+    expect(store.get('pl', false).status).toBe('failed')
+    expect(store.ask('pl').status).toBe('downloading')
+    expect(asked).toBe(2)
+  })
+
   test('the status reads no file and starts no download', async () => {
     let asked = 0
     const { store } = setup(async () => (asked++, gzipSync(JSON.stringify({ go: [['verb', 'ir']] }))))

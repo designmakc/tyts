@@ -134,6 +134,18 @@ describe('LlamaServer', () => {
     server.dispose()
   })
 
+  it('a warm-up that the card refuses never takes the place of a model asked for meanwhile', async () => {
+    // Only b.gguf on the card dies; a request for a.gguf arrives while b's warm-up is still finding that out.
+    const { server, started } = setup(args => args[1] === 'b.gguf' && !args.includes('none'))
+    server.warm(t('b.gguf'))
+    // b's process is gone, and its warm-up has not looked yet.
+    await new Promise(resolve => setTimeout(resolve, 20))
+    await server.run(t('a.gguf'), async () => new Promise(resolve => setTimeout(resolve, 600)))
+    expect(started.find(s => s.args[1] === 'a.gguf')?.child.killed).toBe(false)
+    expect(started.filter(s => s.args[1] === 'b.gguf')).toHaveLength(1)
+    server.dispose()
+  })
+
   it('falls back to the processor when the card cannot take the model, and stays there', async () => {
     const { server, started } = setup(args => !args.includes('none'))
     await expect(server.run(t('a.gguf'), async b => b)).resolves.toBe('http://127.0.0.1:9002')

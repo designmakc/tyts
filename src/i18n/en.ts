@@ -213,9 +213,10 @@ export const en = {
   'word.notEnglish': 'Word meanings are for English only, for now; the {lang} translation is below.',
   'word.noDictionary': 'No {pair} dictionary yet; the translation is below.',
   'word.downloading': 'Downloading the {pair} dictionary, once…',
-  'word.failed': 'Couldn’t download the {pair} dictionary. Check the internet connection; it tries again in a minute.',
+  'word.failed': 'Couldn’t download the {pair} dictionary. Check the internet connection.',
   'word.off': 'The {pair} dictionary isn’t downloaded.',
   'word.download': 'Download',
+  'word.clickToGet': 'Click the word to download it.',
 
   // ------------------------------------------------------------ the talk window
   'talk.yourTalks': 'Your talks',

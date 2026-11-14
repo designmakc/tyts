@@ -609,8 +609,11 @@ function setUpSpeech(): void {
       return new Uint8Array(await res.arrayBuffer())
     },
     onReady: () => (post({ type: 'dictReady' }), toPage('talk', { type: 'dictReady' })),
-    // The setup page follows the download: started, here or failed.
-    onChange: () => postApp(),
+    // The setup page follows the download: started, here or failed. A word's card asks its word again, so a failure shows there too.
+    onChange: code => {
+      postApp()
+      if (code && dictionaries.status(code) === 'failed') (post({ type: 'dictReady' }), toPage('talk', { type: 'dictReady' }))
+    },
   })
 }
 
@@ -1696,7 +1699,7 @@ function onMessage(message: ToHost, page: Page): void {
       postApp()
       return
     case 'prepareDictionary':
-      dictionaries.get(langCode(settings.native), true)
+      dictionaries.ask(langCode(settings.native))
       return
     case 'testSpeech':
       saveSettings({ speechTestAgreed: true })

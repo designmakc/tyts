@@ -94,7 +94,7 @@ def write_md(t: dict, file: str, root: Path) -> Path | None:
         except OSError:
             return None
         if not start.startswith("---") or mark not in start:
-            log.info("transcripts folder: %s is not this recording's Markdown, left as it is", path.name)
+            log.info("transcripts folder: a Markdown that is not this recording's is left as it is")
             return None
     head = notes.frontmatter({
         "created": datetime.fromisoformat(t["created"]).isoformat(timespec="minutes"),

@@ -394,6 +394,8 @@ describe('a text too long to translate at once', () => {
     expect(cutLong(sentences, 32)).toEqual({ head: 'One two three. Four five six.', rest: ' Seven eight.' })
     expect(cutLong('alpha beta gamma', 12)).toEqual({ head: 'alpha beta', rest: ' gamma' })
     expect(cutLong('x'.repeat(50), 20)).toEqual({ head: 'x'.repeat(20), rest: 'x'.repeat(30) })
+    // A line break near the start is no place to cut: most of what fits is translated.
+    expect(cutLong(`Hi,\n${'word '.repeat(20)}`, 40).head.length).toBeGreaterThan(20)
     for (const [text, max] of [[lines, 25], [sentences, 32], ['alpha beta gamma', 12]] as const) {
       const { head, rest } = cutLong(text, max)
       expect(head + rest).toBe(text)

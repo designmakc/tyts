@@ -663,7 +663,8 @@ function swapLanguages(): void {
   stopTextReading()
   syncLanguages()
   if (s?.status === 'text' && s.result.status === 'ready') {
-    setFieldText(s.result.text)
+    // A long text's end, left untranslated, stays in the field: it is cut again and goes back on Paste.
+    setFieldText(s.result.text + (s.result.rest ?? ''))
     updateTextButtons()
   }
   markRareWords()

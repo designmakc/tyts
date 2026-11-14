@@ -269,7 +269,9 @@ export class WordHover {
         this.options.post({ type: 'prepareDictionary' })
         this.options.post({ type: 'lookup', word: hit.word })
       }
-      body = [el('div', { class: 'wc-note' }, this.note(answer.missing), get ? el('button', { class: 'wc-get', onclick: download }, t(answer.missing === 'download-failed' ? 'common.tryAgain' : 'word.download')) : null)]
+      // A card shown in passing takes no clicks: it says to click the word; the clicked one has the button.
+      const how = !get ? null : this.clicked ? el('button', { class: 'wc-get', onclick: download }, t(answer.missing === 'download-failed' ? 'common.tryAgain' : 'word.download')) : el('div', {}, t('word.clickToGet'))
+      body = [el('div', { class: 'wc-note' }, this.note(answer.missing), how)]
     }
     else if (!gloss) body = [el('div', { class: 'wc-note' }, t('word.notFound'))]
     else

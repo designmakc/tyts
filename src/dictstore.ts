@@ -100,6 +100,12 @@ export class DictionaryStore {
     return { status: 'downloading' }
   }
 
+  /** The person asked for it (Download, Try again): a download that failed is tried again at once, not after the wait. */
+  ask(code: string): DictState {
+    if (this.states.get(code)?.status === 'failed') this.states.delete(code)
+    return this.get(code, true)
+  }
+
   /** How the dictionary for a language stands, from its file's being there: nothing read, nothing downloaded. */
   status(code: string): DictState['status'] {
     const known = this.states.get(code)

@@ -208,7 +208,9 @@ export class LlamaServer {
       if (r.cpu || r.stopped) throw error
       // The card could not take it: once more on the processor.
       this.cpuOnly.add(key)
-      if (this.running === r) this.running = undefined
+      // Another model's server took its place meanwhile (a request came while this one was only warming): that one stays.
+      if (this.running && this.running !== r) throw error
+      this.running = undefined
       return this.ready(target)
     }
   }

@@ -280,7 +280,9 @@ export async function translatePairs(
 export function cutLong(text: string, max: number): { head: string; rest: string } {
   if (text.length <= max) return { head: text, rest: '' }
   const part = text.slice(0, max)
-  const at = Math.max(part.lastIndexOf('\n'), 0) || Math.max(part.lastIndexOf('. ') + 1, 0) || Math.max(part.lastIndexOf(' '), 0) || max
+  // In the second half of what fits: a line break near the start would leave almost nothing translated.
+  const late = (at: number) => (at >= max / 2 ? at : 0)
+  const at = late(part.lastIndexOf('\n')) || late(part.lastIndexOf('. ') + 1) || late(part.lastIndexOf(' ')) || max
   return { head: text.slice(0, at), rest: text.slice(at) }
 }
 

@@ -510,6 +510,9 @@ def public(t: dict, id: str) -> dict:
     """A transcript as the window wants it: without the words (thousands of them), saying whether they are kept."""
     out = {k: v for k, v in t.items() if k != "words"}
     out["hasWords"] = bool(t.get("words"))
+    # A file the person removed from the knowledge base is no longer there: it may be sent again.
+    if not notes.kept(t):
+        out.pop("note", None)
     # Names offered by the sound of a voice from earlier meetings (voices.py): a suggestion, never a name by itself.
     out["voiceHints"] = voices.known.suggest(id, t)
     out["audioPath"] = str(state.get_store().folder(id) / t.get("audio", "audio.ogg"))
@@ -752,6 +755,9 @@ def to_kb(id: str):
         path = notes.write_transcript(t, s["kbDir"], s["kbInbox"])
     except notes.NoKnowledgeBase:
         raise HTTPException(409, "Choose a knowledge base folder first")
+    # Remembered, so the window shows it is there and store.save keeps the file up to date.
+    t["note"] = str(path)
+    state.get_store().save(id, t)
     return {"path": str(path)}
 
 

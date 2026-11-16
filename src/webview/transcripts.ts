@@ -863,18 +863,23 @@ function actions(tr: Transcript): HTMLElement {
     }),
     menu,
   )
+  // Sent once: the engine keeps that one file up to date with every change (store.py save), the notice names it.
   const toKb =
-    tr.source !== 'note'
-      ? btn([icon('book'), t('tr.toKb')], async () => {
-          try {
-            const { path } = await api<{ path: string }>('POST', `/transcripts/${tr.id}/to-kb`)
-            toast(t('tr.inKb', { file: fileName(path) }), showFile(path))
-          } catch (error) {
-            const choose = error instanceof SpeechError && error.status === 409
-            toast(problem(error), choose ? { label: t('tr.chooseFolder'), run: () => void pickKb() } : undefined, true)
-          }
-        })
-      : null
+    tr.source === 'note'
+      ? null
+      : tr.note
+        ? Object.assign(btn([icon('check'), t('tr.inKbDone')], () => {}, '', t('tr.inKb', { file: fileName(tr.note) })), { disabled: true })
+        : btn([icon('book'), t('tr.toKb')], async () => {
+            try {
+              const { path } = await api<{ path: string }>('POST', `/transcripts/${tr.id}/to-kb`)
+              if (tx.transcript?.id === tr.id) tx.transcript.note = path
+              redrawPage()
+              toast(t('tr.inKb', { file: fileName(path) }), showFile(path))
+            } catch (error) {
+              const choose = error instanceof SpeechError && error.status === 409
+              toast(problem(error), choose ? { label: t('tr.chooseFolder'), run: () => void pickKb() } : undefined, true)
+            }
+          })
   const del = tx.deleting
     ? el(
         'span',

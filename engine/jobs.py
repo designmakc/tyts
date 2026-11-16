@@ -614,7 +614,7 @@ class Worker:
         }
         # A transcript made again keeps what is not made from the sound: the summary, the call's program, its lost chunks.
         before = store.transcript(id) or {}
-        for key in ("app", "lost", "summary", "notes"):
+        for key in ("app", "lost", "summary", "notes", "note"):
             value = job.get(key, before.get(key))
             if value:
                 transcript[key] = value

@@ -2,6 +2,7 @@
 and the summary kept in transcript.json (searched, exported, kept when transcribed again)."""
 
 import json
+import os
 import sqlite3
 
 import numpy as np
@@ -300,3 +301,19 @@ def test_key_screenshots_and_speaker_hints_are_marks_not_edits(client, fake_soun
     # Only Tyts: no key, or a page's Origin, is refused.
     assert client.request("PATCH", f"/transcripts/{id}", json={"shots": {}}).status_code == 401
     assert client.request("PATCH", f"/transcripts/{id}", headers={"origin": "chrome-extension://" + "a" * 32}, json={"shots": {}}).status_code in (401, 403)
+
+
+def test_to_kb_writes_one_file_and_keeps_it_current(client, fake_sound, tmp_path):
+    id = record(client)
+    worker()._transcribe(id, engine.state.get_store().row(id))
+    first = client.post(f"/transcripts/{id}/to-kb", headers=KEY).json()["path"]
+    assert client.post(f"/transcripts/{id}/to-kb", headers=KEY).json()["path"] == first
+    assert len(list((tmp_path / "kb").rglob("*.md"))) == 1
+    assert client.get(f"/transcripts/{id}", headers=KEY).json()["transcript"]["note"] == first
+    # A change to the call reaches its file there.
+    client.request("PATCH", f"/transcripts/{id}", headers=KEY, json={"notes": "Ask Olga about the invoice"})
+    assert "Ask Olga" in open(first, encoding="utf-8").read()
+    # The person removed it: it is no longer shown as there, and may be sent again.
+    os.remove(first)
+    assert "note" not in client.get(f"/transcripts/{id}", headers=KEY).json()["transcript"]
+    assert os.path.isfile(client.post(f"/transcripts/{id}/to-kb", headers=KEY).json()["path"])

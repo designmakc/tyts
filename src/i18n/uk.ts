@@ -691,6 +691,7 @@ export const uk: Record<Key, Phrase> = {
   'tr.saved': 'Збережено: {file}',
   'tr.export': 'Експорт',
   'tr.toKb': 'У базу знань',
+  'tr.inKbDone': 'У базі знань',
   'tr.inKb': 'У базі знань: {file}',
   'tr.chooseFolder': 'Вибрати папку',
   'tr.folderNote': 'запис, який ви покладете в неї, розшифровується, поруч із кожним Markdown з текстом; дзвінки, записані тут, теж зберігаються туди',

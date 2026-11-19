@@ -6,6 +6,7 @@
 // while the window lives (it only hides); the advice is setup.ts's.
 
 import { cardText, mainCard, shortCpu } from '../hardware'
+import { onMac } from '../hotkey'
 import { languageName, t } from '../i18n'
 import { LANGUAGES } from '../languages'
 import type { AppView, ToHost } from '../protocol'
@@ -267,7 +268,7 @@ function needStep(v: AppView, h: SetupHooks, c: Choice, r: ReturnType<typeof rec
     // A Mac has no place to choose: its speakers run on its own chip.
     c.transcribe && c.speakers && !s.speakers.ane ? speakersOnCard(v, h, c) : null,
     grp(t('app.name')),
-    advised(toggleCard('power', t('setup.startWithWindows'), c.startWithWindows, flip('startWithWindows'), r.startWithWindows.why), r.startWithWindows),
+    advised(toggleCard('power', t(onMac ? 'setup.startWithMac' : 'setup.startWithWindows'), c.startWithWindows, flip('startWithWindows'), r.startWithWindows.why), r.startWithWindows),
     grp(t('setup.allOfIt')),
     total,
     aside('info', t('setup.keysLater')),

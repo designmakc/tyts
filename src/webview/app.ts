@@ -3310,7 +3310,7 @@ function settingsPage(v: AppView): HTMLElement[] {
         theme => save({ theme }),
       ),
     ),
-    toggleCard('power', t('settings.startWithWindows'), s.startWithWindows, startWithWindows => save({ startWithWindows })),
+    toggleCard('power', t(onMac ? 'settings.startWithMac' : 'settings.startWithWindows'), s.startWithWindows, startWithWindows => save({ startWithWindows })),
     toggleCard('pause', t('settings.pause'), s.paused, paused => save({ paused }), t('settings.pauseNote')),
     toggleCard('panel-bottom', t('edge.setting'), s.edgePanel, edgePanel => save({ edgePanel }), t('edge.settingNote')),
     // The look at the top of the screen (toplook.ts), with the picked one drawn small beside the choice.

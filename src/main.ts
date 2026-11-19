@@ -83,6 +83,7 @@ import { BUSY_MS, busyName, slowAfter, tryAgain, type ModelBusy } from './modelb
 import { cardRoom, sharedReading } from './resources'
 import { MistakeStore } from './mistakes'
 import { log, logTo } from './log'
+import { setMacLogin } from './loginmac'
 import { NATURAL_PREFIX, systemVoiceName, type NaturalState } from './natural'
 import { recognize, recognizeMac } from './ocr'
 import { pickLines } from './ocrpick'
@@ -453,7 +454,14 @@ function saveSettings(patch: Partial<Settings>): void {
 function applyLoginItem(): void {
   // A development run would register electron.exe itself.
   if (!app.isPackaged) return
-  app.setLoginItemSettings({ openAtLogin: settings.startWithWindows })
+  if (!onMac) return app.setLoginItemSettings({ openAtLogin: settings.startWithWindows })
+  try {
+    setMacLogin(settings.startWithWindows)
+  } catch (error) {
+    log(`login: could not set the login agent: ${messageOf(error)}`)
+  }
+  // Electron's item from before, which did not start the app: gone, so a start that does work is not doubled.
+  if (app.getLoginItemSettings().openAtLogin) app.setLoginItemSettings({ openAtLogin: false })
 }
 
 /** The uninstaller asks its one question in the interface's language (build/installer.nsh reads it here); a run from source or a test run leaves the registry alone. */

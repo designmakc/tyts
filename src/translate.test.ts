@@ -4,6 +4,7 @@ import { describe, expect, test } from 'vitest'
 
 import { englishHtml, translationHtml } from './render'
 import {
+  cutLong,
   directionOf,
   drafted,
   englishReady,
@@ -378,5 +379,27 @@ describe('a draft first, the accurate translation sentence by sentence', () => {
       { en: 'en{Привет.}', other: 'Привет.' },
       { en: 'Hello there.', other: 'ru{Hello there.}' },
     ])
+  })
+})
+
+describe('a text too long to translate at once', () => {
+  test('is left whole when it fits', () => {
+    expect(cutLong('short text', 100)).toEqual({ head: 'short text', rest: '' })
+  })
+
+  test('is cut where a line ends, else a sentence, else a word, and nothing of it is lost', () => {
+    const lines = 'first line\nsecond line\nthird line'
+    expect(cutLong(lines, 25)).toEqual({ head: 'first line\nsecond line', rest: '\nthird line' })
+    const sentences = 'One two three. Four five six. Seven eight.'
+    expect(cutLong(sentences, 32)).toEqual({ head: 'One two three. Four five six.', rest: ' Seven eight.' })
+    expect(cutLong('alpha beta gamma', 12)).toEqual({ head: 'alpha beta', rest: ' gamma' })
+    expect(cutLong('x'.repeat(50), 20)).toEqual({ head: 'x'.repeat(20), rest: 'x'.repeat(30) })
+    // A line break near the start is no place to cut: most of what fits is translated.
+    expect(cutLong(`Hi,\n${'word '.repeat(20)}`, 40).head.length).toBeGreaterThan(20)
+    for (const [text, max] of [[lines, 25], [sentences, 32], ['alpha beta gamma', 12]] as const) {
+      const { head, rest } = cutLong(text, max)
+      expect(head + rest).toBe(text)
+      expect(head.length).toBeLessThanOrEqual(max)
+    }
   })
 })

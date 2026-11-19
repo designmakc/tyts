@@ -123,6 +123,14 @@ describe('a phrase heard, with text editing', () => {
     expect(typed).toEqual(['EN edited привет мир '])
   })
 
+  it('types a phrase as said when it cannot be translated, and says so', async () => {
+    const { hear, typed, logged, sent } = setup({ editing: () => false, toEnglish: async () => Promise.reject(new Error('no translator from ru into en')) })
+    await hear('english', 'привет мир')
+    expect(typed).toEqual(['привет мир '])
+    expect(logged).toHaveLength(1)
+    expect(sent).toContainEqual({ type: 'dictationDone', text: 'привет мир', note: 'Not translated: typed as said' })
+  })
+
   it('says in the badge why a phrase went as said', async () => {
     const { hear, typed, sent } = setup({ edit: async text => ({ text, note: 'typed as said' }) })
     await hear('type', 'привет мир')

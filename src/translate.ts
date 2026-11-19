@@ -272,6 +272,20 @@ export async function translatePairs(
 }
 
 /** A translated text as plain text: every line its marker and its sentences' translations. */
+/**
+ * A text too long to translate at once, cut where a line ends (else a sentence, else a word) at or before
+ * `max` characters: `head` is translated, `rest` is left as it is and goes back after the translation, so a
+ * Paste over the whole selection loses nothing. `head + rest` is the text.
+ */
+export function cutLong(text: string, max: number): { head: string; rest: string } {
+  if (text.length <= max) return { head: text, rest: '' }
+  const part = text.slice(0, max)
+  // In the second half of what fits: a line break near the start would leave almost nothing translated.
+  const late = (at: number) => (at >= max / 2 ? at : 0)
+  const at = late(part.lastIndexOf('\n')) || late(part.lastIndexOf('. ') + 1) || late(part.lastIndexOf(' ')) || max
+  return { head: text.slice(0, at), rest: text.slice(at) }
+}
+
 export function plainText(lines: readonly TextLine[]): string {
   return lines.map(line => line.prefix + line.pairs.map(p => p.out).join(' ')).join('\n')
 }

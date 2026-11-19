@@ -1,3 +1,9 @@
+## Tyts 0.5.9
+
+**Fixed:**
+- **Mac:** Tyts now starts when you log in, if "Open at login" is on. Before, it did not start, even with every permission given. macOS may show a notice that a background item was added: leave it on (System Settings › General › Login Items). Tyts must be in Applications, not opened from the disk image.
+- **Mac:** the switch reads "Open at login" instead of "Start with Windows".
+
 ## Tyts 0.5.8
 
 **A call goes to the knowledge base once.** "To knowledge base" on a call writes one file and keeps it up to date: a new title, edited lines, speakers or a summary go into the same file. The button then says "In the knowledge base", with the file's Open and Show in folder above it. If you delete or move the file, the button comes back. Edits made to that file by hand are overwritten by the next change in Tyts.

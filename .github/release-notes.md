@@ -1,3 +1,19 @@
+## Tyts 0.5.8
+
+**A call goes to the knowledge base once.** "To knowledge base" on a call writes one file and keeps it up to date: a new title, edited lines, speakers or a summary go into the same file. The button then says "In the knowledge base", with the file's Open and Show in folder above it. If you delete or move the file, the button comes back. Edits made to that file by hand are overwritten by the next change in Tyts.
+
+**Fixed:**
+- **Calls:** answering "Record the call?" on the panel at the top of the screen now starts or skips the recording, and the panel grows for the call's words.
+- **Calls:** a summary is made for every saved recording, also one stopped on the panel, after a long silence or when its window went away.
+- **Translate:** a text longer than 6000 characters no longer loses its end. The first part is translated, and the rest stays as it was, with a notice saying so.
+- **Type in English:** a phrase that could not be translated is typed as you said it, and the badge says why. Before, it was dropped.
+- **Reset all settings** no longer empties your own lists: the languages, the words to spell, the remembered fixes, the words kept as typed, what you told the duck, your instructions and templates stay.
+- A question to the notes with its own model no longer cuts off a summary or a translation in progress: it waits for it to end.
+- The card no longer stops watching the clipboard after a close by Alt+F4 or Cmd+W: it hides, as on Esc.
+- After an update that brings new parts of the speech engine, its keys work without restarting Tyts.
+- Transcribing a file no longer writes a Markdown file beside it, over a note of the same name: it goes only to the transcripts folder.
+- The word dictionary no longer downloads by itself on the first word you look up. It downloads when you ask (during setup, or Download on a word's card), and every file is checked.
+
 ## Tyts 0.5.7
 
 **Fixed:**

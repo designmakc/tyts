@@ -696,6 +696,7 @@ export const ru: Record<Key, Phrase> = {
   'tr.saved': 'Сохранено: {file}',
   'tr.export': 'Экспорт',
   'tr.toKb': 'В базу знаний',
+  'tr.inKbDone': 'В базе знаний',
   'tr.inKb': 'В базе знаний: {file}',
   'tr.chooseFolder': 'Выбрать папку',
   'tr.folderNote': 'запись, которую вы положите в неё, распознаётся, рядом с каждой Markdown с текстом; созвоны, записанные здесь, тоже сохраняются туда',

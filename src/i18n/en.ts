@@ -701,6 +701,7 @@ export const en = {
   'tr.saved': 'Saved: {file}',
   'tr.export': 'Export',
   'tr.toKb': 'To knowledge base',
+  'tr.inKbDone': 'In the knowledge base',
   'tr.inKb': 'In the knowledge base: {file}',
   'tr.chooseFolder': 'Choose a folder',
   'tr.folderNote': 'a recording you put in it is transcribed, each with a Markdown of its text beside it; the calls recorded here are saved there too',

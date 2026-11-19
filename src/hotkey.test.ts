@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { codeOfVk, COPY_TWICE, HotkeyRecorder, hotkeyLabel, isAccelerator, isCopyTwice, isExtendedKey, parseHotkey } from './hotkey'
+import { codeOfVk, COPY_TWICE, HotkeyRecorder, hotkeyLabel, isAccelerator, isCopyTwice, isExtendedKey, pageCode, parseHotkey } from './hotkey'
 
 /** Events in order: "+Code" down, "-Code" up, "@ms" time passes, "mouse4" a side button; what they record. */
 function record(...events: string[]): string[] {
@@ -143,6 +143,23 @@ describe('keys Tyts presses', () => {
   })
 })
 
-test.skipIf(process.platform !== 'darwin')('Mac: Command recorded as Control, so Command+C twice is Control+C*2', () => {
-  expect(record('+MetaLeft', '+KeyC', '-KeyC', '+KeyC')).toEqual(['(Control+C)', 'Control+C*2'])
+describe("a Mac's key field: the page and the keyboard thread both tell a modifier", () => {
+  // The page names keys as the browser does; the thread (kbdmac.ts) as Tyts does: Cmd is Control, Ctrl is Super.
+  const mac = (...events: string[]) => record(...events.map(e => (e.startsWith('page') ? e[4] + pageCode(e.slice(5), true) : e)))
+
+  test('Cmd tapped is Left Cmd, Ctrl tapped is Left Ctrl, not both pressed together', () => {
+    expect(mac('page+MetaLeft', '+ControlLeft', 'page-MetaLeft', '-ControlLeft')).toEqual(['LeftControl?'])
+    expect(mac('page+ControlLeft', '+MetaLeft', 'page-ControlLeft', '-MetaLeft')).toEqual(['LeftSuper?'])
+  })
+
+  test('Cmd+K and Ctrl+K stay apart; Cmd+C twice is Control+C*2', () => {
+    expect(mac('page+MetaLeft', '+ControlLeft', '+KeyK')).toEqual(['Control+K'])
+    expect(mac('page+ControlLeft', '+MetaLeft', '+KeyK')).toEqual(['Super+K'])
+    expect(mac('page+MetaLeft', '+KeyC', '-KeyC', '+KeyC')).toEqual(['(Control+C)', 'Control+C*2'])
+  })
+
+  test('off a Mac a page code is left as it is', () => {
+    expect(pageCode('MetaLeft', false)).toBe('MetaLeft')
+    expect(pageCode('ControlLeft', false)).toBe('ControlLeft')
+  })
 })

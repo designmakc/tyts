@@ -162,8 +162,8 @@ export const onMac = typeof process !== 'undefined' && process.platform ? proces
 export function hotkeyLabel(hotkey: string): string {
   // A key pressed twice that is not a modifier tapped: "Ctrl+C twice".
   if (hotkey.endsWith('*2') && hotkey.includes('+')) return t('keys.twice', { key: hotkeyLabel(hotkey.slice(0, -2)) })
-  // On a Mac, Ctrl is Cmd there (registerMacKeys in main.ts).
-  const name = (mod: string) => (mod === 'Control' ? (onMac ? '⌘' : 'Ctrl') : mod === 'Alt' && onMac ? '⌥' : mod === 'Super' ? 'Win' : mod)
+  // On a Mac, Control is Cmd and Super is Ctrl (kbdmac.ts; registerShortcuts in main.ts).
+  const name = (mod: string) => (mod === 'Control' ? (onMac ? '⌘' : 'Ctrl') : mod === 'Alt' && onMac ? '⌥' : mod === 'Super' ? (onMac ? '⌃' : 'Win') : mod)
   return hotkey
     .split('+')
     .map(part => {
@@ -182,6 +182,18 @@ export function hotkeyLabel(hotkey: string): string {
       return name(part)
     })
     .join('+')
+}
+
+/**
+ * A page's KeyboardEvent.code in Tyts's terms: on a Mac Cmd is Control and
+ * Control is Super (kbdmac.ts), while a page calls Cmd Meta. The keyboard
+ * thread feeds the same field in Tyts's terms (codeOfVk) and never keeps a
+ * modifier from the page, so unswapped, Ctrl or Cmd alone came in as both.
+ */
+export function pageCode(code: string, mac = onMac): string {
+  if (!mac) return code
+  const swap: Record<string, string> = { MetaLeft: 'ControlLeft', MetaRight: 'ControlRight', ControlLeft: 'MetaLeft', ControlRight: 'MetaRight' }
+  return swap[code] ?? code
 }
 
 /** The name of a non-modifier key in a hotkey, from KeyboardEvent.code. */
@@ -309,8 +321,8 @@ export class HotkeyRecorder {
   }
 
   private withMods(name: string): Recorded | undefined {
-    const mods = sortMods([...this.held].map(c => TAPS.find(t => t.code === c)?.mod).filter((m): m is Mod => !!m).map(m => (onMac && m === 'Super' ? 'Control' : m)))
-    const hotkey = [...new Set(mods), name].join('+')
+    const mods = sortMods([...this.held].map(c => TAPS.find(t => t.code === c)?.mod).filter((m): m is Mod => !!m))
+    const hotkey = [...mods, name].join('+')
     return parseHotkey(hotkey) ? { hotkey } : undefined
   }
 }

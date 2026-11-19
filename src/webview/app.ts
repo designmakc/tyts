@@ -18,7 +18,7 @@
 
 import { AWAKE_HOURS, type AwakeHours } from '../awake'
 import { NATURAL_PREFIX, NATURAL_VOICES, naturalLabel } from '../natural'
-import { DOUBLE_MS, HotkeyRecorder, hotkeyLabel, onMac, type Recorded } from '../hotkey'
+import { DOUBLE_MS, HotkeyRecorder, hotkeyLabel, onMac, pageCode, type Recorded } from '../hotkey'
 import { missing } from '../access'
 import type { AppTab, AppView, DiffPart, Feature, KeyboardLayout, MistakeEntry, SavedWord, Settings, StorageId, StoragePart, StorageView, ToView, TutorHost } from '../protocol'
 import { LANGUAGES } from '../languages'
@@ -1450,12 +1450,12 @@ function keyRecorder(
     if (!field.classList.contains('recording')) return
     event.preventDefault()
     if (event.repeat) return
-    press(event.code, performance.timeOrigin + event.timeStamp)
+    press(pageCode(event.code), performance.timeOrigin + event.timeStamp)
   })
   field.addEventListener('keyup', event => {
     if (!field.classList.contains('recording')) return
     event.preventDefault()
-    lift(event.code, performance.timeOrigin + event.timeStamp)
+    lift(pageCode(event.code), performance.timeOrigin + event.timeStamp)
   })
   field.addEventListener('mousedown', event => {
     if (document.activeElement !== field || (event.button !== 3 && event.button !== 4)) return

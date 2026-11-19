@@ -641,7 +641,7 @@ class Worker:
         if file:
             store.update(id, file=file)
             try:
-                calls.write_md(transcript, file)
+                calls.write_md(transcript, file, store.root)
             except OSError as error:
                 log.warning("transcripts folder: could not write the Markdown: %s", error)
         store.save(id, transcript)

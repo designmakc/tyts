@@ -50,9 +50,10 @@ export type TextResult =
    * text's sentences in order, as translated, for the card to find in its field;
    * `drafts`: how many sentences are still quick drafts (`span.t.draft`), the
    * accurate model's translation replacing them one by one; `busy`: Fast
-   * translated it, the model too slow just now.
+   * translated it, the model too slow just now; `rest`: the end of a text too long to
+   * translate at once, as it was: Paste puts it back after the translation, so none of the selection is lost.
    */
-  | { status: 'ready'; text: string; from: string; to: string; html: string; sentences: string[]; drafts?: number; busy?: BusyPart }
+  | { status: 'ready'; text: string; from: string; to: string; html: string; sentences: string[]; drafts?: number; busy?: BusyPart; rest?: string }
   | { status: 'failed'; message: string }
 
 /** What kept the local model too slow just now, so Fast translated instead (modelbusy.ts): the graphics card or the processor taken by another program. */

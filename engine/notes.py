@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 from datetime import datetime
 from pathlib import Path
@@ -60,10 +61,16 @@ def frontmatter(fields: dict) -> str:
     return "\n".join(lines + ["---", ""])
 
 
+def kept(t: dict) -> Path | None:
+    """The knowledge base file this transcript was written to, while it is still there."""
+    path = t.get("note")
+    return Path(path) if path and os.path.isfile(path) else None
+
+
 def write_note(t: dict, kb_dir: str, sub: str) -> Path:
     created = datetime.fromisoformat(t["created"])
     text = "\n\n".join(u["text"] for u in t.get("utterances", []))
-    path = free(inbox(kb_dir, sub), file_name(f"{created:%Y-%m-%d %H%M} {first_words(text)}"))
+    path = kept(t) or free(inbox(kb_dir, sub), file_name(f"{created:%Y-%m-%d %H%M} {first_words(text)}"))
     head = frontmatter({
         "created": created.isoformat(timespec="minutes"),
         "duration": export.clock(t.get("duration", 0)),
@@ -75,8 +82,9 @@ def write_note(t: dict, kb_dir: str, sub: str) -> Path:
 
 
 def write_transcript(t: dict, kb_dir: str, sub: str) -> Path:
+    """Into the file it was sent to before, while that is there: one transcript, one file."""
     created = datetime.fromisoformat(t["created"])
-    path = free(inbox(kb_dir, sub), file_name(f"{created:%Y-%m-%d} {t.get('title', '')}"))
+    path = kept(t) or free(inbox(kb_dir, sub), file_name(f"{created:%Y-%m-%d} {t.get('title', '')}"))
     head = frontmatter({
         "created": created.isoformat(timespec="minutes"),
         "duration": export.clock(t.get("duration", 0)),

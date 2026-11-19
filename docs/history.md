@@ -89,6 +89,11 @@ Landing (`site/index.html`, 2026-10-31, the first concept, which the owner judge
 - **A recording's Markdown** is written only inside the transcripts folder and never over a Markdown that is not that recording's own (`calls.py write_md`): a file dropped from elsewhere gets none beside it, and a note of the person's with the same name stays.
 - **The word dictionary** downloads when asked (the setup, or Download on a word's card), never on the first word looked up, and each file is checked against its size and SHA-256 (`dictstore.ts PINNED`).
 
+## 2026-11-16: a call goes to the knowledge base once
+
+- **The owner's words**: "the file is created several times and nothing says it is already in the knowledge base"; the button should go inactive and a change should update the file already there. Each press wrote a new `name (2).md`.
+- Now `POST /transcripts/{id}/to-kb` remembers the file in transcript.json `note` (the field a voice note already had, so the Transcripts page's "In the knowledge base: file · Open · Show in folder" notice shows for a call too) and writes into it again while it is there (`notes.kept`). The button turns into a disabled "In the knowledge base" with a check. `store.save` rewrites a call's file on every change (renaming, edited lines, speakers, the summary, notes, a redo; `jobs.py` keeps `note` through a redo); a voice note made again goes into its own file too. A file the person deleted or moved is not shown as there (`public`) and the button comes back. A file edited by hand in the knowledge base is overwritten by the next change made in Tyts. Checked by `test_to_kb_writes_one_file_and_keeps_it_current`.
+
 ## Since 2026-11-10: lighter on weak computers, a call while it records
 
 Owner decisions and what was found, all on 2026-11-10 (an 8 GB M1; nothing here was measured on a weak Windows computer).

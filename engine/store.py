@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import secrets
 import shutil
@@ -15,6 +16,10 @@ import sqlite3
 import threading
 from datetime import datetime
 from pathlib import Path
+
+import notes as kb
+
+log = logging.getLogger("tyts.store")
 
 COLUMNS = ("id", "title", "source", "created", "duration", "status", "stage", "progress", "error", "language", "speakers_status", "job", "touched", "summarized", "app", "file")
 LIST_COLUMNS = ("id", "title", "source", "created", "duration", "status", "stage", "progress", "error", "language", "speakers_status", "summarized", "app")
@@ -153,6 +158,12 @@ class Store:
         tmp = folder / "transcript.tmp"
         tmp.write_text(json.dumps(transcript, ensure_ascii=False, indent=1), "utf-8")
         tmp.replace(folder / "transcript.json")
+        # A call sent to the knowledge base: its file there follows every change (a voice note's is written by jobs.py).
+        if transcript.get("source") != "note" and kb.kept(transcript):
+            try:
+                kb.write_transcript(transcript, "", "")
+            except OSError as error:
+                log.warning("knowledge base: could not update the file: %s", error)
         summary = (transcript.get("summary") or {}).get("text", "")
         notes = transcript.get("notes") or ""
         body = "\n".join([u["text"] for u in transcript.get("utterances", [])] + [x for x in (summary, notes) if x])

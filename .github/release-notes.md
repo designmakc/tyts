@@ -1,7 +1,11 @@
 ## Tyts 0.5.7
 
 **Fixed:**
+- **Mac:** a key set with Ctrl or Cmd alone (to switch the layout, for example) is recorded as that key and works. Before, Ctrl and Cmd were both recorded as "⌘+Win", a key that needs both held, so it switched nothing. Set such a key once more. Ctrl+K and Cmd+K are now two different keys, and Ctrl is shown as ⌃.
 - **Windows:** the Keyboard page no longer says that a program "runs as administrator" when it does not. It happened to a program that opened a window for a moment and ended at once (gcc.exe, for example), and the line stayed until Tyts was restarted.
+- **Windows:** uninstalling with "delete the data too" now removes Tyts's own folders (settings, downloads and Documents\Tyts), which were left behind.
+
+**Changed:** Tyts no longer takes over the folders of the app's older names. If you still run a version from before the name Tyts, update to 0.5.6 first.
 
 ## Tyts 0.5.6
 

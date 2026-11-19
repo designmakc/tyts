@@ -3273,8 +3273,8 @@ function registerShortcuts(): void {
       return true
     }
     try {
-      // On a Mac Ctrl (and Win) is read as Cmd, as the labels show it (hotkey.ts hotkeyLabel).
-      return globalShortcut.register(onMac ? accelerator.replace(/\b(Control|Super)\b/g, 'Command') : accelerator, run)
+      // On a Mac Control is Cmd and Super is Ctrl, as the labels show them (hotkey.ts hotkeyLabel, kbdmac.ts).
+      return globalShortcut.register(onMac ? accelerator.replace(/\b(Control|Super)\b/g, m => (m === 'Control' ? 'Command' : 'Control')) : accelerator, run)
     } catch {
       return false
     }
